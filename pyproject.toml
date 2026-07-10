@@ -1,0 +1,15 @@
+[project]
+name = "pbtravellog"
+version = "0.0.0"
+description = "Tools for maintaining travel logs"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+dependencies = [
+]
+[project.scripts]
+pbtravellog = "pbtravellog.cli:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
