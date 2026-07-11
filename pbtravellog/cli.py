@@ -3,15 +3,18 @@
 # Standard imports
 import argparse
 from pathlib import Path
+import sys
 
 # Project imports
 import pbtravellog.extract_photo_metadata as epm
 
 def main():
+    """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         description="Tools for managing travel logs"
     )
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.required = True
     epm_parser = subparsers.add_parser(
         "extract-photo-metadata",
         help="Extract metadata from a folder of photos"
@@ -26,7 +29,7 @@ def main():
         type=Path,
         required=True,
     )
-
+    print(sys.argv)
     args = parser.parse_args()
     if args.command == "extract-photo-metadata":
         epm.extract_photo_metadata(args.source, args.output)

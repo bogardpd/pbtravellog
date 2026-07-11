@@ -10,13 +10,17 @@ from PIL import Image
 import simplekml
 
 def extract_photo_metadata(source: Path, output: Path):
+    """Gets metadata from JPG photos in a folder."""
     if not source.is_dir():
         raise ValueError("Source must be a directory")
     if not output.is_dir():
         raise ValueError("Output must be a directory")
     kmz_path = output / "photo_data.kmz"
     csv_path = output / "photo_data.csv"
-    photos = list(source.glob("*.jpg"))
+    photos = [
+        f for f in source.iterdir()
+        if f.suffix.lower() in ['.jpg', '.jpeg']
+    ]
     if not photos:
         raise ValueError(f"No .jpg files found in {source}")
     records = [
@@ -28,17 +32,16 @@ def extract_photo_metadata(source: Path, output: Path):
     print(f"Wrote CSV to {csv_path}")
 
     kml = simplekml.Kml()
-    for idx, row in df.iterrows():
+    for _, row in df.iterrows():
         if row.location:
-            print(row)
             lat, lon = row.location
-            pnt = kml.newpoint(
+            kml.newpoint(
                 name=str(row['name']),
                 coords=[(lon, lat)]
             )
     kml.savekmz(kmz_path)
-    print(f"Wrote KMZ to {kmz_path}")    
-    
+    print(f"Wrote KMZ to {kmz_path}")
+
 def _get_exif_jpeg(photo_path: Path):
     with Image.open(photo_path) as img:
         exif_data = img.getexif()
