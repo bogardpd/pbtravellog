@@ -1,6 +1,6 @@
 [project]
 name = "pbtravellog"
-version = "0.0.1"
+version = "0.1.0"
 description = "Tools for maintaining travel logs"
 readme = "README.md"
 requires-python = ">=3.14"
