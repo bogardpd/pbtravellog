@@ -3,7 +3,6 @@
 # Standard imports
 import argparse
 from pathlib import Path
-import sys
 
 # Project imports
 import pbtravellog.extract_photo_metadata as epm
@@ -29,7 +28,6 @@ def main():
         type=Path,
         required=True,
     )
-    print(sys.argv)
     args = parser.parse_args()
     if args.command == "extract-photo-metadata":
         epm.extract_photo_metadata(args.source, args.output)
