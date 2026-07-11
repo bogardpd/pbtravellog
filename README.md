@@ -1,2 +1,62 @@
 # pbtravellog
-Utilities for managing travel logs
+
+Utilities for managing travel logs.
+
+## Setup
+
+### Installation
+
+Navigate to the module's folder and install it with pip or pipx:
+
+```bash
+cd path/to/module
+python -m pip install .
+```
+
+```bash
+cd path/to/module
+pipx install .
+```
+
+If you want to allow the scripts to be editable after install, perform a pip or pipx editable installation instead:
+
+```bash
+cd path/to/module
+python -m pip install -e .
+```
+
+```bash
+cd path/to/module
+pipx install --editable .
+```
+
+After installation, the `pbtravellog` command is available on the command line.
+
+## Basic usage
+
+```bash
+pbtravellog <command> [options]
+```
+
+To see available commands:
+
+```bash
+pbtravellog --help
+```
+
+To see help for a specific command:
+
+```bash
+pbtravellog <command> --help
+```
+
+## Commands
+
+### `extract-photo-metadata`
+
+Takes a folder of JPEG images, and returns an HTML file with a table of photo metadata, and a KMZ file of photo locations (for photos with location data).
+
+#### Options
+
+- `--source` (required): The path for a directory of photos to extract metadata from.
+- `--output` (required): The path for a directory to save output data to. Two files will be saved in this directory: `photo_data.html` and `photo_data.kmz`.
