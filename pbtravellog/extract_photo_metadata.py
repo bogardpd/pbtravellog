@@ -3,6 +3,7 @@
 # Standard imports
 from datetime import datetime
 from pathlib import Path
+import html
 
 # Third-party imports
 import pandas as pd
@@ -16,7 +17,7 @@ def extract_photo_metadata(source: Path, output: Path):
     if not output.is_dir():
         raise ValueError("Output must be a directory")
     kmz_path = output / "photo_data.kmz"
-    csv_path = output / "photo_data.csv"
+    html_path = output / "photo_data.html"
     photos = [
         f for f in source.iterdir()
         if f.suffix.lower() in ['.jpg', '.jpeg']
@@ -28,24 +29,42 @@ def extract_photo_metadata(source: Path, output: Path):
         for photo in photos
     ]
     df = pd.DataFrame.from_records(records)
-    df.to_csv(csv_path, index=None)
-    print(f"Wrote CSV to {csv_path}")
 
     kml = simplekml.Kml()
     for _, row in df.iterrows():
         if row.location:
             lat, lon = row.location
+            name = str(row['taken'])
+            if pd.notna(row['desc']):
+                name += " " + str(row['desc'])
             kml.newpoint(
-                name=str(row['name']),
+                name=name,
                 coords=[(lon, lat)]
             )
     kml.savekmz(kmz_path)
     print(f"Wrote KMZ to {kmz_path}")
 
+    df['time'] = df['taken'].dt.strftime('%H:%M')
+    df['event'] = df.apply(_format_event, axis=1)
+    df_output = df[['time', 'event']]
+    df_output.to_html(html_path, index=None, escape=False)
+    print(f"Wrote HTML to {html_path}")
+
+def _format_event(row):
+    output = [
+        row['desc'],
+        row['name'],
+        row['model'],
+        row['location'],
+    ]
+    output = [html.escape(str(s)) for s in output if (pd.notna(s) and not str(s).isspace())]
+    return "📸 " + " &middot; ".join(output)
+
 def _get_exif_jpeg(photo_path: Path):
     with Image.open(photo_path) as img:
         exif_data = img.getexif()
         output = {
+            'desc': exif_data.get(270),
             'taken': _get_exif_dt(exif_data),
             'make': exif_data.get(271),
             'model': exif_data.get(272),
