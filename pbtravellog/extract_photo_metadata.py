@@ -29,6 +29,7 @@ def extract_photo_metadata(source: Path, output: Path):
         for photo in photos
     ]
     df = pd.DataFrame.from_records(records)
+    df = df.sort_values('taken')
 
     kml = simplekml.Kml()
     for _, row in df.iterrows():
