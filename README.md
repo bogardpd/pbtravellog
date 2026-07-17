@@ -56,7 +56,9 @@ pbtravellog <command> --help
 
 Takes a folder of JPEG images, and returns an HTML file with a table of photo metadata, and a KMZ file of photo locations (for photos with location data).
 
-#### Options
+#### Usage
 
-- `--source` (required): The path for a directory of photos to extract metadata from.
-- `--output` (required): The path for a directory to save output data to. Two files will be saved in this directory: `photo_data.html` and `photo_data.kmz`.
+`pbtravellog extract-photo-metadata source output`
+
+- `source` (required): The path for a directory of photos to extract metadata from.
+- `output` (required): The path for a directory to save output data to. Two files will be saved in this directory: `photo_data.html` and `photo_data.kmz`. If these files already exist, they will be overwritten.

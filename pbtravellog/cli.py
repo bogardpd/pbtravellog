@@ -18,15 +18,13 @@ def main():
         "extract-photo-metadata",
         help="Extract metadata from a folder of photos"
     )
-    epm_parser.add_argument("--source",
+    epm_parser.add_argument("source",
         help="Directory of source photos",
         type=Path,
-        required=True,
     )
-    epm_parser.add_argument("--output",
+    epm_parser.add_argument("output",
         help="Directory for output files",
         type=Path,
-        required=True,
     )
     args = parser.parse_args()
     if args.command == "extract-photo-metadata":

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Changed `source` and `output` to positional arguments in `extract-photo-metadata`.
+
 ## [0.1.0]
 
 ### Added
