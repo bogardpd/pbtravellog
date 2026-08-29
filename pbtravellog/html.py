@@ -9,7 +9,6 @@ from functools import partial
 
 # Third-party imports
 
-PORT = 8000
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
 if HTML_PATH is None:
     raise KeyError(
@@ -20,7 +19,7 @@ def build():
     """Builds a directory of static HTML pages."""
     print("Building pbflightlog HTML...")
 
-def run():
+def run(port):
     """Launches a server and browser."""
     print("Launching pbflightlog HTML...")
     if not os.path.exists(HTML_PATH):
@@ -34,9 +33,9 @@ def run():
         http.server.SimpleHTTPRequestHandler, directory=HTML_PATH
     )
     with http.server.ThreadingHTTPServer(
-        ("127.0.0.1", PORT), handler
+        ("127.0.0.1", port), handler
     ) as httpd:
-        url = f"http://localhost:{PORT}"
+        url = f"http://localhost:{port}"
         print(f"Serving {HTML_PATH} at {url}.")
         webbrowser.open(url)
         try:

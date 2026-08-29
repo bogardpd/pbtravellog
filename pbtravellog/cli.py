@@ -37,10 +37,15 @@ def main():
         "run",
         help="Launch HTML travel log"
     )
+    run_parser.add_argument("--port",
+        help="Webserver port (default: %(default)s)",
+        type=int,
+        default=8000,
+    )
     args = parser.parse_args()
     if args.command == "build":
         html.build()
     elif args.command == "extract-photo-metadata":
         epm.extract_photo_metadata(args.source, args.output)
     elif args.command == "run":
-        html.run()
+        html.run(args.port)
