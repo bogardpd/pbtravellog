@@ -50,7 +50,21 @@ To see help for a specific command:
 pbtravellog <command> --help
 ```
 
-## Commands
+## HTML Commands
+
+PBTravelLog can generate a local static HTML website to display travel log data.
+
+### `run`
+
+Launches a server and web browser to show the HTML travel log.
+
+#### Example
+
+```bash
+pbtravellog run
+```
+
+## Additional Commands
 
 ### `extract-photo-metadata`
 
@@ -60,3 +74,9 @@ Takes a folder of JPEG images, and returns an HTML file with a table of photo me
 
 - `--source` (required): The path for a directory of photos to extract metadata from.
 - `--output` (required): The path for a directory to save output data to. Three files will be saved in this directory: `photo_data.html`, `timeline.gpkg`, and `photo_data.kmz`.
+
+#### Example
+
+```bash
+pbtravellog extract-photo-metadata --source ~/source_photos_dir --output ~/output_dir
+```
