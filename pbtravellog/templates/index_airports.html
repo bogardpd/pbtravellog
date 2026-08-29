@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Airports{% endblock %}
+{% block content %}
+<table>
+  <thead>
+    <th>Code</th>
+    <th>Airport</th>
+  </thead>
+  <tbody>
+    {% for airport in airports %}
+    <tr>
+      <td><span class="code">{{ airport.code }}</span></td>
+      <td>{{ airport.name }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock content %}

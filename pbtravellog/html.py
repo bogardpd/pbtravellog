@@ -39,11 +39,13 @@ def build():
 
     # Create joined tables for pages.
     flights_table = _join_flights(flights_gdf, airlines_gdf, airports_gdf)
+    airports_table = _join_airports(airports_gdf)
 
     env = _jinja_env()
     _build_structure(html_dir)
     _build_home(html_dir, env)
     _build_flights(html_dir, env, flights_table)
+    _build_airports(html_dir, env, airports_table)
 
     print(f"Wrote static site to \"{html_dir}\".")
 
@@ -72,9 +74,25 @@ def run(port):
             print("\nShutting down server.")
             sys.exit(0)
 
+def _build_airports(html_dir, env, airports_table) -> None:
+    """Builds airport pages."""
+    airports_dir = html_dir / "airports"
+    airports_dir.mkdir()
+    airport_items = []
+    for idx, row in airports_table.iterrows():
+        airport_items.append({
+            'name': row['name'], # Get name and not row index
+            'code': row.code,
+        })
+    index_airports_html = env.get_template("index_airports.html") \
+        .render(airports=airport_items)
+    (airports_dir / "index.html").write_text(
+        index_airports_html,
+        encoding="utf-8",
+    )
 
 def _build_flights(html_dir, env, flights_table) -> None:
-    """Builds flights index and individual flight pages."""
+    """Builds flight pages."""
     flights_dir = html_dir / "flights"
     flights_dir.mkdir()
     flight_items = []
@@ -85,11 +103,8 @@ def _build_flights(html_dir, env, flights_table) -> None:
             'destination_airport_code': row.destination_airport_code,
             'departure_utc': row.departure_utc,
         })
-    index_flights_html = env.get_template(
-        "index_flights.html"
-    ).render(
-        flights=flight_items
-    )
+    index_flights_html = env.get_template("index_flights.html") \
+        .render(flights=flight_items)
     (flights_dir / "index.html").write_text(
         index_flights_html,
         encoding="utf-8",
@@ -133,6 +148,14 @@ def _jinja_env() -> Environment:
     )
     env.filters['format_utc'] = _format_utc
     return env
+
+def _join_airports(airports_gdf) -> pd.DataFrame:
+    airports_table = pd.DataFrame(airports_gdf[[
+        'name',
+        'code',
+    ]])
+    airports_table = airports_table.sort_values('code')
+    return airports_table
 
 def _join_flights(flights_gdf, airlines_gdf, airports_gdf) -> pd.DataFrame:
     flights_table = pd.DataFrame(flights_gdf[[
