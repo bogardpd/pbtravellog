@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Flights{% endblock %}
+{% block content %}
+<table>
+  <thead>
+    <th>Flight</th>
+    <th>Route</th>
+    <th>Departure UTC</th>
+  </thead>
+  <tbody>
+    {% for flight in flights %}
+    <tr>
+      <td>{{ flight.name }}</td>
+      <td class="flight-route"><span class="code">{{ flight.origin_airport_code }}</span> &rarr; <span class="code">{{ flight.destination_airport_code }}</span></td>
+      <td>{{ flight.departure_utc | format_utc }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock content %}

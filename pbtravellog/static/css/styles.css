@@ -1,16 +1,23 @@
 @font-face {
-  font-family: "IBM Plex Sans";
-  src: url("../fonts/IBM_Plex_Sans_Var_Roman.woff2") format("woff2-variations");
-  font-weight: 100 700;
-  font-style: normal;
-  font-display: swap;
+    font-family: "IBM Plex Sans";
+    src: url("../fonts/IBM_Plex_Sans_Var_Roman.woff2") format("woff2-variations");
+    font-weight: 100 700;
+    font-style: normal;
+    font-display: swap;
 }
 @font-face {
-  font-family: "IBM Plex Sans";
-  src: url("../fonts/IBM_Plex_Sans_Var_Italic.woff2") format("woff2-variations");
-  font-weight: 100 700;
-  font-style: italic;
-  font-display: swap;
+    font-family: "IBM Plex Sans";
+    src: url("../fonts/IBM_Plex_Sans_Var_Italic.woff2") format("woff2-variations");
+    font-weight: 100 700;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    /* No styles currently use monospace italic, so it has been deliberately excluded. */
+    font-family: "IBM Plex Mono";
+    src: url("../fonts/IBM_Plex_Mono_Var_Roman.woff2") format("woff2-variations");
+    font-weight: 100 700;
+    font-display: swap;
 }
 
 body {
@@ -54,4 +61,10 @@ main {
 }
 h1 {
     margin-top: 0;
+}
+span.code {
+    font-family: 'IBM Plex Mono', monospace;
+}
+td.flight-route {
+    text-align: center;
 }

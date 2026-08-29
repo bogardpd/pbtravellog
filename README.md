@@ -38,6 +38,10 @@ This package has the ability to generate static HTML files for travel log data a
 
 ```PBTRAVELLOG_HTML_PATH=/path/to/html/folder```
 
+This package reads from a flight log GeoPackage as described in [pbflightlog](https://github.com/bogardpd/pbflightlog). The path to the flight log must be set as an environment variable:
+
+```PBFLIGHTLOG_GEOPACKAGE_PATH=/path/to/flight_log.gpkg```
+
 ## Basic usage
 
 ```bash
