@@ -32,88 +32,18 @@ def build():
     print("Building pbflightlog HTML...")
     html_dir = Path(HTML_PATH)
 
-    # Create root and static folders.
-    html_dir.mkdir(parents=True, exist_ok=True)
-    for item in html_dir.iterdir():
-        if item.is_file():
-            item.unlink()
-        elif item.is_dir():
-            shutil.rmtree(item)
-    static_dir = files("pbtravellog") / "static"
-    with as_file(static_dir) as static_path:
-        shutil.copytree(static_path, html_dir, dirs_exist_ok=True)
+    # Load travel log data.
+    airlines_gdf = _load_airlines_gdf()
+    airports_gdf = _load_airports_gdf()
+    flights_gdf = _load_flights_gdf()
 
-    # Load Jinja environment.
-    env = Environment(
-        loader=PackageLoader("pbtravellog"),
-        autoescape=True,
-    )
-    env.filters['format_utc'] = _format_utc
-    home_html = env.get_template("home.html").render()
-    (html_dir / "index.html").write_text(home_html, encoding="utf-8")
+    # Create joined tables for pages.
+    flights_table = _join_flights(flights_gdf, airlines_gdf, airports_gdf)
 
-    # Create data tables.
-
-    airports_gdf = gpd.read_file(
-        PBFLIGHTLOG_GEOPACKAGE_PATH,
-        layer='airports',
-        fid_as_index=True
-    )
-    airports_gdf['code'] = airports_gdf['iata_code'] \
-        .fillna(airports_gdf['icao_code']) \
-        .fillna(airports_gdf['faa_lid'])
-    airlines_gdf = gpd.read_file(
-        PBFLIGHTLOG_GEOPACKAGE_PATH,
-        layer='airlines',
-        fid_as_index=True
-    )
-    flights_gdf = gpd.read_file(
-        PBFLIGHTLOG_GEOPACKAGE_PATH,
-        layer='flights',
-        fid_as_index=True,
-    )
-    flights_gdf['airline_fid'] = flights_gdf['airline_fid'].astype("Int64")
-    flights_gdf = flights_gdf.sort_values('departure_utc')
-
-    flights_table = pd.DataFrame(flights_gdf[[
-        'departure_utc',
-        'flight_number',
-        'airline_fid',
-        'origin_airport_fid',
-        'destination_airport_fid',
-    ]])
-    flights_table = flights_table.join(
-        airports_gdf['code'].rename("origin_airport_code"),
-        on="origin_airport_fid",
-    )
-    flights_table = flights_table.join(
-        airports_gdf['code'].rename("destination_airport_code"),
-        on="destination_airport_fid",
-    )
-    flights_table = flights_table.join(
-        airlines_gdf['name'].rename("airline_name"),
-        on="airline_fid",
-    )
-
-    # Create Flights.
-    flights_dir = html_dir / "flights"
-    flights_dir.mkdir()
-    flight_items = []
-    for idx, row in flights_table.iterrows():
-        flight_items.append({
-            'name': _flight_name(row),
-            'origin_airport_code': row.origin_airport_code,
-            'destination_airport_code': row.destination_airport_code,
-            'departure_utc': row.departure_utc,
-        })
-
-    index_flights_html = env.get_template("index_flights.html").render(
-        flights=flight_items
-    )
-    (flights_dir / "index.html").write_text(
-        index_flights_html,
-        encoding="utf-8",
-    )
+    env = _jinja_env()
+    _build_structure(html_dir)
+    _build_home(html_dir, env)
+    _build_flights(html_dir, env, flights_table)
 
     print(f"Wrote static site to \"{html_dir}\".")
 
@@ -142,6 +72,46 @@ def run(port):
             print("\nShutting down server.")
             sys.exit(0)
 
+
+def _build_flights(html_dir, env, flights_table) -> None:
+    """Builds flights index and individual flight pages."""
+    flights_dir = html_dir / "flights"
+    flights_dir.mkdir()
+    flight_items = []
+    for idx, row in flights_table.iterrows():
+        flight_items.append({
+            'name': _flight_name(row),
+            'origin_airport_code': row.origin_airport_code,
+            'destination_airport_code': row.destination_airport_code,
+            'departure_utc': row.departure_utc,
+        })
+    index_flights_html = env.get_template(
+        "index_flights.html"
+    ).render(
+        flights=flight_items
+    )
+    (flights_dir / "index.html").write_text(
+        index_flights_html,
+        encoding="utf-8",
+    )
+
+def _build_home(html_dir, env) -> None:
+    """Builds home page."""
+    home_html = env.get_template("home.html").render()
+    (html_dir / "index.html").write_text(home_html, encoding="utf-8")
+
+def _build_structure(html_dir) -> None:
+    """Ensures empty HTML folder and copies static files."""
+    html_dir.mkdir(parents=True, exist_ok=True)
+    for item in html_dir.iterdir():
+        if item.is_file():
+            item.unlink()
+        elif item.is_dir():
+            shutil.rmtree(item)
+    static_dir = files("pbtravellog") / "static"
+    with as_file(static_dir) as static_path:
+        shutil.copytree(static_path, html_dir, dirs_exist_ok=True)
+
 def _flight_name(row) -> str:
     """Formats a flight name."""
     if pd.notna(row.airline_name):
@@ -154,3 +124,65 @@ def _format_utc(dt) -> str:
     if dt is None:
         return ""
     return dt.strftime("%Y-%m-%d %H:%M")
+
+def _jinja_env() -> Environment:
+    """Creates a Jinja environment."""
+    env = Environment(
+        loader=PackageLoader("pbtravellog"),
+        autoescape=True,
+    )
+    env.filters['format_utc'] = _format_utc
+    return env
+
+def _join_flights(flights_gdf, airlines_gdf, airports_gdf) -> pd.DataFrame:
+    flights_table = pd.DataFrame(flights_gdf[[
+        'departure_utc',
+        'flight_number',
+        'airline_fid',
+        'origin_airport_fid',
+        'destination_airport_fid',
+    ]])
+    flights_table = flights_table.join(
+        airports_gdf['code'].rename("origin_airport_code"),
+        on="origin_airport_fid",
+    )
+    flights_table = flights_table.join(
+        airports_gdf['code'].rename("destination_airport_code"),
+        on="destination_airport_fid",
+    )
+    flights_table = flights_table.join(
+        airlines_gdf['name'].rename("airline_name"),
+        on="airline_fid",
+    )
+    return flights_table
+
+def _load_airlines_gdf() -> gpd.GeoDataFrame:
+    """Prepares a GeoDataFrame of airline data."""
+    airlines_gdf = gpd.read_file(
+        PBFLIGHTLOG_GEOPACKAGE_PATH,
+        layer='airlines',
+        fid_as_index=True
+    )
+    return airlines_gdf
+
+def _load_airports_gdf() -> gpd.GeoDataFrame:
+    """Prepares a GeoDataFrame of airport data."""
+    airports_gdf = gpd.read_file(
+        PBFLIGHTLOG_GEOPACKAGE_PATH,
+        layer='airports',
+        fid_as_index=True
+    )
+    airports_gdf['code'] = airports_gdf['iata_code'] \
+        .fillna(airports_gdf['icao_code']) \
+        .fillna(airports_gdf['faa_lid'])
+    return airports_gdf
+
+def _load_flights_gdf() -> gpd.GeoDataFrame:
+    """Prepares a GeoDataFrame of flight data."""
+    flights_gdf = gpd.read_file(
+        PBFLIGHTLOG_GEOPACKAGE_PATH,
+        layer='flights',
+        fid_as_index=True,
+    )
+    flights_gdf['airline_fid'] = flights_gdf['airline_fid'].astype("Int64")
+    return flights_gdf.sort_values('departure_utc')
