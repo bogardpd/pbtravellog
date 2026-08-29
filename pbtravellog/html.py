@@ -16,6 +16,10 @@ if HTML_PATH is None:
         "Environment variable PBTRAVELLOG_HTML_PATH is missing."
     )
 
+def build():
+    """Builds a directory of static HTML pages."""
+    print("Building pbflightlog HTML...")
+
 def run():
     """Launches a server and browser."""
     print("Launching pbflightlog HTML...")

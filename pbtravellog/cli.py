@@ -15,6 +15,10 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command")
     subparsers.required = True
+    build_parser = subparsers.add_parser(
+        "build",
+        help="Build static HTML log"
+    )
     epm_parser = subparsers.add_parser(
         "extract-photo-metadata",
         help="Extract metadata from a folder of photos"
@@ -34,7 +38,9 @@ def main():
         help="Launch HTML travel log"
     )
     args = parser.parse_args()
-    if args.command == "extract-photo-metadata":
+    if args.command == "build":
+        html.build()
+    elif args.command == "extract-photo-metadata":
         epm.extract_photo_metadata(args.source, args.output)
-    if args.command == "run":
+    elif args.command == "run":
         html.run()

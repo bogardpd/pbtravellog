@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Added `run` command to launch HTML.
+- Added `build` and `run` command to launch HTML.
 
 ## [0.2.0]
 
