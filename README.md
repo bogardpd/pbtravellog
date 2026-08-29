@@ -75,10 +75,18 @@ Launches a server and web browser to show the HTML travel log.
 
 The HTML pages will show travel data current as of the last time `build` was used. If the travel data changes, use `build` again before using `run`.
 
-#### Example
+#### Options
+
+- `--port NNNN`: The port to run the webserver on. Defaults to 8000 if not set.
+
+#### Examples
 
 ```bash
 pbtravellog run
+```
+
+```bash
+pbtravellog run --port 12345
 ```
 
 ## Additional Commands
