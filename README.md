@@ -32,6 +32,12 @@ pipx install --editable .
 
 After installation, the `pbtravellog` command is available on the command line.
 
+### Environment Variables
+
+This package has the ability to generate static HTML files for travel log data and place them into a folder. The path to this folder must be set as an environment variable:
+
+```PBTRAVELLOG_HTML_PATH=/path/to/html/folder```
+
 ## Basic usage
 
 ```bash
