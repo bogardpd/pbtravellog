@@ -3,14 +3,14 @@
 {% block content %}
 <table>
   <thead>
-    <th>Code</th>
     <th>Airport</th>
+    <th>Code</th>
   </thead>
   <tbody>
     {% for airport in airports %}
     <tr>
-      <td><span class="code">{{ airport.code }}</span></td>
       <td>{{ airport.name }}</td>
+      <td><span class="code">{{ airport.code }}</span></td>
     </tr>
     {% endfor %}
   </tbody>

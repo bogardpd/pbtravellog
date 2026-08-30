@@ -33,18 +33,20 @@ def build():
     html_dir = Path(HTML_PATH)
 
     # Load travel log data.
+    flights_gdf = _load_flights_gdf()
     airlines_gdf = _load_airlines_gdf()
     airports_gdf = _load_airports_gdf()
-    flights_gdf = _load_flights_gdf()
 
     # Create joined tables for pages.
     flights_table = _join_flights(flights_gdf, airlines_gdf, airports_gdf)
+    airlines_table = _join_airlines(airlines_gdf)
     airports_table = _join_airports(airports_gdf)
 
     env = _jinja_env()
     _build_structure(html_dir)
     _build_home(html_dir, env)
     _build_flights(html_dir, env, flights_table)
+    _build_airlines(html_dir, env, airlines_table)
     _build_airports(html_dir, env, airports_table)
 
     print(f"Wrote static site to \"{html_dir}\".")
@@ -74,6 +76,26 @@ def run(port):
             print("\nShutting down server.")
             sys.exit(0)
 
+def _build_airlines(html_dir, env, airlines_table) -> None:
+    """Builds airline pages."""
+    airlines_dir = html_dir / "airlines"
+    airlines_dir.mkdir()
+    airline_items = []
+    for idx, row in airlines_table.iterrows():
+        airline_items.append({
+            'fid': idx,
+            'name': row['name'],
+            'iata_code': row['iata_code'] if pd.notna(row['iata_code']) else "",
+            'icao_code': row['icao_code'] if pd.notna(row['icao_code']) else "",
+        })
+        print(airlines_table)
+    index_airlines_html = env.get_template("index_airlines.html") \
+        .render(airlines=airline_items)
+    (airlines_dir / "index.html").write_text(
+        index_airlines_html,
+        encoding="utf-8",
+    )
+
 def _build_airports(html_dir, env, airports_table) -> None:
     """Builds airport pages."""
     airports_dir = html_dir / "airports"
@@ -81,8 +103,8 @@ def _build_airports(html_dir, env, airports_table) -> None:
     airport_items = []
     for idx, row in airports_table.iterrows():
         airport_items.append({
-            'name': row['name'], # Get name and not row index
-            'code': row.code,
+            'name': row['name'],
+            'code': row['code'],
         })
     index_airports_html = env.get_template("index_airports.html") \
         .render(airports=airport_items)
@@ -99,9 +121,10 @@ def _build_flights(html_dir, env, flights_table) -> None:
     for idx, row in flights_table.iterrows():
         flight_items.append({
             'name': _flight_name(row),
-            'origin_airport_code': row.origin_airport_code,
-            'destination_airport_code': row.destination_airport_code,
-            'departure_utc': row.departure_utc,
+            'airline_fid': row['airline_fid'],
+            'origin_airport_code': row['origin_airport_code'],
+            'destination_airport_code': row['destination_airport_code'],
+            'departure_utc': row['departure_utc'],
         })
     index_flights_html = env.get_template("index_flights.html") \
         .render(flights=flight_items)
@@ -149,12 +172,21 @@ def _jinja_env() -> Environment:
     env.filters['format_utc'] = _format_utc
     return env
 
+def _join_airlines(airlines_gdf) -> pd.DataFrame:
+    airlines_table = pd.DataFrame(airlines_gdf[[
+        'name',
+        'iata_code',
+        'icao_code',
+    ]])
+    airlines_table = airlines_table.sort_values('name')
+    return airlines_table
+
 def _join_airports(airports_gdf) -> pd.DataFrame:
     airports_table = pd.DataFrame(airports_gdf[[
         'name',
         'code',
     ]])
-    airports_table = airports_table.sort_values('code')
+    airports_table = airports_table.sort_values('name')
     return airports_table
 
 def _join_flights(flights_gdf, airlines_gdf, airports_gdf) -> pd.DataFrame:

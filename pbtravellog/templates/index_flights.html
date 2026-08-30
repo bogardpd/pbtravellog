@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "icons.html" as icons %}
 {% block title %}Flights{% endblock %}
 {% block content %}
 <table>
@@ -10,7 +11,7 @@
   <tbody>
     {% for flight in flights %}
     <tr>
-      <td>{{ flight.name }}</td>
+      <td>{{ icons.airline(flight.airline_fid) }} {{ flight.name }}</td>
       <td class="flight-route"><span class="code">{{ flight.origin_airport_code }}</span> &rarr; <span class="code">{{ flight.destination_airport_code }}</span></td>
       <td>{{ flight.departure_utc | format_utc }}</td>
     </tr>
