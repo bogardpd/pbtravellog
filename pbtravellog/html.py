@@ -88,7 +88,6 @@ def _build_airlines(html_dir, env, airlines_table) -> None:
             'iata_code': row['iata_code'] if pd.notna(row['iata_code']) else "",
             'icao_code': row['icao_code'] if pd.notna(row['icao_code']) else "",
         })
-        print(airlines_table)
     index_airlines_html = env.get_template("index_airlines.html") \
         .render(airlines=airline_items)
     (airlines_dir / "index.html").write_text(
