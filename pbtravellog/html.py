@@ -76,6 +76,12 @@ def run(port):
             print("\nShutting down server.")
             sys.exit(0)
 
+def _blank_if_na(value):
+    """Returns an empty string if a row value is empty."""
+    if pd.isna(value):
+        return ""
+    return value
+
 def _build_airlines(html_dir, env, airlines_table) -> None:
     """Builds airline pages."""
     airlines_dir = html_dir / "airlines"
@@ -85,8 +91,8 @@ def _build_airlines(html_dir, env, airlines_table) -> None:
         airline_items.append({
             'fid': idx,
             'name': row['name'],
-            'iata_code': row['iata_code'] if pd.notna(row['iata_code']) else "",
-            'icao_code': row['icao_code'] if pd.notna(row['icao_code']) else "",
+            'iata_code': _blank_if_na(row['iata_code']),
+            'icao_code': _blank_if_na(row['icao_code']),
         })
     index_airlines_html = env.get_template("index_airlines.html") \
         .render(airlines=airline_items)
@@ -103,6 +109,8 @@ def _build_airports(html_dir, env, airports_table) -> None:
     for idx, row in airports_table.iterrows():
         airport_items.append({
             'name': row['name'],
+            'iata_code': _blank_if_na(row['iata_code']),
+            'icao_code': _blank_if_na(row['icao_code']),
             'code': row['code'],
         })
     index_airports_html = env.get_template("index_airports.html") \
@@ -183,6 +191,8 @@ def _join_airlines(airlines_gdf) -> pd.DataFrame:
 def _join_airports(airports_gdf) -> pd.DataFrame:
     airports_table = pd.DataFrame(airports_gdf[[
         'name',
+        'iata_code',
+        'icao_code',
         'code',
     ]])
     airports_table = airports_table.sort_values('name')

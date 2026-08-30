@@ -6,14 +6,12 @@
   <thead>
     <th>Airline</th>
     <th>IATA</th>
-    <th>ICAO</th>
   </thead>
   <tbody>
     {% for airline in airlines %}
     <tr>
       <td>{{ icons.airline(airline.fid) }} {{ airline.name }}</td>
       <td><span class="code">{{ airline.iata_code }}</span></td>
-      <td><span class="code">{{ airline.icao_code }}</span></td>
     </tr>
     {% endfor %}
   </tbody>

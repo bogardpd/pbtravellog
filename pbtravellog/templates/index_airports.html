@@ -4,13 +4,13 @@
 <table>
   <thead>
     <th>Airport</th>
-    <th>Code</th>
+    <th>IATA</th>
   </thead>
   <tbody>
     {% for airport in airports %}
     <tr>
       <td>{{ airport.name }}</td>
-      <td><span class="code">{{ airport.code }}</span></td>
+      <td><span class="code">{{ airport.iata_code }}</span></td>
     </tr>
     {% endfor %}
   </tbody>
