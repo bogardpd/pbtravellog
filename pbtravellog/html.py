@@ -21,10 +21,12 @@ if HTML_PATH is None:
         "Environment variable PBTRAVELLOG_HTML_PATH is missing."
     )
 
-PBFLIGHTLOG_GEOPACKAGE_PATH = os.getenv("PBFLIGHTLOG_GEOPACKAGE_PATH")
-if PBFLIGHTLOG_GEOPACKAGE_PATH is None:
+PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH = os.getenv(
+    "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"
+)
+if PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is None:
     raise KeyError(
-        "Environment variable PBFLIGHTLOG_GEOPACKAGE_PATH is missing."
+        "Environment variable PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is missing."
     )
 
 def build():
@@ -223,7 +225,7 @@ def _join_flights(flights_gdf, airlines_gdf, airports_gdf) -> pd.DataFrame:
 def _load_airlines_gdf() -> gpd.GeoDataFrame:
     """Prepares a GeoDataFrame of airline data."""
     airlines_gdf = gpd.read_file(
-        PBFLIGHTLOG_GEOPACKAGE_PATH,
+        PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH,
         layer='airlines',
         fid_as_index=True
     )
@@ -232,7 +234,7 @@ def _load_airlines_gdf() -> gpd.GeoDataFrame:
 def _load_airports_gdf() -> gpd.GeoDataFrame:
     """Prepares a GeoDataFrame of airport data."""
     airports_gdf = gpd.read_file(
-        PBFLIGHTLOG_GEOPACKAGE_PATH,
+        PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH,
         layer='airports',
         fid_as_index=True
     )
@@ -244,7 +246,7 @@ def _load_airports_gdf() -> gpd.GeoDataFrame:
 def _load_flights_gdf() -> gpd.GeoDataFrame:
     """Prepares a GeoDataFrame of flight data."""
     flights_gdf = gpd.read_file(
-        PBFLIGHTLOG_GEOPACKAGE_PATH,
+        PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH,
         layer='flights',
         fid_as_index=True,
     )
