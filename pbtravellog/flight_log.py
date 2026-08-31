@@ -1,27 +1,28 @@
 """Scripts for interacting with the flight log."""
 
 # Standard imports
+from datetime import datetime, date, timedelta, timezone
 import json
+from math import ceil
 import os
+from pathlib import Path
 import re
 import sqlite3
 import sys
-from datetime import datetime, date, timedelta
-from math import ceil
-from pathlib import Path
 from typing import Self
 from zoneinfo import ZoneInfo
 
 # Third-party imports
+from dateutil.parser import isoparse
 import geopandas as gpd
 import pandas as pd
-from dateutil.parser import isoparse
 from pyproj import Geod
 from shapely.geometry import Point, LineString, MultiLineString
 from tabulate import tabulate
 
 # Project imports
 import pbtravellog.aeroapi as aero
+from pbtravellog.boarding_pass import BoardingPass, PKPass
 
 METERS_PER_MILE = 1609.344
 METERS_PER_HUNDRED_FEET = 30.48
@@ -485,6 +486,94 @@ class Trip(Record):
         return record
 
 
+def add_flight_bcbp(bcbp_str, geojson: Path | None = None) -> None:
+    """Parses a Bar-Coded Boarding Pass string."""
+    bp = BoardingPass(bcbp_str)
+    _add_bp_flights(bp, geojson=geojson)
+    refresh_routes()
+
+def add_flight_fa_flight_id(
+    fa_flight_id: str,
+    geojson: Path | None = None
+) -> None:
+    """Gets info for a fa_flight_id and saves flight to log."""
+    fa_flights = aero.get_flights_ident(fa_flight_id, "fa_flight_id")
+    _add_fa_flight_results(fa_flights)
+    refresh_routes()
+
+def add_flight_number(
+    airline_code: str,
+    flight_number: str,
+    geojson: Path | None = None
+) -> None:
+    """Gets info for a flight number and logs the flight."""
+    airline = Airline.find_by_code(airline_code)
+    # If airline is IATA, try to look up ICAO.
+    if len(airline_code) == 2:
+        if airline is not None and airline.icao_code is not None:
+            airline_code = airline.icao_code
+    flight_number = flight_number.lstrip("0") or "0"
+    ident = f"{airline_code}{flight_number}"
+    fa_flights = aero.get_flights_ident(ident, "designator")
+    _add_fa_flight_results(
+        fa_flights,
+        fields={'airline_fid': airline.fid},
+        geojson=geojson,
+    )
+    refresh_routes()
+
+def add_flight_pkpasses(geojson: Path | None = None) -> None:
+    """Imports digital boarding passes."""
+
+    import_folder_env = os.getenv("PBTRAVELLOG_IMPORT_PATH")
+    if import_folder_env is None:
+        raise KeyError(
+            "Environment variable PBTRAVELLOG_IMPORT_PATH is missing."
+        )
+    import_folder = Path(import_folder_env)
+    if not import_folder.is_dir():
+        raise KeyError(
+            "Environment variable PBTRAVELLOG_IMPORT_PATH is not a directory."
+        )
+    archive_folder_env = os.getenv("PBTRAVELLOG_PKPASS_ARCHIVE_PATH")
+    if archive_folder_env is None:
+        raise KeyError(
+            "Environment variable PBTRAVELLOG_PKPASS_ARCHIVE_PATH is missing."
+        )
+    archive_folder = Path(archive_folder_env)
+    if not archive_folder.is_dir():
+        raise KeyError(
+            "Environment variable PBTRAVELLOG_PKPASS_ARCHIVE_PATH is not a directory."
+        )
+
+    print(f"Importing digital boarding passes from \"{import_folder}\"")
+    pkpasses = {
+        f: PKPass(f) for f in import_folder.glob("*.pkpass")
+        if f.is_file()
+    }
+    if len(pkpasses) == 0:
+        print("⚠️ No .pkpass files found.")
+
+    # Sort passes by relevant_date.
+    pkpasses = dict(
+        sorted(
+            pkpasses.items(),
+            key=lambda item: item[1].relevant_date or datetime.max.replace(
+                tzinfo=timezone.utc
+            )
+        )
+    )
+
+    # Process passes.
+    for pkpass_file, pkpass in pkpasses.items():
+        print(pkpass.relevant_date)
+        bp = pkpass.boarding_pass
+        _add_bp_flights(bp, geojson=geojson)
+        archive_file_path = archive_folder / pkpass.archive_filename
+        pkpass_file.move(archive_file_path)
+        print(f"Archived PKPass to \"{archive_file_path}\"")
+    refresh_routes()
+
 def airport_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
     """Calculates airport visit counts from flights."""
     count_orig = count_origin_visits(flights_gdf)
@@ -596,16 +685,6 @@ def flights_table(
         headers=["fid", *table_cols.values()],
     )
 
-def _this_airport_visits(row, fid: int) -> int:
-    """Returns number of visits in row of airport with provided fid."""
-    count = 0
-    if row['count_origin_visits'] and row['origin_airport_fid'] == fid:
-        count += 1
-    if row['destination_airport_fid'] == fid:
-        count += 1
-    return count
-
-
 def great_circle_route(point1, point2) -> pd.Series:
     """
     Creates a great circle line between points.
@@ -633,6 +712,74 @@ def great_circle_route(point1, point2) -> pd.Series:
     )
 
     return pd.Series([dist_mi, geom])
+
+
+def index_airports(
+    year: int | None = None,
+    output_file : Path | None = None,
+) -> None:
+    """Provides an index of all airports."""
+    flights_gdf = Flight.all()
+    if year is not None:
+        flights_gdf = flights_gdf[flights_gdf['departure_utc'].dt.year == year]
+    if len(flights_gdf) == 0:
+        print("No airport visits found.")
+        if year is not None:
+            print(
+                "Try searching a different year or removing the year filter."
+            )
+        sys.exit(1)
+    visits = airport_visits(flights_gdf)
+    airports_gdf = Airport.all()
+    output = airports_gdf.join(visits, how='right')
+    output = output.rename(columns={'count': 'visits'})
+    output = output.sort_values(by=['visits', 'name'], ascending=[False, True])
+    output['rank'] = output['visits'].rank(
+        ascending=False,
+        method='min',
+    ).astype(int)
+    output = output[['rank','name','iata_code','icao_code','faa_lid','visits']]
+    if output_file is None:
+        output = output.fillna('')
+        # print(output.to_string(index=True))
+        print(tabulate(
+            output.to_records(),
+            headers=[
+                "fid",
+                "Rank",
+                "Name",
+                "IATA\nCode",
+                "ICAO\nCode",
+                "FAA\nLID",
+                "Visits",
+            ],
+        ))
+        print(f"{len(output)} airport(s) visited")
+    else:
+        output.to_csv(output_file, index=False)
+        print(f"Wrote report to \"{output_file}\"")
+
+def index_tails() -> None:
+    """Provides an index of all tail numbers."""
+    flights_gdf = Flight.all()
+    flights_gdf = flights_gdf.dropna(subset='tail_number')
+    tails_df = flights_gdf.groupby('tail_number').agg(
+        count=('tail_number', 'count'),
+        aircraft_type_fid=('aircraft_type_fid', 'last'),
+    )
+    types_gdf = AircraftType.all()[['manufacturer', 'name']]
+    tails_df = tails_df.join(types_gdf, on='aircraft_type_fid')
+    tails_df['type'] = tails_df['manufacturer'].str.cat(
+        tails_df['name'],
+        sep=" ",
+    )
+    tails_df = tails_df.sort_values(
+        by=['count', tails_df.index.name],
+        ascending=[False, True],
+    )
+    tails_df = tails_df[['type', 'count']]
+    print(tabulate(tails_df.to_records(), headers=["Tail", "Type", "Count"]))
+    print(f"{len(tails_df)} tails(s) flown")
 
 def refresh_routes():
     """Updates the routes layer based on logged flights."""
@@ -673,6 +820,30 @@ def refresh_routes():
         f"Updated all routes in {flight_log}."
     )
 
+def show_airport(identifier: str) -> None:
+    """Shows data about a specific airport."""
+    airport = Airport.find_by_code(identifier.upper(), check_fid=True)
+    if airport is None:
+        sys.exit(1)
+    print(airport)
+
+    flights_gdf = Flight.all()
+    flights_gdf = flights_gdf[
+        (flights_gdf['origin_airport_fid'] == airport.fid)
+        | (flights_gdf['destination_airport_fid'] == airport.fid)
+    ]
+    print(flights_table(flights_gdf, visit_airport_fid=airport.fid))
+
+def show_tail(tail_number: str) -> None:
+    """Shows data about a specific tail number."""
+    tail_number = tail_number.upper()
+    flights_gdf = Flight.all()
+    flights_gdf = flights_gdf[flights_gdf['tail_number'] == tail_number]
+    if len(flights_gdf) == 0:
+        print(f"No flights found for tail number '{tail_number}'.")
+        sys.exit(0)
+    print(flights_table(flights_gdf))
+
 def split_at_antimeridian(track_ls: LineString) -> MultiLineString:
     """Split a LineString at the antimeridian."""
     # Find all points where the track crosses the antimeridian.
@@ -709,6 +880,62 @@ def split_at_antimeridian(track_ls: LineString) -> MultiLineString:
     tracks = [track for track in tracks if len(track) > 1]
     return MultiLineString(tracks)
 
+def _add_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
+    """Builds Flights from a BoardingPass, and saves them."""
+    if not bp.valid or len(bp.legs) == 0:
+        print("⚠️ The boarding pass data is not valid.")
+        sys.exit(1)
+
+    # Build list of boarding pass flights.
+    bp_flights: list[Flight] = []
+    for leg in bp.legs:
+        print(f"Processing leg \"{leg}\"")
+        airline = Airline.find_by_code(leg.airline_iata)
+        if airline is not None and airline.icao_code is not None:
+            airline_code = airline.icao_code
+        else:
+            airline_code = leg.airline_iata
+        ident = f"{airline_code}{leg.flight_number}"
+        aero_results = aero.get_flights_ident(ident, "designator")
+        flight = _flight_from_aeroapi_results(aero_results)
+        flight.airline_fid = airline.fid
+        flight.boarding_pass_data = leg.bcbp_str
+        trip = Trip.select_by_date(leg.flight_date)
+        if trip is not None:
+            flight.trip_fid = trip.fid
+            if flight.departure_utc is not None:
+                flight.trip_section = trip.estimate_trip_section(
+                    flight.departure_utc
+                )
+        bp_flights.append(flight)
+
+    # Save flights.
+    if geojson is None:
+        for flight in bp_flights:
+            flight.save()
+    else:
+        if len(bp_flights) == 1:
+            bp_flights[0].save(geojson=geojson)
+        else:
+            for i, flight in enumerate(bp_flights):
+                gj_path = geojson.with_stem(f"{geojson.stem}_{i}")
+                flight.save(geojson=gj_path)
+
+def _add_fa_flight_results(
+    aero_results: dict,
+    fields: dict = None,
+    geojson: Path | None = None,
+) -> None:
+    """Processes the results of an AeroAPI flights request."""
+    flight = _flight_from_aeroapi_results(aero_results)
+
+    # Set provided fields
+    if fields is not None:
+        for key, value in fields.items():
+            setattr(flight, key, value)
+
+    flight.save(geojson=geojson)
+
 def _crossing_point(p1, p2):
     """Return the point where a track crosses the antemeridian.
     Returns None if p1 is already on the antemeridian.
@@ -730,12 +957,19 @@ def _crossing_point(p1, p2):
     x_frac = (lon - p1[0]) / (p2[0] - p1[0])
     return tuple([c1 + (x_frac * (c2 - c1)) for c1, c2 in zip(p1, p2)])
 
-def _dt_str_tz(dt, tz):
-    """Converts a datetime into local time."""
-    if dt is None or tz is None:
-        return None
-    dt_tz = dt.astimezone(ZoneInfo(tz))
-    return dt_tz.strftime("%a %d %b %Y %H:%M %Z")
+def _flight_from_aeroapi_results(aero_results) -> Flight:
+    """Has user select flight from AeroAPI results and gets geometry."""
+    if len(aero_results) == 0:
+        print("No matching flights found.")
+        sys.exit(1)
+    aero_flight_info = aero.select_flight_info(aero_results)
+    if aero_flight_info is None:
+        # No AeroAPI flight selected. Return empty flight.
+        return Flight()
+    flight = Flight.from_aeroapi(aero_flight_info)
+    flight.exit_if_not_complete()
+    flight.fetch_aeroapi_track_geometry()
+    return flight
 
 def _format_time(time_val):
     """Format time as ISO 8601 with Z."""
@@ -752,3 +986,12 @@ def _great_circle_airport_lookup(row, airports):
         )
     except KeyError:
         return pd.Series([None, None])
+
+def _this_airport_visits(row, fid: int) -> int:
+    """Returns number of visits in row of airport with provided fid."""
+    count = 0
+    if row['count_origin_visits'] and row['origin_airport_fid'] == fid:
+        count += 1
+    if row['destination_airport_fid'] == fid:
+        count += 1
+    return count
