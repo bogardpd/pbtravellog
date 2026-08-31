@@ -10,7 +10,6 @@ import re
 import sqlite3
 import sys
 from typing import Self
-from zoneinfo import ZoneInfo
 
 # Third-party imports
 from dateutil.parser import isoparse
