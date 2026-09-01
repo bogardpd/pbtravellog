@@ -22,6 +22,12 @@ pipx install --editable .
 
 After installation, the `pbtravellog` command is available on the command line.
 
+### GeoPackage Files
+
+The travel log is stored in a collection of GeoPackage files. Currently, the travel log only interacts with flight data, as described in the following schema:
+
+- [Flight Log schema](docs/schema/flight_log.md)
+
 ### Environment Variables
 
 Environment variables must be set as described in the [Environment Variables documentation](docs/environment_variables.md).
