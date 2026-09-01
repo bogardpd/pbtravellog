@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+
+- Merged [PBFlightLog](https://github.com/bogardpd/pbflightlog) functionality into PBTravelLog.
 - Added `build` and `run` command to build and launch HTML.
 
 ## [0.2.0]
