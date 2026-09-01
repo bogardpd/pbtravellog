@@ -5,7 +5,6 @@ import argparse
 from pathlib import Path
 
 # Third-party imports
-from tabulate import tabulate
 
 # Project imports
 import pbtravellog.extract_photo_metadata as epm
