@@ -485,94 +485,6 @@ class Trip(Record):
         return record
 
 
-def add_flight_bcbp(bcbp_str, geojson: Path | None = None) -> None:
-    """Parses a Bar-Coded Boarding Pass string."""
-    bp = BoardingPass(bcbp_str)
-    _add_bp_flights(bp, geojson=geojson)
-    refresh_routes()
-
-def add_flight_fa_flight_id(
-    fa_flight_id: str,
-    geojson: Path | None = None
-) -> None:
-    """Gets info for a fa_flight_id and saves flight to log."""
-    fa_flights = aero.get_flights_ident(fa_flight_id, "fa_flight_id")
-    _add_fa_flight_results(fa_flights)
-    refresh_routes()
-
-def add_flight_number(
-    airline_code: str,
-    flight_number: str,
-    geojson: Path | None = None
-) -> None:
-    """Gets info for a flight number and logs the flight."""
-    airline = Airline.find_by_code(airline_code)
-    # If airline is IATA, try to look up ICAO.
-    if len(airline_code) == 2:
-        if airline is not None and airline.icao_code is not None:
-            airline_code = airline.icao_code
-    flight_number = flight_number.lstrip("0") or "0"
-    ident = f"{airline_code}{flight_number}"
-    fa_flights = aero.get_flights_ident(ident, "designator")
-    _add_fa_flight_results(
-        fa_flights,
-        fields={'airline_fid': airline.fid},
-        geojson=geojson,
-    )
-    refresh_routes()
-
-def add_flight_pkpasses(geojson: Path | None = None) -> None:
-    """Imports digital boarding passes."""
-
-    import_folder_env = os.getenv("PBTRAVELLOG_IMPORT_PATH")
-    if import_folder_env is None:
-        raise KeyError(
-            "Environment variable PBTRAVELLOG_IMPORT_PATH is missing."
-        )
-    import_folder = Path(import_folder_env)
-    if not import_folder.is_dir():
-        raise KeyError(
-            "Environment variable PBTRAVELLOG_IMPORT_PATH is not a directory."
-        )
-    archive_folder_env = os.getenv("PBTRAVELLOG_PKPASS_ARCHIVE_PATH")
-    if archive_folder_env is None:
-        raise KeyError(
-            "Environment variable PBTRAVELLOG_PKPASS_ARCHIVE_PATH is missing."
-        )
-    archive_folder = Path(archive_folder_env)
-    if not archive_folder.is_dir():
-        raise KeyError(
-            "Environment variable PBTRAVELLOG_PKPASS_ARCHIVE_PATH is not a directory."
-        )
-
-    print(f"Importing digital boarding passes from \"{import_folder}\"")
-    pkpasses = {
-        f: PKPass(f) for f in import_folder.glob("*.pkpass")
-        if f.is_file()
-    }
-    if len(pkpasses) == 0:
-        print("⚠️ No .pkpass files found.")
-
-    # Sort passes by relevant_date.
-    pkpasses = dict(
-        sorted(
-            pkpasses.items(),
-            key=lambda item: item[1].relevant_date or datetime.max.replace(
-                tzinfo=timezone.utc
-            )
-        )
-    )
-
-    # Process passes.
-    for pkpass_file, pkpass in pkpasses.items():
-        print(pkpass.relevant_date)
-        bp = pkpass.boarding_pass
-        _add_bp_flights(bp, geojson=geojson)
-        archive_file_path = archive_folder / pkpass.archive_filename
-        pkpass_file.move(archive_file_path)
-        print(f"Archived PKPass to \"{archive_file_path}\"")
-    refresh_routes()
-
 def airport_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
     """Calculates airport visit counts from flights."""
     count_orig = count_origin_visits(flights_gdf)
@@ -712,6 +624,94 @@ def great_circle_route(point1, point2) -> pd.Series:
 
     return pd.Series([dist_mi, geom])
 
+def import_flight_bcbp(bcbp_str, geojson: Path | None = None) -> None:
+    """Parses a Bar-Coded Boarding Pass string."""
+    bp = BoardingPass(bcbp_str)
+    _import_bp_flights(bp, geojson=geojson)
+    refresh_routes()
+
+def import_flight_fa_flight_id(
+    fa_flight_id: str,
+    geojson: Path | None = None
+) -> None:
+    """Gets info for a fa_flight_id and saves flight to log."""
+    fa_flights = aero.get_flights_ident(fa_flight_id, "fa_flight_id")
+    _import_fa_flight_results(fa_flights)
+    refresh_routes()
+
+def import_flight_number(
+    airline_code: str,
+    flight_number: str,
+    geojson: Path | None = None
+) -> None:
+    """Gets info for a flight number and logs the flight."""
+    airline = Airline.find_by_code(airline_code)
+    # If airline is IATA, try to look up ICAO.
+    if len(airline_code) == 2:
+        if airline is not None and airline.icao_code is not None:
+            airline_code = airline.icao_code
+    flight_number = flight_number.lstrip("0") or "0"
+    ident = f"{airline_code}{flight_number}"
+    fa_flights = aero.get_flights_ident(ident, "designator")
+    _import_fa_flight_results(
+        fa_flights,
+        fields={'airline_fid': airline.fid},
+        geojson=geojson,
+    )
+    refresh_routes()
+
+def import_flight_pkpasses(geojson: Path | None = None) -> None:
+    """Imports digital boarding passes."""
+
+    import_folder_env = os.getenv("PBTRAVELLOG_IMPORT_PATH")
+    if import_folder_env is None:
+        raise KeyError(
+            "Environment variable PBTRAVELLOG_IMPORT_PATH is missing."
+        )
+    import_folder = Path(import_folder_env)
+    if not import_folder.is_dir():
+        raise KeyError(
+            "Environment variable PBTRAVELLOG_IMPORT_PATH is not a directory."
+        )
+    archive_folder_env = os.getenv("PBTRAVELLOG_PKPASS_ARCHIVE_PATH")
+    if archive_folder_env is None:
+        raise KeyError(
+            "Environment variable PBTRAVELLOG_PKPASS_ARCHIVE_PATH is missing."
+        )
+    archive_folder = Path(archive_folder_env)
+    if not archive_folder.is_dir():
+        raise KeyError(
+            "Environment variable PBTRAVELLOG_PKPASS_ARCHIVE_PATH is not a "
+            + "directory."
+        )
+
+    print(f"Importing digital boarding passes from \"{import_folder}\"")
+    pkpasses = {
+        f: PKPass(f) for f in import_folder.glob("*.pkpass")
+        if f.is_file()
+    }
+    if len(pkpasses) == 0:
+        print("⚠️ No .pkpass files found.")
+
+    # Sort passes by relevant_date.
+    pkpasses = dict(
+        sorted(
+            pkpasses.items(),
+            key=lambda item: item[1].relevant_date or datetime.max.replace(
+                tzinfo=timezone.utc
+            )
+        )
+    )
+
+    # Process passes.
+    for pkpass_file, pkpass in pkpasses.items():
+        print(pkpass.relevant_date)
+        bp = pkpass.boarding_pass
+        _import_bp_flights(bp, geojson=geojson)
+        archive_file_path = archive_folder / pkpass.archive_filename
+        pkpass_file.move(archive_file_path)
+        print(f"Archived PKPass to \"{archive_file_path}\"")
+    refresh_routes()
 
 def index_airports(
     year: int | None = None,
@@ -879,62 +879,6 @@ def split_at_antimeridian(track_ls: LineString) -> MultiLineString:
     tracks = [track for track in tracks if len(track) > 1]
     return MultiLineString(tracks)
 
-def _add_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
-    """Builds Flights from a BoardingPass, and saves them."""
-    if not bp.valid or len(bp.legs) == 0:
-        print("⚠️ The boarding pass data is not valid.")
-        sys.exit(1)
-
-    # Build list of boarding pass flights.
-    bp_flights: list[Flight] = []
-    for leg in bp.legs:
-        print(f"Processing leg \"{leg}\"")
-        airline = Airline.find_by_code(leg.airline_iata)
-        if airline is not None and airline.icao_code is not None:
-            airline_code = airline.icao_code
-        else:
-            airline_code = leg.airline_iata
-        ident = f"{airline_code}{leg.flight_number}"
-        aero_results = aero.get_flights_ident(ident, "designator")
-        flight = _flight_from_aeroapi_results(aero_results)
-        flight.airline_fid = airline.fid
-        flight.boarding_pass_data = leg.bcbp_str
-        trip = Trip.select_by_date(leg.flight_date)
-        if trip is not None:
-            flight.trip_fid = trip.fid
-            if flight.departure_utc is not None:
-                flight.trip_section = trip.estimate_trip_section(
-                    flight.departure_utc
-                )
-        bp_flights.append(flight)
-
-    # Save flights.
-    if geojson is None:
-        for flight in bp_flights:
-            flight.save()
-    else:
-        if len(bp_flights) == 1:
-            bp_flights[0].save(geojson=geojson)
-        else:
-            for i, flight in enumerate(bp_flights):
-                gj_path = geojson.with_stem(f"{geojson.stem}_{i}")
-                flight.save(geojson=gj_path)
-
-def _add_fa_flight_results(
-    aero_results: dict,
-    fields: dict = None,
-    geojson: Path | None = None,
-) -> None:
-    """Processes the results of an AeroAPI flights request."""
-    flight = _flight_from_aeroapi_results(aero_results)
-
-    # Set provided fields
-    if fields is not None:
-        for key, value in fields.items():
-            setattr(flight, key, value)
-
-    flight.save(geojson=geojson)
-
 def _crossing_point(p1, p2):
     """Return the point where a track crosses the antemeridian.
     Returns None if p1 is already on the antemeridian.
@@ -985,6 +929,62 @@ def _great_circle_airport_lookup(row, airports):
         )
     except KeyError:
         return pd.Series([None, None])
+
+def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
+    """Builds Flights from a BoardingPass, and saves them."""
+    if not bp.valid or len(bp.legs) == 0:
+        print("⚠️ The boarding pass data is not valid.")
+        sys.exit(1)
+
+    # Build list of boarding pass flights.
+    bp_flights: list[Flight] = []
+    for leg in bp.legs:
+        print(f"Processing leg \"{leg}\"")
+        airline = Airline.find_by_code(leg.airline_iata)
+        if airline is not None and airline.icao_code is not None:
+            airline_code = airline.icao_code
+        else:
+            airline_code = leg.airline_iata
+        ident = f"{airline_code}{leg.flight_number}"
+        aero_results = aero.get_flights_ident(ident, "designator")
+        flight = _flight_from_aeroapi_results(aero_results)
+        flight.airline_fid = airline.fid
+        flight.boarding_pass_data = leg.bcbp_str
+        trip = Trip.select_by_date(leg.flight_date)
+        if trip is not None:
+            flight.trip_fid = trip.fid
+            if flight.departure_utc is not None:
+                flight.trip_section = trip.estimate_trip_section(
+                    flight.departure_utc
+                )
+        bp_flights.append(flight)
+
+    # Save flights.
+    if geojson is None:
+        for flight in bp_flights:
+            flight.save()
+    else:
+        if len(bp_flights) == 1:
+            bp_flights[0].save(geojson=geojson)
+        else:
+            for i, flight in enumerate(bp_flights):
+                gj_path = geojson.with_stem(f"{geojson.stem}_{i}")
+                flight.save(geojson=gj_path)
+
+def _import_fa_flight_results(
+    aero_results: dict,
+    fields: dict = None,
+    geojson: Path | None = None,
+) -> None:
+    """Processes the results of an AeroAPI flights request."""
+    flight = _flight_from_aeroapi_results(aero_results)
+
+    # Set provided fields
+    if fields is not None:
+        for key, value in fields.items():
+            setattr(flight, key, value)
+
+    flight.save(geojson=geojson)
 
 def _this_airport_visits(row, fid: int) -> int:
     """Returns number of visits in row of airport with provided fid."""

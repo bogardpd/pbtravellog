@@ -91,7 +91,7 @@ pbtravellog run --port 12345
 
 ## Travel Log Data Commands
 
-### `add flight`
+### `import flight`
 
 Create a new flight (or new flights) in the flight log.
 
@@ -100,38 +100,38 @@ Create a new flight (or new flights) in the flight log.
 
 #### Options (mutually exclusive)
 
-- `--bcbp <bcbp_text>`: Parse a string coded in the IATA Bar-Coded Boarding Pass (BCBP) format, and add the flight(s) it represents to the log.
+- `--bcbp <bcbp_text>`: Parse a string coded in the IATA Bar-Coded Boarding Pass (BCBP) format, and import the flight(s) it represents into the flight log.
 
     You can get this string by scanning the 2-D barcode on a boarding pass with a barcode reader app.
 
     **Example**
     ```bash
-    pbtravellog add flight --bcbp "M1DOE/JOHN            EABC123 BOSJFKB6 0717 345P014C0010 147>3180 M6344BB6              29279          0 B6 B6 1234567890          ^108abcdefgh"
+    pbtravellog import flight --bcbp "M1DOE/JOHN            EABC123 BOSJFKB6 0717 345P014C0010 147>3180 M6344BB6              29279          0 B6 B6 1234567890          ^108abcdefgh"
     ```
 
     Since BCBP data contains spaces, be sure to place the BCBP string in quotes. Do not trim trailing spaces from the string, as spaces have meaning in the BCBP format.
 
-- `--fa-flight-id <fa_flight_id>`: Look up a flight on [AeroAPI](https://www.flightaware.com/commercial/aeroapi/) by `fa_flight_id` and add it to the flight log.
+- `--fa-flight-id <fa_flight_id>`: Look up a flight on [AeroAPI](https://www.flightaware.com/commercial/aeroapi/) by `fa_flight_id` and import it into the flight log.
 
     **Example**
     ```bash
-    pbtravellog add flight --fa-flight-id UAL1234-1234567890-airline-0123
+    pbtravellog import flight --fa-flight-id UAL1234-1234567890-airline-0123
     ```
 
-- `--number <airline_code> <flight_number>`: Look up an airline and flight number on [AeroAPI](https://www.flightaware.com/commercial/aeroapi/) and add it to the flight log.
+- `--number <airline_code> <flight_number>`: Look up an airline and flight number on [AeroAPI](https://www.flightaware.com/commercial/aeroapi/) and import it into the flight log.
 
   To reduce ambiguity, ICAO airline codes (three letter codes, like `AAL`) are preferred. However, this will attempt to look up IATA airline codes (two character codes, like `AA`).
 
   **Example**
     ```bash
-    pbtravellog add flight --number AAL 1234
+    pbtravellog import flight --number AAL 1234
     ```
 
-- `--pkpasses`: Fetch all PKPass (Apple Wallet) files from the [import folder](#environment-variables) and add them to the flight log.
+- `--pkpasses`: Fetch all PKPass (Apple Wallet) files from the [import folder](#environment-variables) and import them into the flight log.
 
     **Example**
     ```bash
-    pbtravellog add flight --pkpasses
+    pbtravellog import flight --pkpasses
     ```
 
 ### `index airports`
