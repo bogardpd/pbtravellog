@@ -8,11 +8,15 @@ This package interacts with a GeoPackage flight log database as described in the
 
 ```PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH=/path/to/flight_log.gpkg```
 
-## Import Path
+## Boarding Pass Paths
 
 This package can import flights from PKPass boarding passes. The folder these passes will be imported from must be set as an environment variable:
 
 ```PBTRAVELLOG_FLIGHT_IMPORT_PATH=/path/to/import/folder```
+
+When the flight log is done parsing a PKPass, it stores it in a folder which must be set as an environment variable:
+
+```PBTRAVELLOG_PKPASS_ARCHIVE_PATH=/path/to/archive/folder```
 
 ## HTML Path
 
