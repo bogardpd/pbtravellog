@@ -6,7 +6,7 @@ This package stores some configuration in environment variables which must be se
 
 This package interacts with a GeoPackage flight log database as described in the [flight log schema](schema/flight_log.md). The path to this file must be set as an environment variable:
 
-```PBFLIGHTLOG_GEOPACKAGE_PATH=/path/to/flight_log.gpkg```
+```PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH=/path/to/flight_log.gpkg```
 
 ## Import Path
 
