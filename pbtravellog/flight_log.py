@@ -663,15 +663,16 @@ def import_flight_number(
 def import_flight_pkpasses(geojson: Path | None = None) -> None:
     """Imports digital boarding passes."""
 
-    import_folder_env = os.getenv("PBTRAVELLOG_IMPORT_PATH")
+    import_folder_env = os.getenv("PBTRAVELLOG_FLIGHT_IMPORT_PATH")
     if import_folder_env is None:
         raise KeyError(
-            "Environment variable PBTRAVELLOG_IMPORT_PATH is missing."
+            "Environment variable PBTRAVELLOG_FLIGHT_IMPORT_PATH is missing."
         )
     import_folder = Path(import_folder_env)
     if not import_folder.is_dir():
         raise KeyError(
-            "Environment variable PBTRAVELLOG_IMPORT_PATH is not a directory."
+            "Environment variable PBTRAVELLOG_FLIGHT_IMPORT_PATH is not a "
+            + "directory."
         )
     archive_folder_env = os.getenv("PBTRAVELLOG_PKPASS_ARCHIVE_PATH")
     if archive_folder_env is None:
