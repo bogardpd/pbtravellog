@@ -681,7 +681,7 @@ def import_flight_fa_flight_id(
 ) -> None:
     """Gets info for a fa_flight_id and saves flight to log."""
     fa_flights = aero.get_flights_ident(fa_flight_id, "fa_flight_id")
-    _import_fa_flight_results(fa_flights)
+    _import_fa_flight_results(fa_flights, geojson=geojson)
     refresh_routes()
 
 def import_flight_number(
