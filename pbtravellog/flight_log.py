@@ -403,14 +403,10 @@ class Flight(Record):
         return flight
 
     @classmethod
-    def joined_table(cls) -> pd.DataFrame:
-        """Returns all flight records joined to other tables.
-        
-        Geometry columns are included, but this is not a GeoDataFrame.
-        """
+    def joined_table(cls) -> gpd.GeoDataFrame:
+        """Returns all flight records joined to other tables."""
         # Load tables.
-        flights_df = pd.DataFrame(cls.all())
-        flights_df = flights_df.rename(columns={'geometry': "flight_geom"})
+        flights_gdf = cls.all()
         airports_df = pd.DataFrame(Airport.all())
         airports_df = airports_df.rename(
             # 'airport_' is added in join, so just name this 'geom'
@@ -420,31 +416,31 @@ class Flight(Record):
         aircraft_types_df = pd.DataFrame(AircraftType.all())
 
         # Perform joins.
-        flights_df = flights_df.join(
+        flights_gdf = flights_gdf.join(
             airports_df.add_prefix('origin_airport_'),
             on='origin_airport_fid',
         )
-        flights_df = flights_df.join(
+        flights_gdf = flights_gdf.join(
             airports_df.add_prefix('destination_airport_'),
             on='destination_airport_fid',
         )
-        flights_df = flights_df.join(
+        flights_gdf = flights_gdf.join(
             airlines_df.add_prefix('airline_'),
             on='airline_fid',
         )
-        flights_df = flights_df.join(
+        flights_gdf = flights_gdf.join(
             airlines_df.add_prefix('operator_'),
             on='operator_fid',
         )
-        flights_df = flights_df.join(
+        flights_gdf = flights_gdf.join(
             airlines_df.add_prefix('codeshare_airline_'),
             on='codeshare_airline_fid',
         )
-        flights_df = flights_df.join(
-            aircraft_types_df.add_prefix('aircraft_types'),
+        flights_gdf = flights_gdf.join(
+            aircraft_types_df.add_prefix('aircraft_types_'),
             on='aircraft_type_fid',
         )
-        return flights_df
+        return flights_gdf
 
     @staticmethod
     def parse_dt(dt_str) -> datetime | None:
