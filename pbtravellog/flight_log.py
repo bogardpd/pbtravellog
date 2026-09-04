@@ -29,8 +29,8 @@ METERS_BETWEEN_GC_POINTS = 100000
 
 CRS = "EPSG:4326" # WGS-84
 
-flight_log = os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH")
-if flight_log is None:
+FLIGHT_LOG = os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH")
+if FLIGHT_LOG is None:
     raise KeyError(
         "Environment variable PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is missing."
     )
@@ -45,7 +45,7 @@ class Record():
     def all(cls) -> gpd.GeoDataFrame:
         """Returns a GeoDataFrame of all records."""
         records = gpd.read_file(
-            flight_log,
+            FLIGHT_LOG,
             layer=cls.LAYER,
             engine="pyogrio",
             fid_as_index=True,
@@ -66,7 +66,7 @@ class Record():
         if len(cls.FIND_BY_CODES) == 0:
             return None
         records = gpd.read_file(
-            flight_log,
+            FLIGHT_LOG,
             layer = cls.LAYER,
             engine="pyogrio",
             fid_as_index=True,
@@ -161,11 +161,16 @@ class Flight(Record):
     LAYER = "flights"
     FIND_BY_CODES = []
     DTYPES = {
+        'fh_id': "Int64",
+        'airline_fid': "Int64",
         'origin_airport_fid': "Int64",
         'destination_airport_fid': "Int64",
-        'fh_id': "Int64",
+        'class_fid': "Int64",
+        'operator_fid': "Int64",
+        'codeshare_airline_fid': "Int64",
         'trip_fid': "Int64",
         'trip_section': "Int64",
+        'distance_mi': "Int64",
     }
 
     def __init__(self):
@@ -290,7 +295,7 @@ class Flight(Record):
             print(f"Wrote flight to {geojson}.")
             sys.exit(0)
         existing = gpd.read_file(
-            flight_log,
+            FLIGHT_LOG,
             layer=Flight.LAYER,
             engine="pyogrio",
             rows=0,
@@ -326,13 +331,13 @@ class Flight(Record):
         # Reorder columns to match existing schema.
         gdf = record_gdf[existing_cols]
         gdf.to_file(
-            flight_log,
+            FLIGHT_LOG,
             driver="GPKG",
             engine="pyogrio",
             layer=Flight.LAYER,
             mode="a",
         )
-        print(f"Appended flight to {flight_log}.")
+        print(f"Appended flight to {FLIGHT_LOG}.")
 
 
     def _arr_utc(self) -> datetime | None:
@@ -397,6 +402,50 @@ class Flight(Record):
         flight.fa_flight_id = fa_json.get('fa_flight_id')
         return flight
 
+    @classmethod
+    def joined_table(cls) -> pd.DataFrame:
+        """Returns all flight records joined to other tables.
+        
+        Geometry columns are included, but this is not a GeoDataFrame.
+        """
+        # Load tables.
+        flights_df = pd.DataFrame(cls.all())
+        flights_df = flights_df.rename(columns={'geometry': "flight_geom"})
+        airports_df = pd.DataFrame(Airport.all())
+        airports_df = airports_df.rename(
+            # 'airport_' is added in join, so just name this 'geom'
+            columns={'geometry': "geom"}
+        )
+        airlines_df = pd.DataFrame(Airline.all())
+        aircraft_types_df = pd.DataFrame(AircraftType.all())
+
+        # Perform joins.
+        flights_df = flights_df.join(
+            airports_df.add_prefix('origin_airport_'),
+            on='origin_airport_fid',
+        )
+        flights_df = flights_df.join(
+            airports_df.add_prefix('destination_airport_'),
+            on='destination_airport_fid',
+        )
+        flights_df = flights_df.join(
+            airlines_df.add_prefix('airline_'),
+            on='airline_fid',
+        )
+        flights_df = flights_df.join(
+            airlines_df.add_prefix('operator_'),
+            on='operator_fid',
+        )
+        flights_df = flights_df.join(
+            airlines_df.add_prefix('codeshare_airline_'),
+            on='codeshare_airline_fid',
+        )
+        flights_df = flights_df.join(
+            aircraft_types_df.add_prefix('aircraft_types'),
+            on='aircraft_type_fid',
+        )
+        return flights_df
+
     @staticmethod
     def parse_dt(dt_str) -> datetime | None:
         """Parses a datetime string."""
@@ -428,7 +477,7 @@ class Trip(Record):
     def estimate_trip_section(self, departure_dt: datetime) -> int | None:
         """Suggests a trip section number based on departure time."""
         flights = gpd.read_file(
-            flight_log,
+            FLIGHT_LOG,
             layer=Flight.LAYER,
             engine="pyogrio",
             fid_as_index=True,
@@ -461,7 +510,7 @@ class Trip(Record):
         boarding pass.
         """
         records = gpd.read_file(
-            flight_log,
+            FLIGHT_LOG,
             layer=cls.LAYER,
             engine="pyogrio",
             fid_as_index=True,
@@ -783,7 +832,7 @@ def index_tails() -> None:
 
 def refresh_routes():
     """Updates the routes layer based on logged flights."""
-    con = sqlite3.connect(flight_log)
+    con = sqlite3.connect(FLIGHT_LOG)
     flights_sql = """
         SELECT origin_airport_fid, destination_airport_fid,
             COUNT(*) as flight_count
@@ -795,7 +844,7 @@ def refresh_routes():
     con.close()
 
     airports = gpd.read_file(
-        flight_log,
+        FLIGHT_LOG,
         layer='airports',
         engine='pyogrio',
         fid_as_index=True,
@@ -810,14 +859,14 @@ def refresh_routes():
     routes_gdf = gpd.GeoDataFrame(flights_df, geometry='geometry', crs=CRS)
 
     routes_gdf.to_file(
-        flight_log,
+        FLIGHT_LOG,
         driver='GPKG',
         engine='pyogrio',
         layer='routes',
         mode='w',
     )
     print(
-        f"Updated all routes in {flight_log}."
+        f"Updated all routes in {FLIGHT_LOG}."
     )
 
 def show_airport(identifier: str) -> None:
