@@ -786,7 +786,6 @@ def index_airports(
     output = output[['rank','name','iata_code','icao_code','faa_lid','visits']]
     if output_file is None:
         output = output.fillna('')
-        # print(output.to_string(index=True))
         print(tabulate(
             output.to_records(),
             headers=[

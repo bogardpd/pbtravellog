@@ -71,9 +71,32 @@ img.icon {
 span.code {
     font-family: 'IBM Plex Mono', monospace;
 }
-td {
-    padding: 0.5em;
+table {
+    border-collapse: collapse;
 }
-td.flight-route {
+th, td {
+    padding: 0.5em;
+    text-align: left;
+}
+thead {
+    border-bottom: 2px solid #cccccc;
+}
+tr {
+    border-bottom: 1px solid #cccccc;
+}
+th.airport-visits, td.airport-visits {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+th.iata-code, td.iata-code {
     text-align: center;
+}
+th.flight-route, td.flight-route {
+    text-align: center;
+}
+th.rank, td.rank {
+    text-align: center;
+}
+td.rank {
+    color: #999999;
 }

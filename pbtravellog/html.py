@@ -16,7 +16,7 @@ from jinja2 import Environment, PackageLoader
 import pandas as pd
 
 # Project imports
-from pbtravellog.flight_log import Flight
+from pbtravellog.flight_log import Flight, Airport, airport_visits
 
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
 if HTML_PATH is None:
@@ -32,18 +32,18 @@ if PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is None:
         "Environment variable PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is missing."
     )
 
+ALL_AIRPORTS = Airport.all()
+
 def build():
     """Builds a directory of static HTML pages."""
     print("Building pbflightlog HTML...")
     html_dir = Path(HTML_PATH)
 
     # Load travel log data.
-    flights_gdf = _load_flights_gdf()
     airlines_gdf = _load_airlines_gdf()
     airports_gdf = _load_airports_gdf()
 
     # Create joined tables for pages.
-    # flights_table = _join_flights(flights_gdf, airlines_gdf, airports_gdf)
     flights_table = Flight.joined_table()
     airlines_table = _join_airlines(airlines_gdf)
     airports_table = _join_airports(airports_gdf)
@@ -53,7 +53,7 @@ def build():
     _build_home(html_dir, env)
     _build_flights(html_dir, env, flights_table)
     _build_airlines(html_dir, env, airlines_table)
-    _build_airports(html_dir, env, airports_table)
+    _build_airports(html_dir, env, flights_table, airports_table)
 
     print(f"Wrote static site to \"{html_dir}\".")
 
@@ -123,17 +123,19 @@ def _build_airlines(html_dir, env, airlines_table) -> None:
         encoding="utf-8",
     )
 
-def _build_airports(html_dir, env, airports_table) -> None:
+def _build_airports(html_dir, env, flights_table, airports_table) -> None:
     """Builds airport pages."""
     airports_dir = html_dir / "airports"
     airports_dir.mkdir()
+
+    airports_table = _tabulate_airports(flights_table)
     airport_items = []
     for idx, row in airports_table.iterrows():
         airport_items.append({
+            'rank': row['rank'],
             'name': row['name'],
             'iata_code': _blank_if_na(row['iata_code']),
-            'icao_code': _blank_if_na(row['icao_code']),
-            'code': row['code'],
+            'visits': row['visits'],
         })
     index_airports_html = env.get_template("index_airports.html") \
         .render(airports=airport_items)
@@ -251,3 +253,20 @@ def _load_flights_gdf() -> gpd.GeoDataFrame:
     )
     flights_gdf['airline_fid'] = flights_gdf['airline_fid'].astype("Int64")
     return flights_gdf.sort_values('departure_utc')
+
+def _tabulate_airports(flights_table) -> gpd.GeoDataFrame:
+    """Creates a table of airports from a table of flights."""
+    airports_gdf = ALL_AIRPORTS.copy()
+    visits = airport_visits(flights_table)
+    airports_gdf = airports_gdf.join(visits)
+    airports_gdf = airports_gdf.rename(columns={'count': "visits"})
+    airports_gdf = airports_gdf.dropna(subset=['visits'])
+    airports_gdf = airports_gdf.sort_values(
+        by=['visits', 'name'],
+        ascending=[False, True],
+    )
+    airports_gdf['rank'] = airports_gdf['visits'].rank(
+        method='min',
+        ascending=False,
+    )
+    return airports_gdf
