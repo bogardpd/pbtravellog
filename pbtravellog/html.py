@@ -146,10 +146,11 @@ def _build_airports(html_dir, env, flights_table, airports_table) -> None:
 
 def _build_flights(html_dir, env, flights_table) -> None:
     """Builds flight pages."""
+    flights_table = _tabulate_flights(flights_table.copy())
     flights_dir = html_dir / "flights"
     flights_dir.mkdir()
     flight_items = []
-    for idx, row in flights_table.iterrows():
+    for _, row in flights_table.iterrows():
         airport_codes = _airport_codes(row)
         flight_items.append({
             'name': _flight_name(row),
@@ -157,6 +158,7 @@ def _build_flights(html_dir, env, flights_table) -> None:
             'origin_airport_code': airport_codes[0],
             'destination_airport_code': airport_codes[1],
             'departure_utc': row['departure_utc'],
+            'continues_via_layover': row['continues_via_layover'],
         })
     index_flights_html = env.get_template("index_flights.html") \
         .render(flights=flight_items)
@@ -256,17 +258,28 @@ def _load_flights_gdf() -> gpd.GeoDataFrame:
 
 def _tabulate_airports(flights_table) -> gpd.GeoDataFrame:
     """Creates a table of airports from a table of flights."""
-    airports_gdf = ALL_AIRPORTS.copy()
+    gdf = ALL_AIRPORTS.copy()
     visits = airport_visits(flights_table)
-    airports_gdf = airports_gdf.join(visits)
-    airports_gdf = airports_gdf.rename(columns={'count': "visits"})
-    airports_gdf = airports_gdf.dropna(subset=['visits'])
-    airports_gdf = airports_gdf.sort_values(
+    gdf = gdf.join(visits)
+    gdf = gdf.rename(columns={'count': "visits"})
+    gdf = gdf.dropna(subset=['visits'])
+    gdf = gdf.sort_values(
         by=['visits', 'name'],
         ascending=[False, True],
     )
-    airports_gdf['rank'] = airports_gdf['visits'].rank(
+    gdf['rank'] = gdf['visits'].rank(
         method='min',
         ascending=False,
     )
-    return airports_gdf
+    return gdf
+
+def _tabulate_flights(flights_table) -> gpd.GeoDataFrame:
+    """Normalizes a table of flights for Jinja output."""
+    gdf = flights_table.copy()
+    gdf['continues_via_layover'] = (
+        gdf['trip_fid'].notna()
+        & gdf['trip_section'].notna()
+        & (gdf['trip_fid'] == gdf['trip_fid'].shift(-1))
+        & (gdf['trip_section'] == gdf['trip_section'].shift(-1))
+    ).fillna(False)
+    return gdf

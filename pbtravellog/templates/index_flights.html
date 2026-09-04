@@ -4,13 +4,15 @@
 {% block content %}
 <table>
   <thead>
+    <th class="rank">#</th>
     <th>Flight</th>
-    <th>Route</th>
+    <th class="flight-route">Route</th>
     <th>Departure UTC</th>
   </thead>
   <tbody>
     {% for flight in flights %}
-    <tr>
+    <tr{% if flight.continues_via_layover %} class="continue"{% endif %}>
+      <td class="rank">{{ loop.index }}</td>
       <td>{{ icons.airline(flight.airline_fid) }} {{ flight.name }}</td>
       <td class="flight-route"><span class="code">{{ flight.origin_airport_code }}</span> &rarr; <span class="code">{{ flight.destination_airport_code }}</span></td>
       <td>{{ flight.departure_utc | format_utc }}</td>

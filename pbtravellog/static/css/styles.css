@@ -84,6 +84,9 @@ thead {
 tr {
     border-bottom: 1px solid #cccccc;
 }
+tr.continue {
+    border-bottom: 1px dotted #cccccc;
+}
 th.airport-visits, td.airport-visits {
     text-align: right;
     font-variant-numeric: tabular-nums;
