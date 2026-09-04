@@ -15,6 +15,9 @@ import geopandas as gpd
 from jinja2 import Environment, PackageLoader
 import pandas as pd
 
+# Project imports
+from pbtravellog.flight_log import Flight
+
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
 if HTML_PATH is None:
     raise KeyError(
@@ -40,7 +43,8 @@ def build():
     airports_gdf = _load_airports_gdf()
 
     # Create joined tables for pages.
-    flights_table = _join_flights(flights_gdf, airlines_gdf, airports_gdf)
+    # flights_table = _join_flights(flights_gdf, airlines_gdf, airports_gdf)
+    flights_table = Flight.joined_table()
     airlines_table = _join_airlines(airlines_gdf)
     airports_table = _join_airports(airports_gdf)
 
@@ -77,6 +81,22 @@ def run(port):
         except KeyboardInterrupt:
             print("\nShutting down server.")
             sys.exit(0)
+
+def _airport_codes(row) -> tuple[str]:
+    """Returns a default origin and destination code."""
+    orig = [
+        row['origin_airport_iata_code'],
+        row['origin_airport_icao_code'],
+        row['origin_airport_faa_lid'],
+    ]
+    orig = [v for v in orig if pd.notna(v)][0]
+    dest = [
+        row['destination_airport_iata_code'],
+        row['destination_airport_icao_code'],
+        row['destination_airport_faa_lid'],
+    ]
+    dest = [v for v in dest if pd.notna(v)][0]
+    return (orig, dest)
 
 def _blank_if_na(value):
     """Returns an empty string if a row value is empty."""
@@ -128,11 +148,12 @@ def _build_flights(html_dir, env, flights_table) -> None:
     flights_dir.mkdir()
     flight_items = []
     for idx, row in flights_table.iterrows():
+        airport_codes = _airport_codes(row)
         flight_items.append({
             'name': _flight_name(row),
             'airline_fid': row['airline_fid'],
-            'origin_airport_code': row['origin_airport_code'],
-            'destination_airport_code': row['destination_airport_code'],
+            'origin_airport_code': airport_codes[0],
+            'destination_airport_code': airport_codes[1],
             'departure_utc': row['departure_utc'],
         })
     index_flights_html = env.get_template("index_flights.html") \
@@ -199,28 +220,6 @@ def _join_airports(airports_gdf) -> pd.DataFrame:
     ]])
     airports_table = airports_table.sort_values('name')
     return airports_table
-
-def _join_flights(flights_gdf, airlines_gdf, airports_gdf) -> pd.DataFrame:
-    flights_table = pd.DataFrame(flights_gdf[[
-        'departure_utc',
-        'flight_number',
-        'airline_fid',
-        'origin_airport_fid',
-        'destination_airport_fid',
-    ]])
-    flights_table = flights_table.join(
-        airports_gdf['code'].rename("origin_airport_code"),
-        on="origin_airport_fid",
-    )
-    flights_table = flights_table.join(
-        airports_gdf['code'].rename("destination_airport_code"),
-        on="destination_airport_fid",
-    )
-    flights_table = flights_table.join(
-        airlines_gdf['name'].rename("airline_name"),
-        on="airline_fid",
-    )
-    return flights_table
 
 def _load_airlines_gdf() -> gpd.GeoDataFrame:
     """Prepares a GeoDataFrame of airline data."""
