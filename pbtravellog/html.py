@@ -37,7 +37,7 @@ ALL_AIRLINES = Airline.all()
 
 def build():
     """Builds a directory of static HTML pages."""
-    print("Building pbflightlog HTML...")
+    print("Building pbflightlog HTML…")
     html_dir = Path(HTML_PATH)
 
     # Create joined tables for pages.
@@ -49,12 +49,13 @@ def build():
     _build_flights(html_dir, env, flights_table)
     _build_airlines(html_dir, env, flights_table)
     _build_airports(html_dir, env, flights_table)
+    _build_tails(html_dir, env, flights_table)
 
     print(f"Wrote static site to \"{html_dir}\".")
 
 def run(port):
     """Launches a server and browser."""
-    print("Launching pbflightlog HTML...")
+    print("Launching pbflightlog HTML…")
     if not os.path.exists(HTML_PATH):
         raise FileNotFoundError(
             f"HTML path {HTML_PATH} does not exist. "
@@ -101,6 +102,7 @@ def _blank_if_na(value):
 
 def _build_airlines(html_dir, env, flights_table) -> None:
     """Builds airline pages."""
+    print("- Building airlines…")
     airlines_dir = html_dir / "airlines"
     airlines_dir.mkdir()
 
@@ -130,6 +132,7 @@ def _build_airlines(html_dir, env, flights_table) -> None:
 
 def _build_airports(html_dir, env, flights_table) -> None:
     """Builds airport pages."""
+    print("- Building airports…")
     airports_dir = html_dir / "airports"
     airports_dir.mkdir()
 
@@ -151,6 +154,7 @@ def _build_airports(html_dir, env, flights_table) -> None:
 
 def _build_flights(html_dir, env, flights_table) -> None:
     """Builds flight pages."""
+    print("- Building flights…")
     flights_table = _tabulate_flights(flights_table.copy())
     flights_dir = html_dir / "flights"
     flights_dir.mkdir()
@@ -188,6 +192,25 @@ def _build_structure(html_dir) -> None:
     static_dir = files("pbtravellog") / "static"
     with as_file(static_dir) as static_path:
         shutil.copytree(static_path, html_dir, dirs_exist_ok=True)
+
+def _build_tails(html_dir, env, flights_table) -> None:
+    """Builds tail number pages."""
+    print("- Building tail numbers…")
+    tails_dir = html_dir / "tails"
+    tails_dir.mkdir()
+
+    tails_table = _tabulate_tails(flights_table)
+    tail_items = []
+    for idx, row in tails_table.iterrows():
+        tail_items.append({
+            "rank": row["rank"],
+            "tail_number": idx,
+            "aircraft_type_name": _blank_if_na(row["equipment"]),
+            "count": row["count"],
+        })
+    index_tails_html = env.get_template("index_tails.html") \
+        .render(tails=tail_items)
+    (tails_dir / "index.html").write_text(index_tails_html, encoding="utf-8")
 
 def _flight_name(row) -> str:
     """Formats a flight name."""
@@ -247,3 +270,18 @@ def _tabulate_flights(flights_table) -> gpd.GeoDataFrame:
         & (gdf["trip_section"] == gdf["trip_section"].shift(-1))
     ).fillna(False)
     return gdf
+
+def _tabulate_tails(flights_table) -> pd.DataFrame:
+    """Create a table of tail numbers from a table of flights."""
+    ft = flights_table.copy().sort_values("departure_utc")
+    df = ft.groupby("tail_number").agg(
+        count=("tail_number", "count"),
+        equipment=("aircraft_type_name", "last")
+    )
+    df = df.sort_values(
+        by=["count", "tail_number"],
+        ascending=[False, True],
+    )
+    df["rank"] = df["count"].rank(method="min", ascending=False) \
+        .astype("Int64")
+    return df

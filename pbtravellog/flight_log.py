@@ -451,7 +451,7 @@ class Flight(Record):
             on="codeshare_airline_fid",
         )
         flights_gdf = flights_gdf.join(
-            aircraft_types_df.add_prefix("aircraft_types_"),
+            aircraft_types_df.add_prefix("aircraft_type_"),
             on="aircraft_type_fid",
         )
         return flights_gdf

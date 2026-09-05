@@ -88,10 +88,10 @@ tr.continue {
     border-bottom: 1px dotted #cccccc;
 }
 th.airport-visits, td.airport-visits, th.count, td.count {
-    text-align: right;
+    text-align: center;
     font-variant-numeric: tabular-nums;
 }
-th.iata-code, td.iata-code {
+th.iata-code, td.iata-code, th.icao-code, td.icao-code {
     text-align: center;
 }
 th.flight-route, td.flight-route {
