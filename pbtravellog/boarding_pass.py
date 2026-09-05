@@ -80,20 +80,20 @@ class BoardingPass():
 
         # Initialize blocks.
         self._blocks = {
-            'unique': {
-                'mandatory': slice(0, 23), # Always here
-                'conditional': None,
-                'security': None,
+            "unique": {
+                "mandatory": slice(0, 23), # Always here
+                "conditional": None,
+                "security": None,
             },
-            'repeated': []
+            "repeated": []
         }
 
         # Loop through legs.
         for leg_index in range(self._leg_count):
-            self._blocks['repeated'].append({
-                'mandatory': None,
-                'conditional': None,
-                'airline': None,
+            self._blocks["repeated"].append({
+                "mandatory": None,
+                "conditional": None,
+                "airline": None,
             })
 
             # Mandatory Repeated block
@@ -102,7 +102,7 @@ class BoardingPass():
             if mand_rept_stop > self._data_len:
                 self.valid = False
                 return
-            self._blocks['repeated'][leg_index]['mandatory'] = slice(
+            self._blocks["repeated"][leg_index]["mandatory"] = slice(
                 mand_rept_start, mand_rept_stop
             )
             cond_airline_size = _parse_hex(
@@ -123,7 +123,7 @@ class BoardingPass():
                 if cond_airline_size < 4:
                     # Conditional Unique not big enough to contain size
                     # field
-                    self._blocks['unique']['conditional'] = slice(
+                    self._blocks["unique"]["conditional"] = slice(
                         mand_rept_stop, mand_rept_start + cond_airline_size
                     )
                     continue
@@ -137,7 +137,7 @@ class BoardingPass():
                 if cond_rept_start > self._data_len:
                     self.valid = False
                     return
-                self._blocks['unique']['conditional'] = slice(
+                self._blocks["unique"]["conditional"] = slice(
                     mand_rept_stop, cond_rept_start
                 )
             else:
@@ -150,7 +150,7 @@ class BoardingPass():
             if cond_rept_start + 2 > leg_stop:
                 # Conditional not big enough to contain Conditional
                 # Repeated size field.
-                self._blocks['repeated'][leg_index]['conditional'] = slice(
+                self._blocks["repeated"][leg_index]["conditional"] = slice(
                     cond_rept_start, leg_stop
                 )
             cond_rept_size = _parse_hex(
@@ -163,7 +163,7 @@ class BoardingPass():
             if cond_rept_stop > self._data_len:
                 self.valid = False
                 return
-            self._blocks['repeated'][leg_index]['conditional'] = slice(
+            self._blocks["repeated"][leg_index]["conditional"] = slice(
                 cond_rept_start, cond_rept_stop
             )
 
@@ -171,21 +171,21 @@ class BoardingPass():
             if cond_rept_stop == leg_stop:
                 # No more data.
                 continue
-            self._blocks['repeated'][leg_index]['airline'] = slice(
+            self._blocks["repeated"][leg_index]["airline"] = slice(
                 cond_rept_stop, leg_stop
             )
 
         # Security block
         security_start = self._prev_leg_stop(self._leg_count)
         if security_start < self._data_len:
-            self._blocks['unique']['security'] = slice(
+            self._blocks["unique"]["security"] = slice(
                 security_start, self._data_len
             )
 
     def _legs(self) -> list[Leg]:
         """Returns Leg objects for each leg."""
         return [
-            Leg(self.bcbp_str, self._blocks['repeated'][i], self.pass_dt)
+            Leg(self.bcbp_str, self._blocks["repeated"][i], self.pass_dt)
             for i in range(self._leg_count)
         ]
 
@@ -193,17 +193,17 @@ class BoardingPass():
         """Gets the index of the stop of the previous leg."""
         if leg_index == 0:
             # Use end of mandatory unique block.
-            return self._blocks['unique']['mandatory'].stop
-        prev_leg = self._blocks['repeated'][leg_index - 1]
-        if prev_leg['airline'] is not None:
-            return prev_leg['airline'].stop
-        if prev_leg['conditional'] is not None:
-            return prev_leg['conditional'].stop
+            return self._blocks["unique"]["mandatory"].stop
+        prev_leg = self._blocks["repeated"][leg_index - 1]
+        if prev_leg["airline"] is not None:
+            return prev_leg["airline"].stop
+        if prev_leg["conditional"] is not None:
+            return prev_leg["conditional"].stop
         if leg_index == 1:
             # Second leg might start at end of Unique Conditional.
-            if self._blocks['unique']['conditional'] is not None:
-                return self._blocks['unique']['conditional'].stop
-        return prev_leg['mandatory'].stop
+            if self._blocks["unique"]["conditional"] is not None:
+                return self._blocks["unique"]["conditional"].stop
+        return prev_leg["mandatory"].stop
 
 
 class Leg():
@@ -236,7 +236,7 @@ class Leg():
     def _parse_airline_iata(self) -> str | None:
         """Parses airline IATA code."""
         raw = _get_raw(
-            self.bcbp_str, self._blocks['mandatory'], slice(13, 16)
+            self.bcbp_str, self._blocks["mandatory"], slice(13, 16)
         )
         if raw is None:
             return None
@@ -245,7 +245,7 @@ class Leg():
     def _parse_airport_dest_iata(self) -> str | None:
         """Parses destination airport IATA code."""
         raw = _get_raw(
-            self.bcbp_str, self._blocks['mandatory'], slice(10, 13)
+            self.bcbp_str, self._blocks["mandatory"], slice(10, 13)
         )
         if raw is None:
             return None
@@ -254,7 +254,7 @@ class Leg():
     def _parse_airport_orig_iata(self) -> str | None:
         """Parses origin airport IATA code."""
         raw = _get_raw(
-            self.bcbp_str, self._blocks['mandatory'], slice(7, 10)
+            self.bcbp_str, self._blocks["mandatory"], slice(7, 10)
         )
         if raw is None:
             return None
@@ -263,7 +263,7 @@ class Leg():
     def _parse_flight_date(self) -> date | None:
         """Parses flight date."""
         raw = _get_raw(
-            self.bcbp_str, self._blocks['mandatory'], slice(21, 24)
+            self.bcbp_str, self._blocks["mandatory"], slice(21, 24)
         )
         try:
             day_of_year: int = int(raw)
@@ -321,7 +321,7 @@ class Leg():
     def _parse_flight_number(self) -> str | None:
         """Parses flight number."""
         raw = _get_raw(
-            self.bcbp_str, self._blocks['mandatory'], slice(16, 21)
+            self.bcbp_str, self._blocks["mandatory"], slice(16, 21)
         )
         if raw is None:
             return None
@@ -335,7 +335,7 @@ class PKPass():
     def __init__(self, path: Path):
         self.pass_json = self._load_pass_json(path)
         self.relevant_date = self._parse_relevant_date()
-        self.message = self.pass_json.get('barcode', {}).get('message')
+        self.message = self.pass_json.get("barcode", {}).get("message")
         self.boarding_pass = self._boarding_pass()
 
     @property
@@ -366,17 +366,17 @@ class PKPass():
 
     def _load_pass_json(self, path) -> dict:
         """Gets boarding pass JSON."""
-        with ZipFile(path, 'r') as zf:
+        with ZipFile(path, "r") as zf:
             if PKPass.PASS_FILE not in zf.namelist():
                 print(f"{PKPass.PASS_FILE} not found in {path}.")
                 return {}
             with zf.open(PKPass.PASS_FILE) as pf:
-                return json.loads(pf.read().decode('utf-8'))
+                return json.loads(pf.read().decode("utf-8"))
 
     def _parse_relevant_date(self) -> datetime | None:
         """Gets the PKPass date."""
         try:
-            pass_date = isoparse(self.pass_json.get('relevantDate'))
+            pass_date = isoparse(self.pass_json.get("relevantDate"))
             return pass_date.astimezone(ZoneInfo("UTC"))
         except TypeError, ValueError:
             return None

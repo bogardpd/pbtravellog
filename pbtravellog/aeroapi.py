@@ -53,8 +53,8 @@ def get_flights_ident(ident, ident_type=None):
     """Gets flights matching an ident."""
     print(f"Looking up \"{ident}\" on AeroAPI")
     url = f"{SERVER}/flights/{ident}"
-    headers = {'x-apikey': _API_KEY}
-    params = {'ident_type': ident_type}
+    headers = {"x-apikey": _API_KEY}
+    params = {"ident_type": ident_type}
     _rate_limiter.wait()
     response = requests.get(
         url,
@@ -65,15 +65,15 @@ def get_flights_ident(ident, ident_type=None):
     print(f"🌐 GET {response.url}")
     response.raise_for_status()
     fa_json = response.json()
-    return fa_json['flights']
+    return fa_json["flights"]
 
 def get_flights_ident_track(ident):
     """Gets the track for a specific flight."""
     url = f"{SERVER}/flights/{ident}/track"
-    headers = {'x-apikey': _API_KEY}
+    headers = {"x-apikey": _API_KEY}
     params = {
-        'include_estimated_positions': "true",
-        'include_surface_positions': "true",
+        "include_estimated_positions": "true",
+        "include_surface_positions": "true",
     }
     _rate_limiter.wait()
     response = requests.get(
@@ -96,26 +96,26 @@ def select_flight_info(flight_info_flights: list[dict]) -> dict | None:
     if len(flight_info_flights) == 1:
         return flight_info_flights[0]
     flight_info_flights = sorted(flight_info_flights, key=lambda f: (
-        f.get('scheduled_out') is None, f.get('scheduled_out')
+        f.get("scheduled_out") is None, f.get("scheduled_out")
     ), reverse=True)
     table = [
         [
             i + 1,
-            f.get('ident'),
+            f.get("ident"),
             _dt_str_tz((
-                f.get('actual_out')
-                or f.get('estimated_out')
-                or f.get('scheduled_out')
-            ), f.get('origin', {}).get('timezone')),
+                f.get("actual_out")
+                or f.get("estimated_out")
+                or f.get("scheduled_out")
+            ), f.get("origin", {}).get("timezone")),
             (
-                f.get('origin', {}).get('code_iata')
-                or f.get('origin', {}).get('code')
+                f.get("origin", {}).get("code_iata")
+                or f.get("origin", {}).get("code")
             ),
             (
-                f.get('destination', {}).get('code_iata')
-                or f.get('destination', {}).get('code')
+                f.get("destination", {}).get("code_iata")
+                or f.get("destination", {}).get("code")
             ),
-            f.get('progress_percent'),
+            f.get("progress_percent"),
         ]
         for i, f in enumerate(flight_info_flights)
     ]

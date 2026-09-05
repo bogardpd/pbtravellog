@@ -80,15 +80,15 @@ def run(port):
 def _airport_codes(row) -> tuple[str]:
     """Returns a default origin and destination code."""
     orig = [
-        row['origin_airport_iata_code'],
-        row['origin_airport_icao_code'],
-        row['origin_airport_faa_lid'],
+        row["origin_airport_iata_code"],
+        row["origin_airport_icao_code"],
+        row["origin_airport_faa_lid"],
     ]
     orig = [v for v in orig if pd.notna(v)][0]
     dest = [
-        row['destination_airport_iata_code'],
-        row['destination_airport_icao_code'],
-        row['destination_airport_faa_lid'],
+        row["destination_airport_iata_code"],
+        row["destination_airport_icao_code"],
+        row["destination_airport_faa_lid"],
     ]
     dest = [v for v in dest if pd.notna(v)][0]
     return (orig, dest)
@@ -105,24 +105,24 @@ def _build_airlines(html_dir, env, flights_table) -> None:
     airlines_dir.mkdir()
 
     tables = {
-        'airlines': _tabulate_airlines(flights_table, column='airline_fid'),
-        'operators': _tabulate_airlines(flights_table, column='operator_fid'),
+        "airlines": _tabulate_airlines(flights_table, column="airline_fid"),
+        "operators": _tabulate_airlines(flights_table, column="operator_fid"),
     }
     items = {
-        'airlines': [],
-        'operators': [],
+        "airlines": [],
+        "operators": [],
     }
     for airline_type, airline_table in tables.items():
         for idx, row in airline_table.iterrows():
             items[airline_type].append({
-                'fid': idx,
-                'rank': row['rank'],
-                'name': row['name'],
-                'iata_code': _blank_if_na(row['iata_code']),
-                'count': row['count'],
+                "fid": idx,
+                "rank": row["rank"],
+                "name": row["name"],
+                "iata_code": _blank_if_na(row["iata_code"]),
+                "count": row["count"],
             })
     index_airlines_html = env.get_template("index_airlines.html") \
-        .render(airlines=items['airlines'], operators=items['operators'])
+        .render(airlines=items["airlines"], operators=items["operators"])
     (airlines_dir / "index.html").write_text(
         index_airlines_html,
         encoding="utf-8",
@@ -137,10 +137,10 @@ def _build_airports(html_dir, env, flights_table) -> None:
     airport_items = []
     for _, row in airports_table.iterrows():
         airport_items.append({
-            'rank': row['rank'],
-            'name': row['name'],
-            'iata_code': _blank_if_na(row['iata_code']),
-            'visits': row['visits'],
+            "rank": row["rank"],
+            "name": row["name"],
+            "iata_code": _blank_if_na(row["iata_code"]),
+            "visits": row["visits"],
         })
     index_airports_html = env.get_template("index_airports.html") \
         .render(airports=airport_items)
@@ -158,12 +158,12 @@ def _build_flights(html_dir, env, flights_table) -> None:
     for _, row in flights_table.iterrows():
         airport_codes = _airport_codes(row)
         flight_items.append({
-            'name': _flight_name(row),
-            'airline_fid': row['airline_fid'],
-            'origin_airport_code': airport_codes[0],
-            'destination_airport_code': airport_codes[1],
-            'departure_utc': row['departure_utc'],
-            'continues_via_layover': row['continues_via_layover'],
+            "name": _flight_name(row),
+            "airline_fid": row["airline_fid"],
+            "origin_airport_code": airport_codes[0],
+            "destination_airport_code": airport_codes[1],
+            "departure_utc": row["departure_utc"],
+            "continues_via_layover": row["continues_via_layover"],
         })
     index_flights_html = env.get_template("index_flights.html") \
         .render(flights=flight_items)
@@ -208,19 +208,19 @@ def _jinja_env() -> Environment:
         loader=PackageLoader("pbtravellog"),
         autoescape=True,
     )
-    env.filters['format_utc'] = _format_utc
+    env.filters["format_utc"] = _format_utc
     return env
 
-def _tabulate_airlines(flights_table, column='airline_fid') -> pd.DataFrame:
+def _tabulate_airlines(flights_table, column="airline_fid") -> pd.DataFrame:
     """Creates a table of airlines from a table of flights."""
     df = pd.DataFrame(ALL_AIRLINES.copy())
     count = flights_table[column].value_counts()
-    df = df.join(count, how='right')
+    df = df.join(count, how="right")
     df = df.sort_values(
-        by=['count', 'name'],
+        by=["count", "name"],
         ascending=[False, True],
     )
-    df['rank'] = df['count'].rank(method='min', ascending=False)
+    df["rank"] = df["count"].rank(method="min", ascending=False)
     return df
 
 def _tabulate_airports(flights_table) -> gpd.GeoDataFrame:
@@ -228,22 +228,22 @@ def _tabulate_airports(flights_table) -> gpd.GeoDataFrame:
     gdf = ALL_AIRPORTS.copy()
     visits = airport_visits(flights_table)
     gdf = gdf.join(visits)
-    gdf = gdf.rename(columns={'count': "visits"})
-    gdf = gdf.dropna(subset=['visits'])
+    gdf = gdf.rename(columns={"count": "visits"})
+    gdf = gdf.dropna(subset=["visits"])
     gdf = gdf.sort_values(
-        by=['visits', 'name'],
+        by=["visits", "name"],
         ascending=[False, True],
     )
-    gdf['rank'] = gdf['visits'].rank(method='min', ascending=False)
+    gdf["rank"] = gdf["visits"].rank(method="min", ascending=False)
     return gdf
 
 def _tabulate_flights(flights_table) -> gpd.GeoDataFrame:
     """Normalizes a table of flights for Jinja output."""
     gdf = flights_table.copy()
-    gdf['continues_via_layover'] = (
-        gdf['trip_fid'].notna()
-        & gdf['trip_section'].notna()
-        & (gdf['trip_fid'] == gdf['trip_fid'].shift(-1))
-        & (gdf['trip_section'] == gdf['trip_section'].shift(-1))
+    gdf["continues_via_layover"] = (
+        gdf["trip_fid"].notna()
+        & gdf["trip_section"].notna()
+        & (gdf["trip_fid"] == gdf["trip_fid"].shift(-1))
+        & (gdf["trip_section"] == gdf["trip_section"].shift(-1))
     ).fillna(False)
     return gdf

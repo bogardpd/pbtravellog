@@ -61,7 +61,7 @@ class Record():
     @classmethod
     def find_by_code(cls, code: str, check_fid=False) -> Self | None:
         """Finds a record by searching through code fields."""
-        if getattr(cls, 'FIND_BY_CODES', None) is None:
+        if getattr(cls, "FIND_BY_CODES", None) is None:
             return None
         if len(cls.FIND_BY_CODES) == 0:
             return None
@@ -77,7 +77,7 @@ class Record():
         if check_fid and re.search(r'^[0-9]+$', code):
             if int(code) in records.index:
                 record_dict = records.loc[int(code)].to_dict()
-                record_dict['fid'] = int(code)
+                record_dict["fid"] = int(code)
                 record = cls()
                 for key, value in record_dict.items():
                     setattr(record, key, value)
@@ -86,15 +86,15 @@ class Record():
         # Filter out defunct records. This is helpful in situations
         # where current records use the same codes as an old record
         # (for example, the current PSA airlines and the defunct Comair
-        # both use the IATA code 'OH'.)
-        if 'is_defunct' in records.columns:
-            records = records[~records['is_defunct']]
+        # both use the IATA code "OH".)
+        if "is_defunct" in records.columns:
+            records = records[~records["is_defunct"]]
         for code_type in cls.FIND_BY_CODES:
             # Search for matching codes.
             matching_code = records[records[code_type] == code]
             if len(matching_code) == 1:
                 record_dict = matching_code.iloc[0].to_dict()
-                record_dict['fid'] = int(matching_code.index[0])
+                record_dict["fid"] = int(matching_code.index[0])
                 record = cls()
                 for key, value in record_dict.items():
                     setattr(record, key, value)
@@ -105,10 +105,10 @@ class Record():
 class AircraftType(Record):
     """Represents an aircraft type record."""
     LAYER = "aircraft_types"
-    FIND_BY_CODES = ['icao_code']
+    FIND_BY_CODES = ["icao_code"]
     DTYPES = {
-        'iata_code': 'string',
-        'icao_code': 'string',
+        "iata_code": "string",
+        "icao_code": "string",
     }
 
     def __init__(self):
@@ -124,11 +124,11 @@ class AircraftType(Record):
 class Airline(Record):
     """Represents an airline record."""
     LAYER = "airlines"
-    FIND_BY_CODES = ['icao_code', 'iata_code']
+    FIND_BY_CODES = ["icao_code", "iata_code"]
     DTYPES = {
-        'iata_code': 'string',
-        'icao_code': 'string',
-        'numeric_code': 'string',
+        "iata_code": "string",
+        "icao_code": "string",
+        "numeric_code": "string",
     }
 
     def __init__(self):
@@ -144,11 +144,11 @@ class Airline(Record):
 class Airport(Record):
     """Represents an airline record."""
     LAYER = "airports"
-    FIND_BY_CODES = ['icao_code', 'iata_code', 'faa_lid']
+    FIND_BY_CODES = ["icao_code", "iata_code", "faa_lid"]
     DTYPES = {
-        'iata_code': 'string',
-        'icao_code': 'string',
-        'faa_lid': 'string',
+        "iata_code": "string",
+        "icao_code": "string",
+        "faa_lid": "string",
     }
 
     def __init__(self):
@@ -172,19 +172,19 @@ class Flight(Record):
     LAYER = "flights"
     FIND_BY_CODES = []
     DTYPES = {
-        'fh_id': 'Int64',
-        'airline_fid': 'Int64',
-        'origin_airport_fid': 'Int64',
-        'destination_airport_fid': 'Int64',
-        'class_fid': 'Int64',
-        'operator_fid': 'Int64',
-        'codeshare_airline_fid': 'Int64',
-        'trip_fid': 'Int64',
-        'trip_section': 'Int64',
-        'distance_mi': 'Int64',
-        'tail_number': 'string',
-        'boarding_pass_data': 'string',
-        'geom_source': 'string',
+        "fh_id": "Int64",
+        "airline_fid": "Int64",
+        "origin_airport_fid": "Int64",
+        "destination_airport_fid": "Int64",
+        "class_fid": "Int64",
+        "operator_fid": "Int64",
+        "codeshare_airline_fid": "Int64",
+        "trip_fid": "Int64",
+        "trip_section": "Int64",
+        "distance_mi": "Int64",
+        "tail_number": "string",
+        "boarding_pass_data": "string",
+        "geom_source": "string",
     }
 
     def __init__(self):
@@ -237,19 +237,19 @@ class Flight(Record):
         if fa_json is None:
             print(f"⚠️ No track found for {self.fa_flight_id}.")
             return
-        positions = fa_json.get('positions')
+        positions = fa_json.get("positions")
         if len(positions) == 0:
             print(f"⚠️ No positions found for {self.fa_flight_id}.")
             return
         track_ls = LineString([Point(
-            p.get('longitude'),
-            p.get('latitude'),
-            p.get('altitude') * METERS_PER_HUNDRED_FEET,
+            p.get("longitude"),
+            p.get("latitude"),
+            p.get("altitude") * METERS_PER_HUNDRED_FEET,
         ) for p in positions])
         self.geometry = split_at_antimeridian(track_ls)
         self.geom_source = "FlightAware"
         try:
-            self.distance_mi = int(fa_json.get('actual_distance'))
+            self.distance_mi = int(fa_json.get("actual_distance"))
         except TypeError, ValueError:
             print(f"⚠️ No distance found for {self.fa_flight_id}.")
 
@@ -265,29 +265,29 @@ class Flight(Record):
     def gdf(self) -> gpd.GeoDataFrame:
         """Returns a GeoDataFrame record for the flight."""
         record = {
-            'geometry': self.geometry,
-            'departure_utc': _format_time(self.departure_utc),
-            'arrival_utc': _format_time(self.arrival_utc),
-            'trip_fid': self.trip_fid,
-            'trip_section': self.trip_section,
-            'airline_fid': self.airline_fid,
-            'flight_number': self.flight_number,
-            'origin_airport_fid': self.origin_airport_fid,
-            'destination_airport_fid': self.destination_airport_fid,
-            'aircraft_type_fid': self.aircraft_type_fid,
-            'operator_fid': self.operator_fid,
-            'tail_number': self.tail_number,
-            'boarding_pass_data': self.boarding_pass_data,
-            'fh_id': self.fh_id,
-            'fa_flight_id': self.fa_flight_id,
-            'fa_json': (
+            "geometry": self.geometry,
+            "departure_utc": _format_time(self.departure_utc),
+            "arrival_utc": _format_time(self.arrival_utc),
+            "trip_fid": self.trip_fid,
+            "trip_section": self.trip_section,
+            "airline_fid": self.airline_fid,
+            "flight_number": self.flight_number,
+            "origin_airport_fid": self.origin_airport_fid,
+            "destination_airport_fid": self.destination_airport_fid,
+            "aircraft_type_fid": self.aircraft_type_fid,
+            "operator_fid": self.operator_fid,
+            "tail_number": self.tail_number,
+            "boarding_pass_data": self.boarding_pass_data,
+            "fh_id": self.fh_id,
+            "fa_flight_id": self.fa_flight_id,
+            "fa_json": (
                 None if self.fa_json is None else json.dumps(self.fa_json)
             ),
-            'geom_source': self.geom_source,
-            'distance_mi': self.distance_mi,
-            'comments': None,
+            "geom_source": self.geom_source,
+            "distance_mi": self.distance_mi,
+            "comments": None,
         }
-        return gpd.GeoDataFrame([record], geometry='geometry', crs=CRS)
+        return gpd.GeoDataFrame([record], geometry="geometry", crs=CRS)
 
     def save(self, geojson: Path | None = None) -> None:
         """Appends a flight to the geopackage file."""
@@ -296,7 +296,7 @@ class Flight(Record):
         # Check for matching tail numbers.
         if self.tail_number is not None:
             tails_gdf = Flight.all()
-            tails_gdf = tails_gdf[tails_gdf['tail_number'] == self.tail_number]
+            tails_gdf = tails_gdf[tails_gdf["tail_number"] == self.tail_number]
             if len(tails_gdf) > 0:
                 print(
                     f"You've now had {len(tails_gdf) + 1} flights on tail "
@@ -305,7 +305,7 @@ class Flight(Record):
 
         if geojson is not None:
             # Save to GeoJSON instead of database.
-            record_gdf.to_file(geojson, driver='GeoJSON')
+            record_gdf.to_file(geojson, driver="GeoJSON")
             print(f"Wrote flight to {geojson}.")
             sys.exit(0)
         existing = gpd.read_file(
@@ -372,48 +372,48 @@ class Flight(Record):
         """Loads flight values from an AeroAPI response."""
         flight = cls()
         try:
-            flight.progress = int(fa_json.get('progress_percent'))
+            flight.progress = int(fa_json.get("progress_percent"))
         except TypeError, ValueError:
             pass
         # Store fa_json as list containing dict because some flight
         # records (such as diverts) may require more than one AeroAPI
         # JSON result stored in the database.
         flight.fa_json = [fa_json]
-        flight.ident = fa_json.get('ident')
-        flight.scheduled_out = cls.parse_dt(fa_json.get('scheduled_out'))
-        flight.estimated_out = cls.parse_dt(fa_json.get('estimated_out'))
-        flight.actual_out = cls.parse_dt(fa_json.get('actual_out'))
-        flight.scheduled_in = cls.parse_dt(fa_json.get('scheduled_in'))
-        flight.estimated_in = cls.parse_dt(fa_json.get('estimated_in'))
-        flight.actual_in = cls.parse_dt(fa_json.get('actual_in'))
+        flight.ident = fa_json.get("ident")
+        flight.scheduled_out = cls.parse_dt(fa_json.get("scheduled_out"))
+        flight.estimated_out = cls.parse_dt(fa_json.get("estimated_out"))
+        flight.actual_out = cls.parse_dt(fa_json.get("actual_out"))
+        flight.scheduled_in = cls.parse_dt(fa_json.get("scheduled_in"))
+        flight.estimated_in = cls.parse_dt(fa_json.get("estimated_in"))
+        flight.actual_in = cls.parse_dt(fa_json.get("actual_in"))
         flight.departure_utc = flight._dep_utc()
         flight.arrival_utc = flight._arr_utc()
-        flight.flight_number = fa_json.get('flight_number')
+        flight.flight_number = fa_json.get("flight_number")
 
-        origin = fa_json.get('origin', {})
+        origin = fa_json.get("origin", {})
         flight.origin_airport_fid = getattr(
-            Airport.find_by_code(origin.get('code')), 'fid', None
+            Airport.find_by_code(origin.get("code")), "fid", None
         )
-        flight.origin_code = origin.get('code_iata') or origin.get('code')
-        flight.origin_tz = origin.get('timezone')
+        flight.origin_code = origin.get("code_iata") or origin.get("code")
+        flight.origin_tz = origin.get("timezone")
 
-        destination = fa_json.get('destination', {})
+        destination = fa_json.get("destination", {})
         flight.destination_airport_fid = getattr(
-            Airport.find_by_code(destination.get('code')), 'fid', None
+            Airport.find_by_code(destination.get("code")), "fid", None
         )
-        flight.destination_code = destination.get('code_iata') \
-            or destination.get('code')
-        flight.destination_tz = destination.get('timezone')
+        flight.destination_code = destination.get("code_iata") \
+            or destination.get("code")
+        flight.destination_tz = destination.get("timezone")
 
         flight.aircraft_type_fid = getattr(
-            AircraftType.find_by_code(fa_json.get('aircraft_type')),
-            'fid', None
+            AircraftType.find_by_code(fa_json.get("aircraft_type")),
+            "fid", None
         )
         flight.operator_fid = getattr(
-            Airline.find_by_code(fa_json.get('operator')), 'fid', None
+            Airline.find_by_code(fa_json.get("operator")), "fid", None
         )
-        flight.tail_number = fa_json.get('registration')
-        flight.fa_flight_id = fa_json.get('fa_flight_id')
+        flight.tail_number = fa_json.get("registration")
+        flight.fa_flight_id = fa_json.get("fa_flight_id")
         return flight
 
     @classmethod
@@ -423,36 +423,36 @@ class Flight(Record):
         flights_gdf = cls.all()
         airports_df = pd.DataFrame(Airport.all())
         airports_df = airports_df.rename(
-            # 'airport_' is added in join, so just name this 'geom'
-            columns={'geometry': "geom"}
+            # "airport_" is added in join, so just name this "geom"
+            columns={"geometry": "geom"}
         )
         airlines_df = pd.DataFrame(Airline.all())
         aircraft_types_df = pd.DataFrame(AircraftType.all())
 
         # Perform joins.
         flights_gdf = flights_gdf.join(
-            airports_df.add_prefix('origin_airport_'),
-            on='origin_airport_fid',
+            airports_df.add_prefix("origin_airport_"),
+            on="origin_airport_fid",
         )
         flights_gdf = flights_gdf.join(
-            airports_df.add_prefix('destination_airport_'),
-            on='destination_airport_fid',
+            airports_df.add_prefix("destination_airport_"),
+            on="destination_airport_fid",
         )
         flights_gdf = flights_gdf.join(
-            airlines_df.add_prefix('airline_'),
-            on='airline_fid',
+            airlines_df.add_prefix("airline_"),
+            on="airline_fid",
         )
         flights_gdf = flights_gdf.join(
-            airlines_df.add_prefix('operator_'),
-            on='operator_fid',
+            airlines_df.add_prefix("operator_"),
+            on="operator_fid",
         )
         flights_gdf = flights_gdf.join(
-            airlines_df.add_prefix('codeshare_airline_'),
-            on='codeshare_airline_fid',
+            airlines_df.add_prefix("codeshare_airline_"),
+            on="codeshare_airline_fid",
         )
         flights_gdf = flights_gdf.join(
-            aircraft_types_df.add_prefix('aircraft_types_'),
-            on='aircraft_type_fid',
+            aircraft_types_df.add_prefix("aircraft_types_"),
+            on="aircraft_type_fid",
         )
         return flights_gdf
 
@@ -473,7 +473,7 @@ class Trip(Record):
     """Represents a trip record."""
     LAYER = "trips"
     FIND_BY_CODES = []
-    DTYPES = {'fh_id': "Int64"}
+    DTYPES = {"fh_id": "Int64"}
 
     def __init__(self):
         # Fields used in flight log database:
@@ -492,24 +492,24 @@ class Trip(Record):
             engine="pyogrio",
             fid_as_index=True,
         ).astype(Flight.DTYPES)
-        flights = flights[flights['trip_fid'] == self.fid]
+        flights = flights[flights["trip_fid"] == self.fid]
         if len(flights) == 0:
             # No flights in trip.
             return 1
-        if flights['trip_section'].isnull().any():
+        if flights["trip_section"].isnull().any():
             # Some flights have no trip section.
             return None
-        flights = flights[['departure_utc', 'trip_fid', 'trip_section']]
-        flights = flights.sort_values(by='departure_utc')
+        flights = flights[["departure_utc", "trip_fid", "trip_section"]]
+        flights = flights.sort_values(by="departure_utc")
         latest_flight = flights.iloc[-1]
-        if departure_dt <= latest_flight['departure_utc']:
+        if departure_dt <= latest_flight["departure_utc"]:
             # New flight occurs before latest flight.
             return None
-        if departure_dt < latest_flight['departure_utc'] + timedelta(days=1):
+        if departure_dt < latest_flight["departure_utc"] + timedelta(days=1):
             # New flight is within 24 hours of latest flight.
-            return int(latest_flight['trip_section'])
+            return int(latest_flight["trip_section"])
         # New flight is more than 24 hours after latest flight.
-        return int(latest_flight['trip_section']) + 1
+        return int(latest_flight["trip_section"]) + 1
 
     @classmethod
     def select_by_date(cls, departure_date: date) -> Self | None:
@@ -524,22 +524,22 @@ class Trip(Record):
             layer=cls.LAYER,
             engine="pyogrio",
             fid_as_index=True,
-        ).dropna(subset=['start_date', 'end_date']).astype(cls.DTYPES)
+        ).dropna(subset=["start_date", "end_date"]).astype(cls.DTYPES)
 
         matching = records[
-            (records['start_date'].dt.date <= departure_date)
-            & (records['end_date'].dt.date >= departure_date)
-        ].sort_values(by=['start_date', 'end_date'], ascending=False)
+            (records["start_date"].dt.date <= departure_date)
+            & (records["end_date"].dt.date >= departure_date)
+        ].sort_values(by=["start_date", "end_date"], ascending=False)
         if matching.size == 0:
             return None
         record_dict = matching.iloc[0].to_dict()
-        record_dict['fid'] = int(matching.index[0])
+        record_dict["fid"] = int(matching.index[0])
         record = cls()
         for k, v in record_dict.items():
             setattr(
                 record,
                 k,
-                v.date() if hasattr(v, 'date') else v
+                v.date() if hasattr(v, "date") else v
             )
         return record
 
@@ -547,25 +547,25 @@ class Trip(Record):
 def airport_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
     """Calculates airport visit counts from flights."""
     count_orig = count_origin_visits(flights_gdf)
-    flights_gdf.loc[~count_orig, 'origin_airport_fid'] = pd.NA
-    counts = flights_gdf[['origin_airport_fid', 'destination_airport_fid']] \
+    flights_gdf.loc[~count_orig, "origin_airport_fid"] = pd.NA
+    counts = flights_gdf[["origin_airport_fid", "destination_airport_fid"]] \
         .stack().value_counts()
     return counts
 
 def count_origin_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
     """Determines whether to count origins as a visit."""
     flights_gdf = flights_gdf[[
-        'departure_utc',
-        'trip_fid',
-        'trip_section',
-        'origin_airport_fid',
-        'destination_airport_fid',
+        "departure_utc",
+        "trip_fid",
+        "trip_section",
+        "origin_airport_fid",
+        "destination_airport_fid",
     ]]
-    flights_gdf = flights_gdf.sort_values(by='departure_utc')
-    flights_gdf['prev_dest_fid'] = flights_gdf['destination_airport_fid'] \
+    flights_gdf = flights_gdf.sort_values(by="departure_utc")
+    flights_gdf["prev_dest_fid"] = flights_gdf["destination_airport_fid"] \
         .shift(1)
-    flights_gdf['prev_trip_fid'] = flights_gdf['trip_fid'].shift(1)
-    flights_gdf['prev_trip_section'] = flights_gdf['trip_section'].shift(1)
+    flights_gdf["prev_trip_fid"] = flights_gdf["trip_fid"].shift(1)
+    flights_gdf["prev_trip_section"] = flights_gdf["trip_section"].shift(1)
     # Set origin airport to NA for flights that continue after a
     # layover. A flight is considered continuing after a layover if it
     # has a trip and trip section, the trip and trip section are the
@@ -573,15 +573,15 @@ def count_origin_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
     # previous flight's destination. In that case, the continuing
     # flight's origin should not be counted (since it was already
     # counted in the previous flight's destination).
-    flights_gdf['orig_visit'] = True
+    flights_gdf["orig_visit"] = True
     flights_gdf.loc[
-        (flights_gdf['trip_fid'].notna())
-        & (flights_gdf['trip_section'].notna())
-        & (flights_gdf['origin_airport_fid'] == flights_gdf['prev_dest_fid'])
-        & (flights_gdf['trip_fid'] == flights_gdf['prev_trip_fid'])
-        & (flights_gdf['trip_section'] == flights_gdf['prev_trip_section']),
-    'orig_visit'] = False
-    return flights_gdf['orig_visit']
+        (flights_gdf["trip_fid"].notna())
+        & (flights_gdf["trip_section"].notna())
+        & (flights_gdf["origin_airport_fid"] == flights_gdf["prev_dest_fid"])
+        & (flights_gdf["trip_fid"] == flights_gdf["prev_trip_fid"])
+        & (flights_gdf["trip_section"] == flights_gdf["prev_trip_section"]),
+    "orig_visit"] = False
+    return flights_gdf["orig_visit"]
 
 def flights_table(
     flights_gdf: gpd.GeoDataFrame,
@@ -603,49 +603,49 @@ def flights_table(
         airlines_gdf.add_suffix("_airline"),
         on="airline_fid"
     )
-    flights_gdf['order'] = flights_gdf['departure_utc'].rank().astype(int)
-    flights_gdf['departure_date'] = flights_gdf.apply(lambda r:
-        r['departure_utc'].tz_convert(r['time_zone_orig']).date(),
+    flights_gdf["order"] = flights_gdf["departure_utc"].rank().astype(int)
+    flights_gdf["departure_date"] = flights_gdf.apply(lambda r:
+        r["departure_utc"].tz_convert(r["time_zone_orig"]).date(),
         axis=1,
     )
-    flights_gdf['flight_ident'] = flights_gdf['iata_code_airline'].str.cat(
-        flights_gdf['flight_number'], sep=" "
+    flights_gdf["flight_ident"] = flights_gdf["iata_code_airline"].str.cat(
+        flights_gdf["flight_number"], sep=" "
     ).fillna("")
-    flights_gdf['orig'] = flights_gdf.apply(lambda r:
+    flights_gdf["orig"] = flights_gdf.apply(lambda r:
         next(val for col in [
-            'iata_code_orig', 'icao_code_orig', 'faa_lid_orig'
+            "iata_code_orig", "icao_code_orig", "faa_lid_orig"
         ] if pd.notna(val := r[col])),
         axis=1,
     )
-    flights_gdf['dest'] = flights_gdf.apply(lambda r:
+    flights_gdf["dest"] = flights_gdf.apply(lambda r:
         next(val for col in [
-            'iata_code_dest', 'icao_code_dest', 'faa_lid_dest'
+            "iata_code_dest", "icao_code_dest", "faa_lid_dest"
         ] if pd.notna(val := r[col])),
         axis=1,
     )
     table_cols = {
-        'order': "#",
-        'departure_date': "Departure",
-        'flight_ident': "Flight",
-        'orig': "Orig",
-        'dest': "Dest",
+        "order": "#",
+        "departure_date": "Departure",
+        "flight_ident": "Flight",
+        "orig": "Orig",
+        "dest": "Dest",
     }
     if visit_airport_fid is not None:
         # Include visit counts for the specified airport.
-        flights_gdf['count_origin_visits'] = count_origin_visits(flights_gdf)
-        flights_gdf['this_airport_visits'] = flights_gdf.apply(lambda r:
+        flights_gdf["count_origin_visits"] = count_origin_visits(flights_gdf)
+        flights_gdf["this_airport_visits"] = flights_gdf.apply(lambda r:
             (1 if (
-                r['count_origin_visits']
-                and r['origin_airport_fid'] == visit_airport_fid
+                r["count_origin_visits"]
+                and r["origin_airport_fid"] == visit_airport_fid
             ) else 0) + (1 if (
-                r['destination_airport_fid'] == visit_airport_fid
+                r["destination_airport_fid"] == visit_airport_fid
             ) else 0),
             axis=1,
         )
-        flights_gdf['cumulative_visits'] = flights_gdf['this_airport_visits'] \
+        flights_gdf["cumulative_visits"] = flights_gdf["this_airport_visits"] \
             .cumsum()
         table_cols |= {
-            'cumulative_visits': "Cumulative\nVisits"
+            "cumulative_visits": "Cumulative\nVisits"
         }
     if extra_columns is not None:
         table_cols |= extra_columns
@@ -714,7 +714,7 @@ def import_flight_number(
     fa_flights = aero.get_flights_ident(ident, "designator")
     _import_fa_flight_results(
         fa_flights,
-        fields={'airline_fid': airline.fid},
+        fields={"airline_fid": airline.fid},
         geojson=geojson,
     )
     refresh_routes()
@@ -780,7 +780,7 @@ def index_airports(
     """Provides an index of all airports."""
     flights_gdf = Flight.all()
     if year is not None:
-        flights_gdf = flights_gdf[flights_gdf['departure_utc'].dt.year == year]
+        flights_gdf = flights_gdf[flights_gdf["departure_utc"].dt.year == year]
     if len(flights_gdf) == 0:
         print("No airport visits found.")
         if year is not None:
@@ -790,16 +790,16 @@ def index_airports(
         sys.exit(1)
     visits = airport_visits(flights_gdf)
     airports_gdf = Airport.all()
-    output = airports_gdf.join(visits, how='right')
-    output = output.rename(columns={'count': 'visits'})
-    output = output.sort_values(by=['visits', 'name'], ascending=[False, True])
-    output['rank'] = output['visits'].rank(
+    output = airports_gdf.join(visits, how="right")
+    output = output.rename(columns={"count": "visits"})
+    output = output.sort_values(by=["visits", "name"], ascending=[False, True])
+    output["rank"] = output["visits"].rank(
         ascending=False,
-        method='min',
+        method="min",
     ).astype(int)
-    output = output[['rank','name','iata_code','icao_code','faa_lid','visits']]
+    output = output[["rank","name","iata_code","icao_code","faa_lid","visits"]]
     if output_file is None:
-        output = output.fillna('')
+        output = output.fillna("")
         print(tabulate(
             output.to_records(),
             headers=[
@@ -820,22 +820,22 @@ def index_airports(
 def index_tails() -> None:
     """Provides an index of all tail numbers."""
     flights_gdf = Flight.all()
-    flights_gdf = flights_gdf.dropna(subset='tail_number')
-    tails_df = flights_gdf.groupby('tail_number').agg(
-        count=('tail_number', 'count'),
-        aircraft_type_fid=('aircraft_type_fid', 'last'),
+    flights_gdf = flights_gdf.dropna(subset="tail_number")
+    tails_df = flights_gdf.groupby("tail_number").agg(
+        count=("tail_number", "count"),
+        aircraft_type_fid=("aircraft_type_fid", "last"),
     )
-    types_gdf = AircraftType.all()[['manufacturer', 'name']]
-    tails_df = tails_df.join(types_gdf, on='aircraft_type_fid')
-    tails_df['type'] = tails_df['manufacturer'].str.cat(
-        tails_df['name'],
+    types_gdf = AircraftType.all()[["manufacturer", "name"]]
+    tails_df = tails_df.join(types_gdf, on="aircraft_type_fid")
+    tails_df["type"] = tails_df["manufacturer"].str.cat(
+        tails_df["name"],
         sep=" ",
     )
     tails_df = tails_df.sort_values(
-        by=['count', tails_df.index.name],
+        by=["count", tails_df.index.name],
         ascending=[False, True],
     )
-    tails_df = tails_df[['type', 'count']]
+    tails_df = tails_df[["type", "count"]]
     print(tabulate(tails_df.to_records(), headers=["Tail", "Type", "Count"]))
     print(f"{len(tails_df)} tails(s) flown")
 
@@ -854,25 +854,25 @@ def refresh_routes():
 
     airports = gpd.read_file(
         FLIGHT_LOG,
-        layer='airports',
-        engine='pyogrio',
+        layer="airports",
+        engine="pyogrio",
         fid_as_index=True,
     )
 
-    flights_df[['distance_mi', 'geometry']] = flights_df.apply(lambda f:
+    flights_df[["distance_mi", "geometry"]] = flights_df.apply(lambda f:
         _great_circle_airport_lookup(f, airports),
         axis = 1,
     )
-    flights_df['distance_mi'] = flights_df['distance_mi'].astype("Int64")
+    flights_df["distance_mi"] = flights_df["distance_mi"].astype("Int64")
 
-    routes_gdf = gpd.GeoDataFrame(flights_df, geometry='geometry', crs=CRS)
+    routes_gdf = gpd.GeoDataFrame(flights_df, geometry="geometry", crs=CRS)
 
     routes_gdf.to_file(
         FLIGHT_LOG,
-        driver='GPKG',
-        engine='pyogrio',
-        layer='routes',
-        mode='w',
+        driver="GPKG",
+        engine="pyogrio",
+        layer="routes",
+        mode="w",
     )
     print(
         f"Updated all routes in {FLIGHT_LOG}."
@@ -887,8 +887,8 @@ def show_airport(identifier: str) -> None:
 
     flights_gdf = Flight.all()
     flights_gdf = flights_gdf[
-        (flights_gdf['origin_airport_fid'] == airport.fid)
-        | (flights_gdf['destination_airport_fid'] == airport.fid)
+        (flights_gdf["origin_airport_fid"] == airport.fid)
+        | (flights_gdf["destination_airport_fid"] == airport.fid)
     ]
     print(flights_table(flights_gdf, visit_airport_fid=airport.fid))
 
@@ -896,7 +896,7 @@ def show_tail(tail_number: str) -> None:
     """Shows data about a specific tail number."""
     tail_number = tail_number.upper()
     flights_gdf = Flight.all()
-    flights_gdf = flights_gdf[flights_gdf['tail_number'] == tail_number]
+    flights_gdf = flights_gdf[flights_gdf["tail_number"] == tail_number]
     if len(flights_gdf) == 0:
         print(f"No flights found for tail number '{tail_number}'.")
         sys.exit(0)
@@ -983,8 +983,8 @@ def _great_circle_airport_lookup(row, airports):
     """Runs great_circle_route with a GeoDataFrame row."""
     try:
         return great_circle_route(
-            airports.loc[row.origin_airport_fid, 'geometry'],
-            airports.loc[row.destination_airport_fid, 'geometry'],
+            airports.loc[row.origin_airport_fid, "geometry"],
+            airports.loc[row.destination_airport_fid, "geometry"],
         )
     except KeyError:
         return pd.Series([None, None])
@@ -1048,8 +1048,8 @@ def _import_fa_flight_results(
 def _this_airport_visits(row, fid: int) -> int:
     """Returns number of visits in row of airport with provided fid."""
     count = 0
-    if row['count_origin_visits'] and row['origin_airport_fid'] == fid:
+    if row["count_origin_visits"] and row["origin_airport_fid"] == fid:
         count += 1
-    if row['destination_airport_fid'] == fid:
+    if row["destination_airport_fid"] == fid:
         count += 1
     return count
