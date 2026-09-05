@@ -1,19 +1,15 @@
 {% extends "base.html" %}
-{% import "icons.html" as icons %}
 {% block title %}Airlines{% endblock %}
 {% block content %}
-<table>
-  <thead>
-    <th>Airline</th>
-    <th class="iata-code">IATA</th>
-  </thead>
-  <tbody>
-    {% for airline in airlines %}
-    <tr>
-      <td>{{ icons.airline(airline.fid) }} {{ airline.name }}</td>
-      <td class="iata-code"><span class="code">{{ airline.iata_code }}</span></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+
+<h2>Marketing Airlines</h2>
+{% with airlines=airlines %}
+  {% include "partials/airline_table.html" %}
+{% endwith %}
+
+<h2>Operators</h2>
+{% with airlines=operators %}
+  {% include "partials/airline_table.html" %}
+{% endwith %}
+
 {% endblock content %}

@@ -16,7 +16,7 @@ from jinja2 import Environment, PackageLoader
 import pandas as pd
 
 # Project imports
-from pbtravellog.flight_log import Flight, Airport, airport_visits
+from pbtravellog.flight_log import Flight, Airport, Airline, airport_visits
 
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
 if HTML_PATH is None:
@@ -33,27 +33,22 @@ if PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is None:
     )
 
 ALL_AIRPORTS = Airport.all()
+ALL_AIRLINES = Airline.all()
 
 def build():
     """Builds a directory of static HTML pages."""
     print("Building pbflightlog HTML...")
     html_dir = Path(HTML_PATH)
 
-    # Load travel log data.
-    airlines_gdf = _load_airlines_gdf()
-    airports_gdf = _load_airports_gdf()
-
     # Create joined tables for pages.
     flights_table = Flight.joined_table()
-    airlines_table = _join_airlines(airlines_gdf)
-    airports_table = _join_airports(airports_gdf)
 
     env = _jinja_env()
     _build_structure(html_dir)
     _build_home(html_dir, env)
     _build_flights(html_dir, env, flights_table)
-    _build_airlines(html_dir, env, airlines_table)
-    _build_airports(html_dir, env, flights_table, airports_table)
+    _build_airlines(html_dir, env, flights_table)
+    _build_airports(html_dir, env, flights_table)
 
     print(f"Wrote static site to \"{html_dir}\".")
 
@@ -104,33 +99,43 @@ def _blank_if_na(value):
         return ""
     return value
 
-def _build_airlines(html_dir, env, airlines_table) -> None:
+def _build_airlines(html_dir, env, flights_table) -> None:
     """Builds airline pages."""
     airlines_dir = html_dir / "airlines"
     airlines_dir.mkdir()
-    airline_items = []
-    for idx, row in airlines_table.iterrows():
-        airline_items.append({
-            'fid': idx,
-            'name': row['name'],
-            'iata_code': _blank_if_na(row['iata_code']),
-            'icao_code': _blank_if_na(row['icao_code']),
-        })
+
+    tables = {
+        'airlines': _tabulate_airlines(flights_table, column='airline_fid'),
+        'operators': _tabulate_airlines(flights_table, column='operator_fid'),
+    }
+    items = {
+        'airlines': [],
+        'operators': [],
+    }
+    for airline_type, airline_table in tables.items():
+        for idx, row in airline_table.iterrows():
+            items[airline_type].append({
+                'fid': idx,
+                'rank': row['rank'],
+                'name': row['name'],
+                'iata_code': _blank_if_na(row['iata_code']),
+                'count': row['count'],
+            })
     index_airlines_html = env.get_template("index_airlines.html") \
-        .render(airlines=airline_items)
+        .render(airlines=items['airlines'], operators=items['operators'])
     (airlines_dir / "index.html").write_text(
         index_airlines_html,
         encoding="utf-8",
     )
 
-def _build_airports(html_dir, env, flights_table, airports_table) -> None:
+def _build_airports(html_dir, env, flights_table) -> None:
     """Builds airport pages."""
     airports_dir = html_dir / "airports"
     airports_dir.mkdir()
 
     airports_table = _tabulate_airports(flights_table)
     airport_items = []
-    for idx, row in airports_table.iterrows():
+    for _, row in airports_table.iterrows():
         airport_items.append({
             'rank': row['rank'],
             'name': row['name'],
@@ -206,55 +211,17 @@ def _jinja_env() -> Environment:
     env.filters['format_utc'] = _format_utc
     return env
 
-def _join_airlines(airlines_gdf) -> pd.DataFrame:
-    airlines_table = pd.DataFrame(airlines_gdf[[
-        'name',
-        'iata_code',
-        'icao_code',
-    ]])
-    airlines_table = airlines_table.sort_values('name')
-    return airlines_table
-
-def _join_airports(airports_gdf) -> pd.DataFrame:
-    airports_table = pd.DataFrame(airports_gdf[[
-        'name',
-        'iata_code',
-        'icao_code',
-        'code',
-    ]])
-    airports_table = airports_table.sort_values('name')
-    return airports_table
-
-def _load_airlines_gdf() -> gpd.GeoDataFrame:
-    """Prepares a GeoDataFrame of airline data."""
-    airlines_gdf = gpd.read_file(
-        PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH,
-        layer='airlines',
-        fid_as_index=True
+def _tabulate_airlines(flights_table, column='airline_fid') -> pd.DataFrame:
+    """Creates a table of airlines from a table of flights."""
+    df = pd.DataFrame(ALL_AIRLINES.copy())
+    count = flights_table[column].value_counts()
+    df = df.join(count, how='right')
+    df = df.sort_values(
+        by=['count', 'name'],
+        ascending=[False, True],
     )
-    return airlines_gdf
-
-def _load_airports_gdf() -> gpd.GeoDataFrame:
-    """Prepares a GeoDataFrame of airport data."""
-    airports_gdf = gpd.read_file(
-        PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH,
-        layer='airports',
-        fid_as_index=True
-    )
-    airports_gdf['code'] = airports_gdf['iata_code'] \
-        .fillna(airports_gdf['icao_code']) \
-        .fillna(airports_gdf['faa_lid'])
-    return airports_gdf
-
-def _load_flights_gdf() -> gpd.GeoDataFrame:
-    """Prepares a GeoDataFrame of flight data."""
-    flights_gdf = gpd.read_file(
-        PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH,
-        layer='flights',
-        fid_as_index=True,
-    )
-    flights_gdf['airline_fid'] = flights_gdf['airline_fid'].astype("Int64")
-    return flights_gdf.sort_values('departure_utc')
+    df['rank'] = df['count'].rank(method='min', ascending=False)
+    return df
 
 def _tabulate_airports(flights_table) -> gpd.GeoDataFrame:
     """Creates a table of airports from a table of flights."""
@@ -267,10 +234,7 @@ def _tabulate_airports(flights_table) -> gpd.GeoDataFrame:
         by=['visits', 'name'],
         ascending=[False, True],
     )
-    gdf['rank'] = gdf['visits'].rank(
-        method='min',
-        ascending=False,
-    )
+    gdf['rank'] = gdf['visits'].rank(method='min', ascending=False)
     return gdf
 
 def _tabulate_flights(flights_table) -> gpd.GeoDataFrame:

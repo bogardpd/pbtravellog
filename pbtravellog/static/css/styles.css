@@ -87,7 +87,7 @@ tr {
 tr.continue {
     border-bottom: 1px dotted #cccccc;
 }
-th.airport-visits, td.airport-visits {
+th.airport-visits, td.airport-visits, th.count, td.count {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }

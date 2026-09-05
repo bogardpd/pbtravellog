@@ -106,7 +106,10 @@ class AircraftType(Record):
     """Represents an aircraft type record."""
     LAYER = "aircraft_types"
     FIND_BY_CODES = ['icao_code']
-    DTYPES = {}
+    DTYPES = {
+        'iata_code': 'string',
+        'icao_code': 'string',
+    }
 
     def __init__(self):
         # Fields used in flight log database:
@@ -122,7 +125,11 @@ class Airline(Record):
     """Represents an airline record."""
     LAYER = "airlines"
     FIND_BY_CODES = ['icao_code', 'iata_code']
-    DTYPES = {}
+    DTYPES = {
+        'iata_code': 'string',
+        'icao_code': 'string',
+        'numeric_code': 'string',
+    }
 
     def __init__(self):
         # Fields used in flight log database:
@@ -138,7 +145,11 @@ class Airport(Record):
     """Represents an airline record."""
     LAYER = "airports"
     FIND_BY_CODES = ['icao_code', 'iata_code', 'faa_lid']
-    DTYPES = {}
+    DTYPES = {
+        'iata_code': 'string',
+        'icao_code': 'string',
+        'faa_lid': 'string',
+    }
 
     def __init__(self):
         # Fields used in flight log database:
@@ -161,16 +172,19 @@ class Flight(Record):
     LAYER = "flights"
     FIND_BY_CODES = []
     DTYPES = {
-        'fh_id': "Int64",
-        'airline_fid': "Int64",
-        'origin_airport_fid': "Int64",
-        'destination_airport_fid': "Int64",
-        'class_fid': "Int64",
-        'operator_fid': "Int64",
-        'codeshare_airline_fid': "Int64",
-        'trip_fid': "Int64",
-        'trip_section': "Int64",
-        'distance_mi': "Int64",
+        'fh_id': 'Int64',
+        'airline_fid': 'Int64',
+        'origin_airport_fid': 'Int64',
+        'destination_airport_fid': 'Int64',
+        'class_fid': 'Int64',
+        'operator_fid': 'Int64',
+        'codeshare_airline_fid': 'Int64',
+        'trip_fid': 'Int64',
+        'trip_section': 'Int64',
+        'distance_mi': 'Int64',
+        'tail_number': 'string',
+        'boarding_pass_data': 'string',
+        'geom_source': 'string',
     }
 
     def __init__(self):
