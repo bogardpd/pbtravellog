@@ -26,14 +26,6 @@ if HTML_PATH is None:
         "Environment variable PBTRAVELLOG_HTML_PATH is missing."
     )
 
-PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH = os.getenv(
-    "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"
-)
-if PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is None:
-    raise KeyError(
-        "Environment variable PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is missing."
-    )
-
 ALL_FLIGHTS = Flight.joined_table()
 ALL_AIRLINES = Airline.all()
 ALL_AIRPORTS = Airport.all()
