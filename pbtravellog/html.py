@@ -37,7 +37,7 @@ ALL_AIRLINES = Airline.all()
 
 def build():
     """Builds a directory of static HTML pages."""
-    print("Building pbflightlog HTML…")
+    print("Building PBTravelLog HTML…")
     html_dir = Path(HTML_PATH)
 
     # Create joined tables for pages.
@@ -55,11 +55,11 @@ def build():
 
 def run(port):
     """Launches a server and browser."""
-    print("Launching pbflightlog HTML…")
+    print("Launching PBTravelLog HTML…")
     if not os.path.exists(HTML_PATH):
         raise FileNotFoundError(
             f"HTML path {HTML_PATH} does not exist. "
-            "Did you run `pbflightlog build`?"
+            "Did you run `pbtravellog build`?"
         )
 
     # Launch web server
