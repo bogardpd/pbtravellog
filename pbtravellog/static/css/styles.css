@@ -20,6 +20,10 @@
     font-display: swap;
 }
 
+:root {
+    --border-color: #cccccc;
+}
+
 body {
     font-size: 14pt;
     font-weight: 450;
@@ -73,19 +77,25 @@ span.code {
 }
 table {
     border-collapse: collapse;
+    border-top: 1px solid var(--border-color);
 }
 th, td {
     padding: 0.5em;
     text-align: left;
 }
+table.summary {
+    th, td {
+        text-align: center;
+    }
+}
 thead {
-    border-bottom: 2px solid #cccccc;
+    border-bottom: 2px solid var(--border-color);
 }
 tr {
-    border-bottom: 1px solid #cccccc;
+    border-bottom: 1px solid var(--border-color);
 }
 tr.continue {
-    border-bottom: 1px dotted #cccccc;
+    border-bottom: 1px dotted var(--border-color);
 }
 th.airport-visits, td.airport-visits, th.count, td.count {
     text-align: center;

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ airport.name }}{% endblock %}
+{% block content %}
+<table class="summary">
+  <thead>
+    <tr>
+      <th>IATA Code</th>
+      <th>ICAO Code</th>
+      <th>FAA LID</th>
+      <th>Visits</th>
+      <th>Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="code">{{ airport.iata_code }}</span></td>
+      <td><span class="code">{{ airport.icao_code }}</span></td>
+      <td><span class="code">{{ airport.faa_lid }}</span></td>
+      <td>{{ airport.visits }}</td>
+      <td>{{ flights | length }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Flights</h2>
+{% include "partials/flight_table.html" %}
+{% endblock content %}

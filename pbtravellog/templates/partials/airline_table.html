@@ -1,10 +1,12 @@
 {% import "macros/icons.html" as icons %}
 <table>
   <thead>
-    <th class="rank">#</th>
-    <th>Airline</th>
-    <th class="iata-code">IATA</th>
-    <th class="count">Flights</th>
+    <tr>
+      <th class="rank">#</th>
+      <th>Airline</th>
+      <th class="iata-code">IATA</th>
+      <th class="count">Flights</th>
+    </tr>
   </thead>
   <tbody>
     {% for airline in airlines %}

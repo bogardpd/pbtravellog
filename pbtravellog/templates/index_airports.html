@@ -3,16 +3,18 @@
 {% block content %}
 <table>
   <thead>
-    <th class="rank">#</th>
-    <th>Airport</th>
-    <th class="iata-code">IATA</th>
-    <th class="airport-visits">Visits</th>
+    <tr>
+      <th class="rank">#</th>
+      <th>Airport</th>
+      <th class="iata-code">IATA</th>
+      <th class="airport-visits">Visits</th>
+    </tr>
   </thead>
   <tbody>
     {% for airport in airports %}
     <tr>
       <td class="rank">{% if loop.first or airport.rank != loop.previtem.rank %}{{ airport.rank }}{% else %}⋮{% endif %}</td>
-      <td>{{ airport.name }}</td>
+      <td><a href="/airports/{{ airport.id }}.html">{{ airport.name }}</a></td>
       <td class="iata-code"><span class="code">{{ airport.iata_code }}</span></td>
       <td class="airport-visits">{{ airport.visits }}</td>
     </tr>

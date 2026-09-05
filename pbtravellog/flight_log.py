@@ -546,9 +546,10 @@ class Trip(Record):
 
 def airport_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
     """Calculates airport visit counts from flights."""
-    count_orig = count_origin_visits(flights_gdf)
-    flights_gdf.loc[~count_orig, "origin_airport_fid"] = pd.NA
-    counts = flights_gdf[["origin_airport_fid", "destination_airport_fid"]] \
+    gdf = flights_gdf.copy()
+    count_orig = count_origin_visits(gdf)
+    gdf.loc[~count_orig, "origin_airport_fid"] = pd.NA
+    counts = gdf[["origin_airport_fid", "destination_airport_fid"]] \
         .stack().value_counts()
     return counts
 
