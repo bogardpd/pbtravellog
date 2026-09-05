@@ -6,7 +6,6 @@ import tomllib
 
 # Third-party imports
 import pandas as pd
-from tabulate import tabulate
 
 # Project imports
 import pbtravellog.flight_log as fl
