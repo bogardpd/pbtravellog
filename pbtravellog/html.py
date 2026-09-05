@@ -26,25 +26,293 @@ if HTML_PATH is None:
         "Environment variable PBTRAVELLOG_HTML_PATH is missing."
     )
 
-ALL_FLIGHTS = Flight.joined_table()
-ALL_AIRLINES = Airline.all()
-ALL_AIRPORTS = Airport.all()
+
+
+class StaticHTMLBuilder():
+    """Manages generation of static HTML travel data."""
+
+
+
+    def __init__(self):
+        """Initialize the static HTML builder."""
+        self.all_flights = Flight.joined_table()
+        self.all_airlines = Airline.all()
+        self.all_airports = Airport.all()
+        self.html_dir = Path(HTML_PATH)
+        self.env = self._jinja_env()
+
+    def build(self):
+        """Builds a directory of static HTML pages."""
+        print("Building PBTravelLog HTML…")
+
+        self._build_structure()
+        self._build_home()
+        self._build_flights()
+        self._build_aircraft()
+        self._build_airlines()
+        self._build_airports()
+        self._build_tails()
+
+        print(f"Wrote static site to \"{self.html_dir}\".")
+
+    def _build_aircraft(self) -> None:
+        """Builds aircraft pages."""
+        print("- Building aircraft…")
+        aircraft_dir = self.html_dir / "aircraft"
+        aircraft_dir.mkdir()
+
+        aircraft_families_table = self._tabulate_aircraft_families(
+            self.all_flights
+        )
+        aircraft_family_items = []
+        for idx, row in aircraft_families_table.iterrows():
+            aircraft_family_items.append({
+                "rank": row["rank"],
+                "name": idx,
+                "count": row["count"],
+            })
+        index_aircraft_families_html = self.env.get_template(
+            "index_aircraft_families.html"
+        ).render(aircraft_families=aircraft_family_items)
+        (aircraft_dir / "index.html").write_text(
+            index_aircraft_families_html,
+            encoding="utf-8",
+        )
+
+    def _build_airlines(self) -> None:
+        """Builds airline pages."""
+        print("- Building airlines…")
+        airlines_dir = self.html_dir / "airlines"
+        airlines_dir.mkdir()
+
+        tables = {
+            "airlines": self._tabulate_airlines(
+                self.all_flights,
+                column="airline_fid",
+            ),
+            "operators": self._tabulate_airlines(
+                self.all_flights,
+                column="operator_fid",
+            ),
+        }
+        items = {
+            "airlines": [],
+            "operators": [],
+        }
+        for airline_type, airline_table in tables.items():
+            for idx, row in airline_table.iterrows():
+                items[airline_type].append({
+                    "fid": idx,
+                    "rank": row["rank"],
+                    "name": row["name"],
+                    "iata_code": _blank_if_na(row["iata_code"]),
+                    "count": row["count"],
+                })
+        index_airlines_html = self.env.get_template("index_airlines.html") \
+            .render(airlines=items["airlines"], operators=items["operators"])
+        (airlines_dir / "index.html").write_text(
+            index_airlines_html,
+            encoding="utf-8",
+        )
+
+    def _build_airports(self) -> None:
+        """Builds airport pages."""
+        print("- Building airports…")
+        airports_dir = self.html_dir / "airports"
+        airports_dir.mkdir()
+
+        airports = []
+        for idx, row in self._tabulate_airports(self.all_flights).iterrows():
+            airport = self._recordify_airport(idx, row)
+            airport_flights = self.all_flights.copy()
+            airport_flights_table = self._tabulate_flights(
+                airport_flights[
+                    (airport_flights["origin_airport_fid"] == idx)
+                    | (airport_flights["destination_airport_fid"] == idx)
+                ]
+            )
+            airport_flight_records = [
+                self._recordify_flight(_, r)
+                for _, r in airport_flights_table.iterrows()
+            ]
+            show_airport_html = self.env.get_template("show_airport.html") \
+                .render(
+                    airport=airport,
+                    flights=airport_flight_records,
+                )
+            (airports_dir / f"{airport["id"]}.html").write_text(
+                show_airport_html,
+                encoding="utf-8",
+            )
+            airports.append(airport)
+        index_airports_html = self.env.get_template("index_airports.html") \
+            .render(airports=airports)
+        (airports_dir / "index.html").write_text(
+            index_airports_html,
+            encoding="utf-8",
+        )
+
+    def _build_flights(self) -> None:
+        """Builds flight pages."""
+        print("- Building flights…")
+        flights_table = self._tabulate_flights(self.all_flights.copy())
+        flights_dir = self.html_dir / "flights"
+        flights_dir.mkdir()
+        flight_items = []
+        for _, row in flights_table.iterrows():
+            flight = self._recordify_flight(_, row)
+            flight_items.append(flight)
+        index_flights_html = self.env.get_template("index_flights.html") \
+            .render(flights=flight_items)
+        (flights_dir / "index.html").write_text(
+            index_flights_html,
+            encoding="utf-8",
+        )
+
+    def _build_home(self) -> None:
+        """Builds home page."""
+        home_html = self.env.get_template("home.html").render()
+        (self.html_dir / "index.html").write_text(home_html, encoding="utf-8")
+
+    def _build_structure(self) -> None:
+        """Ensures empty HTML folder and copies static files."""
+        self.html_dir.mkdir(parents=True, exist_ok=True)
+        for item in self.html_dir.iterdir():
+            if item.is_file():
+                item.unlink()
+            elif item.is_dir():
+                shutil.rmtree(item)
+        static_dir = files("pbtravellog") / "static"
+        with as_file(static_dir) as static_path:
+            shutil.copytree(static_path, self.html_dir, dirs_exist_ok=True)
+
+    def _build_tails(self) -> None:
+        """Builds tail number pages."""
+        print("- Building tail numbers…")
+        tails_dir = self.html_dir / "tails"
+        tails_dir.mkdir()
+
+        tails_table = self._tabulate_tails(self.all_flights)
+        tail_items = []
+        for idx, row in tails_table.iterrows():
+            tail_items.append({
+                "rank": row["rank"],
+                "tail_number": idx,
+                "aircraft_type_name": _blank_if_na(row["equipment"]),
+                "count": row["count"],
+            })
+        index_tails_html = self.env.get_template("index_tails.html") \
+            .render(tails=tail_items)
+        (tails_dir / "index.html").write_text(
+            index_tails_html,
+            encoding="utf-8",
+        )
+
+    def _jinja_env(self) -> Environment:
+        """Creates a Jinja environment."""
+        env = Environment(
+            loader=PackageLoader("pbtravellog"),
+            autoescape=True,
+        )
+        env.filters["format_utc"] = _format_utc
+        return env
+
+    def _recordify_airport(self, idx, row) -> dict:
+        """Turns an airport row into a record."""
+        return {
+            "id": str(idx),
+            "rank": row["rank"],
+            "name": row["name"],
+            "iata_code": _blank_if_na(row["iata_code"]),
+            "icao_code": _blank_if_na(row["icao_code"]),
+            "faa_lid": _blank_if_na(row["faa_lid"]),
+            "visits": row["visits"],
+        }
+
+    def _recordify_flight(self, _, row) -> dict:
+        """Turns a flight row into a record."""
+        airport_codes = _airport_codes(row)
+        return {
+            "name": _flight_name(row),
+            "airline_fid": row["airline_fid"],
+            "origin_airport_code": airport_codes[0],
+            "destination_airport_code": airport_codes[1],
+            "departure_utc": row["departure_utc"],
+            "continues_via_layover": row["continues_via_layover"],
+        }
+
+    def _tabulate_aircraft_families(self, flights_table) -> pd.DataFrame:
+        """Creates a table of aircraft families from a table of flights."""
+        ft = flights_table.copy()
+        df = ft.groupby("aircraft_type_family").agg(
+            count=("aircraft_type_family", "count"),
+        )
+        df = df.sort_values(
+            by=["count", "aircraft_type_family"],
+            ascending=[False, True],
+        )
+        df["rank"] = df["count"].rank(method="min", ascending=False) \
+            .astype("Int64")
+        return df
+
+    def _tabulate_airlines(
+        self, flights_table, column="airline_fid"
+    ) -> pd.DataFrame:
+        """Creates a table of airlines from a table of flights."""
+        df = pd.DataFrame(self.all_airlines.copy())
+        count = flights_table[column].value_counts()
+        df = df.join(count, how="right")
+        df = df.sort_values(
+            by=["count", "name"],
+            ascending=[False, True],
+        )
+        df["rank"] = df["count"].rank(method="min", ascending=False)
+        return df
+
+    def _tabulate_airports(self, flights_table) -> gpd.GeoDataFrame:
+        """Creates a table of airports from a table of flights."""
+        gdf = self.all_airports.copy()
+        visits = airport_visits(flights_table)
+        gdf = gdf.join(visits)
+        gdf = gdf.rename(columns={"count": "visits"})
+        gdf = gdf.dropna(subset=["visits"])
+        gdf = gdf.sort_values(
+            by=["visits", "name"],
+            ascending=[False, True],
+        )
+        gdf["rank"] = gdf["visits"].rank(method="min", ascending=False)
+        return gdf
+
+    def _tabulate_flights(self, flights_table) -> gpd.GeoDataFrame:
+        """Normalizes a table of flights for Jinja output."""
+        gdf = flights_table.copy()
+        gdf["continues_via_layover"] = (
+            gdf["trip_fid"].notna()
+            & gdf["trip_section"].notna()
+            & (gdf["trip_fid"] == gdf["trip_fid"].shift(-1))
+            & (gdf["trip_section"] == gdf["trip_section"].shift(-1))
+        ).fillna(False)
+        return gdf
+
+    def _tabulate_tails(self, flights_table) -> pd.DataFrame:
+        """Create a table of tail numbers from a table of flights."""
+        ft = flights_table.copy().sort_values("departure_utc")
+        df = ft.groupby("tail_number").agg(
+            count=("tail_number", "count"),
+            equipment=("aircraft_type_name", "last")
+        )
+        df = df.sort_values(
+            by=["count", "tail_number"],
+            ascending=[False, True],
+        )
+        df["rank"] = df["count"].rank(method="min", ascending=False) \
+            .astype("Int64")
+        return df
 
 def build():
     """Builds a directory of static HTML pages."""
-    print("Building PBTravelLog HTML…")
-    html_dir = Path(HTML_PATH)
-
-    env = _jinja_env()
-    _build_structure(html_dir)
-    _build_home(html_dir, env)
-    _build_flights(html_dir, env, ALL_FLIGHTS)
-    _build_aircraft(html_dir, env, ALL_FLIGHTS)
-    _build_airlines(html_dir, env, ALL_FLIGHTS)
-    _build_airports(html_dir, env, ALL_FLIGHTS)
-    _build_tails(html_dir, env, ALL_FLIGHTS)
-
-    print(f"Wrote static site to \"{html_dir}\".")
+    b = StaticHTMLBuilder()
+    b.build()
 
 def run(port):
     """Launches a server and browser."""
@@ -93,148 +361,6 @@ def _blank_if_na(value):
         return ""
     return value
 
-def _build_aircraft(html_dir, env, flights_table) -> None:
-    """Builds aircraft pages."""
-    print("- Building aircraft…")
-    aircraft_dir = html_dir / "aircraft"
-    aircraft_dir.mkdir()
-
-    aircraft_families_table = _tabulate_aircraft_families(flights_table)
-    aircraft_family_items = []
-    for idx, row in aircraft_families_table.iterrows():
-        aircraft_family_items.append({
-            "rank": row["rank"],
-            "name": idx,
-            "count": row["count"],
-        })
-    index_aircraft_families_html = env.get_template(
-        "index_aircraft_families.html"
-    ).render(aircraft_families=aircraft_family_items)
-    (aircraft_dir / "index.html").write_text(
-        index_aircraft_families_html,
-        encoding="utf-8",
-    )
-
-def _build_airlines(html_dir, env, flights_table) -> None:
-    """Builds airline pages."""
-    print("- Building airlines…")
-    airlines_dir = html_dir / "airlines"
-    airlines_dir.mkdir()
-
-    tables = {
-        "airlines": _tabulate_airlines(flights_table, column="airline_fid"),
-        "operators": _tabulate_airlines(flights_table, column="operator_fid"),
-    }
-    items = {
-        "airlines": [],
-        "operators": [],
-    }
-    for airline_type, airline_table in tables.items():
-        for idx, row in airline_table.iterrows():
-            items[airline_type].append({
-                "fid": idx,
-                "rank": row["rank"],
-                "name": row["name"],
-                "iata_code": _blank_if_na(row["iata_code"]),
-                "count": row["count"],
-            })
-    index_airlines_html = env.get_template("index_airlines.html") \
-        .render(airlines=items["airlines"], operators=items["operators"])
-    (airlines_dir / "index.html").write_text(
-        index_airlines_html,
-        encoding="utf-8",
-    )
-
-def _build_airports(html_dir, env, flights_table) -> None:
-    """Builds airport pages."""
-    print("- Building airports…")
-    airports_dir = html_dir / "airports"
-    airports_dir.mkdir()
-
-    airports = []
-    for idx, row in _tabulate_airports(flights_table).iterrows():
-        airport = _recordify_airport(idx, row)
-        airport_flights = ALL_FLIGHTS.copy()
-        airport_flights_table = _tabulate_flights(
-            airport_flights[
-                (airport_flights["origin_airport_fid"] == idx)
-                | (airport_flights["destination_airport_fid"] == idx)
-            ]
-        )
-        airport_flight_records = [
-            _recordify_flight(_, r)
-            for _, r in airport_flights_table.iterrows()
-        ]
-        show_airport_html = env.get_template("show_airport.html") \
-            .render(
-                airport=airport,
-                flights=airport_flight_records,
-            )
-        (airports_dir / f"{airport["id"]}.html").write_text(
-            show_airport_html,
-            encoding="utf-8",
-        )
-        airports.append(airport)
-    index_airports_html = env.get_template("index_airports.html") \
-        .render(airports=airports)
-    (airports_dir / "index.html").write_text(
-        index_airports_html,
-        encoding="utf-8",
-    )
-
-def _build_flights(html_dir, env, flights_table) -> None:
-    """Builds flight pages."""
-    print("- Building flights…")
-    flights_table = _tabulate_flights(flights_table.copy())
-    flights_dir = html_dir / "flights"
-    flights_dir.mkdir()
-    flight_items = []
-    for _, row in flights_table.iterrows():
-        flight = _recordify_flight(_, row)
-        flight_items.append(flight)
-    index_flights_html = env.get_template("index_flights.html") \
-        .render(flights=flight_items)
-    (flights_dir / "index.html").write_text(
-        index_flights_html,
-        encoding="utf-8",
-    )
-
-def _build_home(html_dir, env) -> None:
-    """Builds home page."""
-    home_html = env.get_template("home.html").render()
-    (html_dir / "index.html").write_text(home_html, encoding="utf-8")
-
-def _build_structure(html_dir) -> None:
-    """Ensures empty HTML folder and copies static files."""
-    html_dir.mkdir(parents=True, exist_ok=True)
-    for item in html_dir.iterdir():
-        if item.is_file():
-            item.unlink()
-        elif item.is_dir():
-            shutil.rmtree(item)
-    static_dir = files("pbtravellog") / "static"
-    with as_file(static_dir) as static_path:
-        shutil.copytree(static_path, html_dir, dirs_exist_ok=True)
-
-def _build_tails(html_dir, env, flights_table) -> None:
-    """Builds tail number pages."""
-    print("- Building tail numbers…")
-    tails_dir = html_dir / "tails"
-    tails_dir.mkdir()
-
-    tails_table = _tabulate_tails(flights_table)
-    tail_items = []
-    for idx, row in tails_table.iterrows():
-        tail_items.append({
-            "rank": row["rank"],
-            "tail_number": idx,
-            "aircraft_type_name": _blank_if_na(row["equipment"]),
-            "count": row["count"],
-        })
-    index_tails_html = env.get_template("index_tails.html") \
-        .render(tails=tail_items)
-    (tails_dir / "index.html").write_text(index_tails_html, encoding="utf-8")
-
 def _flight_name(row) -> str:
     """Formats a flight name."""
     if pd.notna(row.airline_name):
@@ -247,102 +373,3 @@ def _format_utc(dt) -> str:
     if dt is None:
         return ""
     return dt.strftime("%Y-%m-%d %H:%M")
-
-def _jinja_env() -> Environment:
-    """Creates a Jinja environment."""
-    env = Environment(
-        loader=PackageLoader("pbtravellog"),
-        autoescape=True,
-    )
-    env.filters["format_utc"] = _format_utc
-    return env
-
-def _recordify_airport(idx, row) -> dict:
-    """Turns an airport row into a record."""
-    return {
-        "id": str(idx),
-        "rank": row["rank"],
-        "name": row["name"],
-        "iata_code": _blank_if_na(row["iata_code"]),
-        "icao_code": _blank_if_na(row["icao_code"]),
-        "faa_lid": _blank_if_na(row["faa_lid"]),
-        "visits": row["visits"],
-    }
-
-def _recordify_flight(_, row) -> dict:
-    """Turns a flight row into a record."""
-    airport_codes = _airport_codes(row)
-    return {
-        "name": _flight_name(row),
-        "airline_fid": row["airline_fid"],
-        "origin_airport_code": airport_codes[0],
-        "destination_airport_code": airport_codes[1],
-        "departure_utc": row["departure_utc"],
-        "continues_via_layover": row["continues_via_layover"],
-    }
-
-def _tabulate_aircraft_families(flights_table) -> pd.DataFrame:
-    """Creates a table of aircraft families from a table of flights."""
-    ft = flights_table.copy()
-    df = ft.groupby("aircraft_type_family").agg(
-        count=("aircraft_type_family", "count"),
-    )
-    df = df.sort_values(
-        by=["count", "aircraft_type_family"],
-        ascending=[False, True],
-    )
-    df["rank"] = df["count"].rank(method="min", ascending=False) \
-        .astype("Int64")
-    return df
-
-def _tabulate_airlines(flights_table, column="airline_fid") -> pd.DataFrame:
-    """Creates a table of airlines from a table of flights."""
-    df = pd.DataFrame(ALL_AIRLINES.copy())
-    count = flights_table[column].value_counts()
-    df = df.join(count, how="right")
-    df = df.sort_values(
-        by=["count", "name"],
-        ascending=[False, True],
-    )
-    df["rank"] = df["count"].rank(method="min", ascending=False)
-    return df
-
-def _tabulate_airports(flights_table) -> gpd.GeoDataFrame:
-    """Creates a table of airports from a table of flights."""
-    gdf = ALL_AIRPORTS.copy()
-    visits = airport_visits(flights_table)
-    gdf = gdf.join(visits)
-    gdf = gdf.rename(columns={"count": "visits"})
-    gdf = gdf.dropna(subset=["visits"])
-    gdf = gdf.sort_values(
-        by=["visits", "name"],
-        ascending=[False, True],
-    )
-    gdf["rank"] = gdf["visits"].rank(method="min", ascending=False)
-    return gdf
-
-def _tabulate_flights(flights_table) -> gpd.GeoDataFrame:
-    """Normalizes a table of flights for Jinja output."""
-    gdf = flights_table.copy()
-    gdf["continues_via_layover"] = (
-        gdf["trip_fid"].notna()
-        & gdf["trip_section"].notna()
-        & (gdf["trip_fid"] == gdf["trip_fid"].shift(-1))
-        & (gdf["trip_section"] == gdf["trip_section"].shift(-1))
-    ).fillna(False)
-    return gdf
-
-def _tabulate_tails(flights_table) -> pd.DataFrame:
-    """Create a table of tail numbers from a table of flights."""
-    ft = flights_table.copy().sort_values("departure_utc")
-    df = ft.groupby("tail_number").agg(
-        count=("tail_number", "count"),
-        equipment=("aircraft_type_name", "last")
-    )
-    df = df.sort_values(
-        by=["count", "tail_number"],
-        ascending=[False, True],
-    )
-    df["rank"] = df["count"].rank(method="min", ascending=False) \
-        .astype("Int64")
-    return df
