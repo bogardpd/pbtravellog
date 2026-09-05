@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Aircraft Families{% endblock %}
+{% block content %}
+<table>
+  <thead>
+    <th class="rank">#</th>
+    <th>Family</th>
+    <th class="count">Flights</th>
+  </thead>
+  <tbody>
+    {% for family in aircraft_families %}
+    <tr>
+      <td class="rank">{% if loop.first or family.rank != loop.previtem.rank %}{{ family.rank }}{% else %}⋮{% endif %}</td>
+      <td>{{ family.name }}</td>
+      <td class="count">{{ family.count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock content %}

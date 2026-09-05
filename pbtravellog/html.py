@@ -16,7 +16,9 @@ from jinja2 import Environment, PackageLoader
 import pandas as pd
 
 # Project imports
-from pbtravellog.flight_log import Flight, Airport, Airline, airport_visits
+from pbtravellog.flight_log import (
+    Flight, Airport, Airline, airport_visits
+)
 
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
 if HTML_PATH is None:
@@ -32,8 +34,8 @@ if PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is None:
         "Environment variable PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is missing."
     )
 
-ALL_AIRPORTS = Airport.all()
 ALL_AIRLINES = Airline.all()
+ALL_AIRPORTS = Airport.all()
 
 def build():
     """Builds a directory of static HTML pages."""
@@ -47,6 +49,7 @@ def build():
     _build_structure(html_dir)
     _build_home(html_dir, env)
     _build_flights(html_dir, env, flights_table)
+    _build_aircraft(html_dir, env, flights_table)
     _build_airlines(html_dir, env, flights_table)
     _build_airports(html_dir, env, flights_table)
     _build_tails(html_dir, env, flights_table)
@@ -99,6 +102,28 @@ def _blank_if_na(value):
     if pd.isna(value):
         return ""
     return value
+
+def _build_aircraft(html_dir, env, flights_table) -> None:
+    """Builds aircraft pages."""
+    print("- Building aircraft…")
+    aircraft_dir = html_dir / "aircraft"
+    aircraft_dir.mkdir()
+
+    aircraft_families_table = _tabulate_aircraft_families(flights_table)
+    aircraft_family_items = []
+    for idx, row in aircraft_families_table.iterrows():
+        aircraft_family_items.append({
+            "rank": row["rank"],
+            "name": idx,
+            "count": row["count"],
+        })
+    index_aircraft_families_html = env.get_template(
+        "index_aircraft_families.html"
+    ).render(aircraft_families=aircraft_family_items)
+    (aircraft_dir / "index.html").write_text(
+        index_aircraft_families_html,
+        encoding="utf-8",
+    )
 
 def _build_airlines(html_dir, env, flights_table) -> None:
     """Builds airline pages."""
@@ -233,6 +258,20 @@ def _jinja_env() -> Environment:
     )
     env.filters["format_utc"] = _format_utc
     return env
+
+def _tabulate_aircraft_families(flights_table) -> pd.DataFrame:
+    """Creates a table of aircraft families from a table of flights."""
+    ft = flights_table.copy()
+    df = ft.groupby("aircraft_type_family").agg(
+        count=("aircraft_type_family", "count"),
+    )
+    df = df.sort_values(
+        by=["count", "aircraft_type_family"],
+        ascending=[False, True],
+    )
+    df["rank"] = df["count"].rank(method="min", ascending=False) \
+        .astype("Int64")
+    return df
 
 def _tabulate_airlines(flights_table, column="airline_fid") -> pd.DataFrame:
     """Creates a table of airlines from a table of flights."""
