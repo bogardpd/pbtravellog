@@ -77,7 +77,7 @@ class StaticHTMLBuilder():
         self._build_structure()
         self._build_home()
         self._build_flights()
-        # self._build_aircraft()
+        self._build_aircraft()
         # self._build_airlines()
         self._build_airports()
         # self._build_tails()
@@ -90,19 +90,23 @@ class StaticHTMLBuilder():
         aircraft_dir = self.html_dir / "aircraft"
         aircraft_dir.mkdir()
 
-        aircraft_families_table = self._tabulate_aircraft_families(
+        aircraft_family_records = self._collect_aircraft_family_records(
             self.all_flights
         )
-        aircraft_family_items = []
-        for idx, row in aircraft_families_table.iterrows():
-            aircraft_family_items.append({
-                "rank": row["rank"],
-                "name": idx,
-                "count": row["count"],
-            })
+
+        # aircraft_families_table = self._tabulate_aircraft_families(
+        #     self.all_flights
+        # )
+        # aircraft_family_items = []
+        # for idx, row in aircraft_families_table.iterrows():
+        #     aircraft_family_items.append({
+        #         "rank": row["rank"],
+        #         "name": idx,
+        #         "count": row["count"],
+        #     })
         index_aircraft_families_html = self.env.get_template(
             "index_aircraft_families.html"
-        ).render(aircraft_families=aircraft_family_items)
+        ).render(aircraft_families=aircraft_family_records)
         (aircraft_dir / "index.html").write_text(
             index_aircraft_families_html,
             encoding="utf-8",
@@ -222,6 +226,35 @@ class StaticHTMLBuilder():
             encoding="utf-8",
         )
 
+    def _collect_aircraft_family_records(self, flight_records) -> list[dict]:
+        """Builds aircraft family records from flight records."""
+        aircraft_family_flight_count = defaultdict(int)
+        for flight in flight_records:
+            aircraft_family_flight_count[flight["aircraft_type_family"]] += 1
+        sorted_count_tuples = sorted(
+            aircraft_family_flight_count.items(),
+            key=lambda x: -x[1],
+        )
+        aircraft_family_records = []
+        prev_count = None
+        prev_rank = 0
+        for idx, (aircraft_family, count) in enumerate(sorted_count_tuples):
+            rank = prev_rank if count == prev_count else idx + 1
+            record = {
+                "index_id": idx,
+                "name": aircraft_family,
+                "count": count,
+                "rank": rank,
+            }
+            aircraft_family_records.append(record)
+            prev_count = count
+            prev_rank = rank
+            aircraft_family_records = sorted(
+                aircraft_family_records,
+                key=lambda x: (-x["count"], x["name"]),
+            )
+        return aircraft_family_records
+
     def _collect_airport_records(self, flight_records) -> list[dict]:
         """Builds airport records from flight records."""
         airport_visit_count = defaultdict(int)
@@ -233,8 +266,15 @@ class StaticHTMLBuilder():
                 airport_visit_count[flight["origin_airport_fid"]] += 1
             airport_visit_count[flight["destination_airport_fid"]] += 1
             prev_trip_sec = curr_trip_sec
+        sorted_visit_tuples = sorted(
+            airport_visit_count.items(),
+            key=lambda x: -x[1],
+        )
         airport_records = []
-        for airport_fid, visits in airport_visit_count.items():
+        prev_visits = None
+        prev_rank = 0
+        for idx, (airport_fid, visits) in enumerate(sorted_visit_tuples):
+            rank = prev_rank if visits == prev_visits else idx + 1
             airport_row = self.all_airports.loc[airport_fid]
             record = {
                 "fid": airport_fid,
@@ -243,13 +283,19 @@ class StaticHTMLBuilder():
                 "icao_code": airport_row["icao_code"],
                 "faa_lid": airport_row["faa_lid"],
                 "visits": visits,
+                "rank": rank,
             }
             record = {
                 k: (None if pd.isna(v) else v) for k, v in record.items()
             }
             airport_records.append(record)
-
-        return sorted(airport_records, key=lambda x: x["visits"], reverse=True)
+            prev_visits = visits
+            prev_rank = rank
+        
+        airport_records = sorted(
+            airport_records, key=lambda x: (-x["visits"], x["name"]),
+        )
+        return airport_records
 
     def _filter_flights_by_airport(self, flight_records, airport_fid):
             """Filters flight records by an airport."""
@@ -288,6 +334,7 @@ class StaticHTMLBuilder():
             "fid": flight_fid,
             "departure_utc": row["departure_utc"].to_pydatetime(),
             "name": _flight_name(row),
+            "aircraft_type_family": row["aircraft_type_family"],
             "airline_fid": row["airline_fid"],
             "origin_airport_fid": row["origin_airport_fid"],
             "origin_airport_code": airport_codes[0],
