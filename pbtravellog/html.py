@@ -64,7 +64,7 @@ class StaticHTMLBuilder():
 
     def __init__(self):
         """Initialize the static HTML builder."""
-        self.all_flights = Flight.joined_records()
+        self.all_flights = self._load_joined_flight_records()
         self.all_airlines = Airline.all()
         self.all_airports = Airport.all()
         self.html_dir = Path(HTML_PATH)
@@ -83,17 +83,6 @@ class StaticHTMLBuilder():
         # self._build_tails()
 
         print(f"Wrote static site to \"{self.html_dir}\".")
-
-    def _airport_flights(self, flight_records, airport_fid):
-        """Filters flight records by an airport."""
-        records = [
-            r for r in flight_records
-            if (
-                r["origin_airport_fid"] == airport_fid
-                or r["destination_airport_fid"] == airport_fid
-            )
-        ]
-        return records
 
     def _build_aircraft(self) -> None:
         """Builds aircraft pages."""
@@ -161,12 +150,12 @@ class StaticHTMLBuilder():
         airports_dir = self.html_dir / "airports"
         airports_dir.mkdir()
 
-        airport_records = self._flights_airports(self.all_flights)
+        airport_records = self._collect_airport_records(self.all_flights)
         for airport in airport_records:
             show_airport_html = self.env.get_template("show_airport.html") \
                 .render(
                     airport=airport,
-                    flights=self._airport_flights(
+                    flights=self._filter_flights_by_airport(
                         self.all_flights,
                         airport["fid"]
                     ),
@@ -233,7 +222,7 @@ class StaticHTMLBuilder():
             encoding="utf-8",
         )
 
-    def _flights_airports(self, flight_records) -> list[dict]:
+    def _collect_airport_records(self, flight_records) -> list[dict]:
         """Builds airport records from flight records."""
         airport_visit_count = defaultdict(int)
         prev_trip_sec = [None, None]
@@ -262,6 +251,17 @@ class StaticHTMLBuilder():
 
         return sorted(airport_records, key=lambda x: x["visits"], reverse=True)
 
+    def _filter_flights_by_airport(self, flight_records, airport_fid):
+            """Filters flight records by an airport."""
+            records = [
+                r for r in flight_records
+                if (
+                    r["origin_airport_fid"] == airport_fid
+                    or r["destination_airport_fid"] == airport_fid
+                )
+            ]
+            return records
+    
     def _jinja_env(self) -> Environment:
         """Creates a Jinja environment."""
         env = Environment(
@@ -270,6 +270,36 @@ class StaticHTMLBuilder():
         )
         env.filters["format_utc"] = _format_utc
         return env
+
+    def _load_joined_flight_records(self) -> list[dict]:
+        """Loads records from Flight.joined()."""
+        gdf = Flight.joined()
+        output = [
+            self._recordize_flight_row(idx, row)
+            for idx, row in gdf.iterrows()
+        ]
+        output = sorted(output, key=lambda x: x["departure_utc"])
+        return output
+
+    def _recordize_flight_row(self, flight_fid, row) -> dict:
+        """Turns a flight row into a record."""
+        airport_codes = _airport_codes(row)
+        record = {
+            "fid": flight_fid,
+            "departure_utc": row["departure_utc"].to_pydatetime(),
+            "name": _flight_name(row),
+            "airline_fid": row["airline_fid"],
+            "origin_airport_fid": row["origin_airport_fid"],
+            "origin_airport_code": airport_codes[0],
+            "destination_airport_fid": row["destination_airport_fid"],
+            "destination_airport_code": airport_codes[1],
+            "trip_fid": row["trip_fid"],
+            "trip_section": row["trip_section"],
+        }
+        record = {
+            k: (None if pd.isna(v) else v) for k, v in record.items()
+        }
+        return record
 
     def _tabulate_aircraft_families(self, flights_table) -> pd.DataFrame:
         """Creates a table of aircraft families from a table of flights."""
@@ -369,28 +399,41 @@ def run(port):
             print("\nShutting down server.")
             sys.exit(0)
 
+
+def _airport_codes(row) -> tuple[str]:
+    """Returns a default origin and destination code."""
+    orig = [
+        row["origin_airport_iata_code"],
+        row["origin_airport_icao_code"],
+        row["origin_airport_faa_lid"],
+    ]
+    orig = [v for v in orig if pd.notna(v)][0]
+    dest = [
+        row["destination_airport_iata_code"],
+        row["destination_airport_icao_code"],
+        row["destination_airport_faa_lid"],
+    ]
+    dest = [v for v in dest if pd.notna(v)][0]
+    return (orig, dest)
+
 def _blank_if_na(value):
     """Returns an empty string if a row value is empty."""
     if pd.isna(value):
         return ""
     return value
 
+def _flight_name(row) -> str:
+    """Formats a flight name."""
+    if pd.notna(row.airline_name):
+        if pd.notna(row.flight_number):
+            return f"{row.airline_name} {row.flight_number}"
+        return row.airline_name
+    return "Unnamed Flight"
+
 def _format_utc(dt) -> str:
     if dt is None:
         return ""
     return dt.strftime("%Y-%m-%d %H:%M")
-
-def _recordify_airport(idx, row) -> dict:
-    """Turns an airport row into a record."""
-    return {
-        "id": str(idx),
-        "rank": row["rank"],
-        "name": row["name"],
-        "iata_code": _blank_if_na(row["iata_code"]),
-        "icao_code": _blank_if_na(row["icao_code"]),
-        "faa_lid": _blank_if_na(row["faa_lid"]),
-        "visits": row["visits"],
-    }
 
 def _recordify_flight(_, row) -> dict:
     """Turns a flight row into a record."""
