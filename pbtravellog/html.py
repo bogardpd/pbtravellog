@@ -291,23 +291,23 @@ class StaticHTMLBuilder():
             airport_records.append(record)
             prev_visits = visits
             prev_rank = rank
-        
+
         airport_records = sorted(
             airport_records, key=lambda x: (-x["visits"], x["name"]),
         )
         return airport_records
 
     def _filter_flights_by_airport(self, flight_records, airport_fid):
-            """Filters flight records by an airport."""
-            records = [
-                r for r in flight_records
-                if (
-                    r["origin_airport_fid"] == airport_fid
-                    or r["destination_airport_fid"] == airport_fid
-                )
-            ]
-            return records
-    
+        """Filters flight records by an airport."""
+        records = [
+            r for r in flight_records
+            if (
+                r["origin_airport_fid"] == airport_fid
+                or r["destination_airport_fid"] == airport_fid
+            )
+        ]
+        return records
+
     def _jinja_env(self) -> Environment:
         """Creates a Jinja environment."""
         env = Environment(
