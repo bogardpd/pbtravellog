@@ -1,6 +1,7 @@
 """Builds and runs a static HTML travel log."""
 
 # Standard imports
+from collections import defaultdict
 from functools import partial
 import http.server
 from importlib.resources import files, as_file
@@ -63,7 +64,7 @@ class StaticHTMLBuilder():
 
     def __init__(self):
         """Initialize the static HTML builder."""
-        self.all_flights = FlightsTable(Flight.joined_table())
+        self.all_flights = Flight.joined_records()
         self.all_airlines = Airline.all()
         self.all_airports = Airport.all()
         self.html_dir = Path(HTML_PATH)
@@ -76,12 +77,23 @@ class StaticHTMLBuilder():
         self._build_structure()
         self._build_home()
         self._build_flights()
-        self._build_aircraft()
-        self._build_airlines()
+        # self._build_aircraft()
+        # self._build_airlines()
         self._build_airports()
-        self._build_tails()
+        # self._build_tails()
 
         print(f"Wrote static site to \"{self.html_dir}\".")
+
+    def _airport_flights(self, flight_records, airport_fid):
+        """Filters flight records by an airport."""
+        records = [
+            r for r in flight_records
+            if (
+                r["origin_airport_fid"] == airport_fid
+                or r["destination_airport_fid"] == airport_fid
+            )
+        ]
+        return records
 
     def _build_aircraft(self) -> None:
         """Builds aircraft pages."""
@@ -149,22 +161,22 @@ class StaticHTMLBuilder():
         airports_dir = self.html_dir / "airports"
         airports_dir.mkdir()
 
-        airports = []
-        for idx, row in self._tabulate_airports(self.all_flights).iterrows():
-            airport = _recordify_airport(idx, row)
-            airport_flights = self.all_flights.airport_records(idx)
+        airport_records = self._flights_airports(self.all_flights)
+        for airport in airport_records:
             show_airport_html = self.env.get_template("show_airport.html") \
                 .render(
                     airport=airport,
-                    flights=airport_flights,
+                    flights=self._airport_flights(
+                        self.all_flights,
+                        airport["fid"]
+                    ),
                 )
-            (airports_dir / f"{airport["id"]}.html").write_text(
+            (airports_dir / f"{airport["fid"]}.html").write_text(
                 show_airport_html,
                 encoding="utf-8",
             )
-            airports.append(airport)
         index_airports_html = self.env.get_template("index_airports.html") \
-            .render(airports=airports)
+            .render(airports=airport_records)
         (airports_dir / "index.html").write_text(
             index_airports_html,
             encoding="utf-8",
@@ -175,9 +187,8 @@ class StaticHTMLBuilder():
         print("- Building flights…")
         flights_dir = self.html_dir / "flights"
         flights_dir.mkdir()
-        flight_items = self.all_flights.flight_records()
         index_flights_html = self.env.get_template("index_flights.html") \
-            .render(flights=flight_items)
+            .render(flights=self.all_flights)
         (flights_dir / "index.html").write_text(
             index_flights_html,
             encoding="utf-8",
@@ -221,6 +232,35 @@ class StaticHTMLBuilder():
             index_tails_html,
             encoding="utf-8",
         )
+
+    def _flights_airports(self, flight_records) -> list[dict]:
+        """Builds airport records from flight records."""
+        airport_visit_count = defaultdict(int)
+        prev_trip_sec = [None, None]
+        for flight in flight_records:
+            curr_trip_sec = [flight["trip_fid"], flight["trip_section"]]
+            if curr_trip_sec != prev_trip_sec:
+                # This is not following a layover, so count the origin.
+                airport_visit_count[flight["origin_airport_fid"]] += 1
+            airport_visit_count[flight["destination_airport_fid"]] += 1
+            prev_trip_sec = curr_trip_sec
+        airport_records = []
+        for airport_fid, visits in airport_visit_count.items():
+            airport_row = self.all_airports.loc[airport_fid]
+            record = {
+                "fid": airport_fid,
+                "name": airport_row["name"],
+                "iata_code": airport_row["iata_code"],
+                "icao_code": airport_row["icao_code"],
+                "faa_lid": airport_row["faa_lid"],
+                "visits": visits,
+            }
+            record = {
+                k: (None if pd.isna(v) else v) for k, v in record.items()
+            }
+            airport_records.append(record)
+
+        return sorted(airport_records, key=lambda x: x["visits"], reverse=True)
 
     def _jinja_env(self) -> Environment:
         """Creates a Jinja environment."""
@@ -313,7 +353,7 @@ def run(port):
             "Did you run `pbtravellog build`?"
         )
 
-    # Launch web server
+    # Launch web server.
     handler = partial(
         http.server.SimpleHTTPRequestHandler, directory=HTML_PATH
     )
@@ -329,35 +369,11 @@ def run(port):
             print("\nShutting down server.")
             sys.exit(0)
 
-def _airport_codes(row) -> tuple[str]:
-    """Returns a default origin and destination code."""
-    orig = [
-        row["origin_airport_iata_code"],
-        row["origin_airport_icao_code"],
-        row["origin_airport_faa_lid"],
-    ]
-    orig = [v for v in orig if pd.notna(v)][0]
-    dest = [
-        row["destination_airport_iata_code"],
-        row["destination_airport_icao_code"],
-        row["destination_airport_faa_lid"],
-    ]
-    dest = [v for v in dest if pd.notna(v)][0]
-    return (orig, dest)
-
 def _blank_if_na(value):
     """Returns an empty string if a row value is empty."""
     if pd.isna(value):
         return ""
     return value
-
-def _flight_name(row) -> str:
-    """Formats a flight name."""
-    if pd.notna(row.airline_name):
-        if pd.notna(row.flight_number):
-            return f"{row.airline_name} {row.flight_number}"
-        return row.airline_name
-    return "Unnamed Flight"
 
 def _format_utc(dt) -> str:
     if dt is None:

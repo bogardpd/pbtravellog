@@ -417,7 +417,7 @@ class Flight(Record):
         return flight
 
     @classmethod
-    def joined_table(cls) -> gpd.GeoDataFrame:
+    def joined_records(cls) -> gpd.GeoDataFrame:
         """Returns all flight records joined to other tables."""
         # Load tables.
         flights_gdf = cls.all()
@@ -454,7 +454,31 @@ class Flight(Record):
             aircraft_types_df.add_prefix("aircraft_type_"),
             on="aircraft_type_fid",
         )
-        return flights_gdf
+
+        def recordize(idx, row):
+            """Converts a row into a dict."""
+            airport_codes = _airport_codes(row)
+            records = {
+                "fid": idx,
+                "departure_utc": row["departure_utc"].to_pydatetime(),
+                "name": _flight_name(row),
+                "airline_fid": row["airline_fid"],
+                "origin_airport_fid": row["origin_airport_fid"],
+                "origin_airport_code": airport_codes[0],
+                "destination_airport_fid": row["destination_airport_fid"],
+                "destination_airport_code": airport_codes[1],
+                "trip_fid": row["trip_fid"],
+                "trip_section": row["trip_section"],
+            }
+            records = {
+                k: (None if pd.isna(v) else v)
+                for k, v in records.items()
+            }
+            return records
+
+        output = [recordize(idx, row) for idx, row in flights_gdf.iterrows()]
+        output = sorted(output, key=lambda x: x["departure_utc"])
+        return output
 
     @staticmethod
     def parse_dt(dt_str) -> datetime | None:
@@ -939,6 +963,22 @@ def split_at_antimeridian(track_ls: LineString) -> MultiLineString:
     tracks = [track for track in tracks if len(track) > 1]
     return MultiLineString(tracks)
 
+def _airport_codes(row) -> tuple[str]:
+    """Returns a default origin and destination code."""
+    orig = [
+        row["origin_airport_iata_code"],
+        row["origin_airport_icao_code"],
+        row["origin_airport_faa_lid"],
+    ]
+    orig = [v for v in orig if pd.notna(v)][0]
+    dest = [
+        row["destination_airport_iata_code"],
+        row["destination_airport_icao_code"],
+        row["destination_airport_faa_lid"],
+    ]
+    dest = [v for v in dest if pd.notna(v)][0]
+    return (orig, dest)
+
 def _crossing_point(p1, p2):
     """Return the point where a track crosses the antemeridian.
     Returns None if p1 is already on the antemeridian.
@@ -973,6 +1013,14 @@ def _flight_from_aeroapi_results(aero_results) -> Flight:
     flight.exit_if_not_complete()
     flight.fetch_aeroapi_track_geometry()
     return flight
+
+def _flight_name(row) -> str:
+    """Formats a flight name."""
+    if pd.notna(row.airline_name):
+        if pd.notna(row.flight_number):
+            return f"{row.airline_name} {row.flight_number}"
+        return row.airline_name
+    return "Unnamed Flight"
 
 def _format_time(time_val):
     """Format time as ISO 8601 with Z."""

@@ -10,7 +10,7 @@
   </thead>
   <tbody>
     {% for flight in flights %}
-    <tr{% if flight.continues_via_layover %} class="continue"{% endif %}>
+    <tr{% if not loop.last and flight.trip_fid == loop.nextitem.trip_fid and flight.trip_section == loop.nextitem.trip_section %} class="continue"{% endif %}>
       <td class="rank">{{ loop.index }}</td>
       <td>{{ icons.airline(flight.airline_fid) }} {{ flight.name }}</td>
       <td class="flight-route"><span class="code">{{ flight.origin_airport_code }}</span> &rarr; <span class="code">{{ flight.destination_airport_code }}</span></td>

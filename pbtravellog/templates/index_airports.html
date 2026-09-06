@@ -14,7 +14,7 @@
     {% for airport in airports %}
     <tr>
       <td class="rank">{% if loop.first or airport.rank != loop.previtem.rank %}{{ airport.rank }}{% else %}⋮{% endif %}</td>
-      <td><a href="/airports/{{ airport.id }}.html">{{ airport.name }}</a></td>
+      <td><a href="/airports/{{ airport.fid }}.html">{{ airport.name }}</a></td>
       <td class="iata-code"><span class="code">{{ airport.iata_code }}</span></td>
       <td class="airport-visits">{{ airport.visits }}</td>
     </tr>
