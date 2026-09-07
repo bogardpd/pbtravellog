@@ -14,7 +14,7 @@
     {% for tail in tails %}
     <tr>
       <td class="rank">{% if loop.first or tail.rank != loop.previtem.rank %}{{ tail.rank }}{% else %}⋮{% endif %}</td>
-      <td><span class="code">{{ tail.tail_number }}</span></td>
+      <td>{{ tail.tail_number }}</td>
       <td>{{ tail.aircraft_type_name }}</td>
       <td class="count">{{ tail.count }}</td>
     </tr>

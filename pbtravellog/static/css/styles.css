@@ -70,8 +70,7 @@ h1 {
 img.icon {
     width: 48px;
     height: 24px;
-    vertical-align: middle;
-    margin-right: 0.5em;
+    vertical-align: text-bottom;
 }
 span.code, a.code {
     font-family: 'IBM Plex Mono', monospace;
