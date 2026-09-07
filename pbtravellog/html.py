@@ -161,23 +161,18 @@ class StaticHTMLBuilder():
         for flight in flight_records:
             aircraft_family_flight_count[flight["aircraft_type_family"]] += 1
         aircraft_family_flight_count.pop(None, None) # Remove None count
-        sorted_count_tuples = sorted(
-            aircraft_family_flight_count.items(), key=lambda x: -x[1],
-        )
+        ranks = _rank_count(aircraft_family_flight_count)
         aircraft_family_records = []
-        prev_count = None
-        prev_rank = 0
-        for idx, (aircraft_family, count) in enumerate(sorted_count_tuples):
-            rank = prev_rank if count == prev_count else idx + 1
+        for idx, (aircraft_family, count) in enumerate(
+            aircraft_family_flight_count.items()
+        ):
             record = {
                 "index_id": idx,
                 "name": aircraft_family,
                 "count": count,
-                "rank": rank,
+                "rank": ranks[aircraft_family],
             }
             aircraft_family_records.append(record)
-            prev_count = count
-            prev_rank = rank
         aircraft_family_records = sorted(
             aircraft_family_records, key=lambda x: (-x["count"], x["name"]),
         )
@@ -192,28 +187,23 @@ class StaticHTMLBuilder():
         for flight in flight_records:
             airline_flight_count[flight[column]] += 1
         airline_flight_count.pop(None, None) # Remove None count
-        sorted_count_tuples = sorted(
-            airline_flight_count.items(), key=lambda x: -x[1],
-        )
+        ranks = _rank_count(airline_flight_count)
         airline_records = []
-        prev_count = None
-        prev_rank = None
-        for idx, (airline_fid, count) in enumerate(sorted_count_tuples):
-            rank = prev_rank if count == prev_count else idx + 1
+        for _, (airline_fid, count) in enumerate(
+            airline_flight_count.items()
+        ):
             airline_row = self.all_airlines.loc[airline_fid]
             record = {
                 "fid": airline_fid,
                 "name": airline_row["name"],
                 "iata_code": airline_row["iata_code"],
                 "count": count,
-                "rank": rank,
+                "rank": ranks[airline_fid],
             }
             record = {
                 k: (None if pd.isna(v) else v) for k, v in record.items()
             }
             airline_records.append(record)
-            prev_count = count
-            prev_rank = rank
         airline_records = sorted(
             airline_records, key=lambda x: (-x["count"], x["name"])
         )
@@ -231,15 +221,11 @@ class StaticHTMLBuilder():
             airport_visit_count[flight["destination_airport_fid"]] += 1
             prev_trip_sec = curr_trip_sec
         airport_visit_count.pop(None, None) # Remove None count
-        sorted_visit_tuples = sorted(
-            airport_visit_count.items(),
-            key=lambda x: -x[1],
-        )
+        ranks = _rank_count(airport_visit_count)
         airport_records = []
-        prev_visits = None
-        prev_rank = 0
-        for idx, (airport_fid, visits) in enumerate(sorted_visit_tuples):
-            rank = prev_rank if visits == prev_visits else idx + 1
+        for _, (airport_fid, visits) in enumerate(
+            airport_visit_count.items()
+        ):
             airport_row = self.all_airports.loc[airport_fid]
             record = {
                 "fid": airport_fid,
@@ -248,14 +234,12 @@ class StaticHTMLBuilder():
                 "icao_code": airport_row["icao_code"],
                 "faa_lid": airport_row["faa_lid"],
                 "visits": visits,
-                "rank": rank,
+                "rank": ranks[airport_fid],
             }
             record = {
                 k: (None if pd.isna(v) else v) for k, v in record.items()
             }
             airport_records.append(record)
-            prev_visits = visits
-            prev_rank = rank
 
         airport_records = sorted(
             airport_records, key=lambda x: (-x["visits"], x["name"]),
@@ -265,29 +249,22 @@ class StaticHTMLBuilder():
     def _collect_tail_records(self, flight_records) -> list[dict]:
         """Builds tail records from flight records."""
         tail_flight_count = defaultdict(int)
-        equipment = dict()
+        equipment = {}
         for flight in flight_records:
             tail_flight_count[flight["tail_number"]] += 1
             equipment[flight["tail_number"]] = flight["aircraft_type_name"]
         tail_flight_count.pop(None, None) # Remove None count
-        sorted_count_tuples = sorted(
-            tail_flight_count.items(), key=lambda x: -x[1],
-        )
+        ranks = _rank_count(tail_flight_count)
         tail_records = []
-        prev_count = None
-        prev_rank = 0
-        for idx, (tail_number, count) in enumerate(sorted_count_tuples):
-            rank = prev_rank if count == prev_count else idx + 1
+        for idx, (tail_number, count) in enumerate(tail_flight_count.items()):
             record = {
                 "index_id": idx,
                 "tail_number": tail_number,
                 "aircraft_type_name": equipment[tail_number],
                 "count": count,
-                "rank": rank,
+                "rank": ranks[tail_number],
             }
             tail_records.append(record)
-            prev_count = count
-            prev_rank = rank
         tail_records = sorted(
             tail_records, key=lambda x: (-x["count"], x["tail_number"]),
         )
@@ -409,3 +386,16 @@ def _format_utc(dt) -> str:
     if dt is None:
         return ""
     return dt.strftime("%Y-%m-%d %H:%M")
+
+def _rank_count(count_dict: dict) -> dict:
+    """Ranks a dictionary of item counts."""
+    sorted_count = sorted(count_dict.items(), key=lambda x: -x[1])
+    ranks = dict()
+    prev_count = None
+    prev_rank = 0
+    for idx, (key, count) in enumerate(sorted_count):
+        rank = prev_rank if count == prev_count else idx + 1
+        ranks[key] = rank
+        prev_count = count
+        prev_rank = rank
+    return ranks
