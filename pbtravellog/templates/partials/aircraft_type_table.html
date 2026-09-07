@@ -1,0 +1,16 @@
+<table>
+  <thead>
+    <th class="rank">#</th>
+    <th>Type</th>
+    <th class="count">Flights</th>
+  </thead>
+  <tbody>
+    {% for aircraft_type in aircraft_types %}
+    <tr>
+      <td class="rank">{% if loop.first or aircraft_type.rank != loop.previtem.rank %}{{ aircraft_type.rank }}{% else %}⋮{% endif %}</td>
+      <td><a href="/aircraft/types/{{ aircraft_type.fid }}.html">{{ aircraft_type.name }}</a></td>
+      <td class="count">{{ aircraft_type.count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

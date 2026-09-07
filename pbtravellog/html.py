@@ -19,7 +19,7 @@ import pandas as pd
 
 # Project imports
 from pbtravellog.flight_log import (
-    Flight, Airport, Airline
+    Flight, Airport, Airline, AircraftType
 )
 
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
@@ -36,6 +36,7 @@ class StaticHTMLBuilder():
         self.all_flights = self._load_joined_flight_records()
         self.all_airlines = Airline.all()
         self.all_airports = Airport.all()
+        self.all_aircraft_types = AircraftType.all()
         self.html_dir = Path(HTML_PATH)
         self.env = self._jinja_env()
 
@@ -58,8 +59,11 @@ class StaticHTMLBuilder():
         print("- Building aircraft…")
         aircraft_dir = self.html_dir / "aircraft"
         aircraft_dir.mkdir()
+        aircraft_types_dir = aircraft_dir / "types"
+        aircraft_types_dir.mkdir()
         index_template = self.env.get_template("index_aircraft_families.html")
         show_template = self.env.get_template("show_aircraft_family.html")
+        show_type_template = self.env.get_template("show_aircraft_type.html")
         aircraft_family_records = self._collect_aircraft_family_records(
             self.all_flights
         )
@@ -67,10 +71,33 @@ class StaticHTMLBuilder():
             flights = self._filter_flights_by_aircraft_family(
                 self.all_flights, aircraft_family["name"]
             )
+            aircraft_types = self._collect_aircraft_type_records(flights)
             airlines = self._collect_airline_records(flights, operators=False)
             operators = self._collect_airline_records(flights, operators=True)
+            for aircraft_type in aircraft_types:
+                type_flights = self._filter_flights_by_aircraft_type(
+                    self.all_flights, aircraft_type["fid"],
+                )
+                type_airlines = self._collect_airline_records(
+                    type_flights, operators=False,
+                )
+                type_operators = self._collect_airline_records(
+                    type_flights, operators=True,
+                )
+                show_type_html = show_type_template.render(
+                    aircraft_type=aircraft_type,
+                    aircraft_family=aircraft_family,
+                    airlines=type_airlines,
+                    operators=type_operators,
+                    flights=type_flights,
+                )
+                type_page_path = (
+                    aircraft_types_dir / f"{aircraft_type["fid"]}.html"
+                )
+                type_page_path.write_text(show_type_html, encoding="utf-8")
             show_html = show_template.render(
                 aircraft_family=aircraft_family,
+                aircraft_types=aircraft_types,
                 airlines=airlines,
                 operators=operators,
                 flights=flights,
@@ -176,9 +203,7 @@ class StaticHTMLBuilder():
         aircraft_family_flight_count.pop(None, None) # Remove None count
         ranks = _rank_count(aircraft_family_flight_count)
         aircraft_family_records = []
-        for idx, (aircraft_family, count) in enumerate(
-            aircraft_family_flight_count.items()
-        ):
+        for aircraft_family, count in aircraft_family_flight_count.items():
             record = {
                 "slug": _slugify(aircraft_family),
                 "name": aircraft_family,
@@ -191,6 +216,34 @@ class StaticHTMLBuilder():
             aircraft_family_records, key=lambda x: (-x["count"], x["name"]),
         )
         return aircraft_family_records
+
+    def _collect_aircraft_type_records(self, flight_records) -> list[dict]:
+        """Builds aircraft type records from flight records."""
+        aircraft_type_flight_count = defaultdict(int)
+        for flight in flight_records:
+            aircraft_type_flight_count[flight["aircraft_type_fid"]] += 1
+        aircraft_type_flight_count.pop(None, None) # Remove None count
+        ranks = _rank_count(aircraft_type_flight_count)
+        aircraft_type_records = []
+        for aircraft_type_fid, count in aircraft_type_flight_count.items():
+            aircraft_type_row = self.all_aircraft_types.loc[aircraft_type_fid]
+            record = {
+                "fid": aircraft_type_fid,
+                "name": aircraft_type_row["name"],
+                "iata_code": aircraft_type_row["iata_code"],
+                "icao_code": aircraft_type_row["icao_code"],
+                "category": aircraft_type_row["category"].replace("_", " "),
+                "count": count,
+                "rank": ranks[aircraft_type_fid],
+            }
+            record = {
+                k: (None if pd.isna(v) else v) for k, v in record.items()
+            }
+            aircraft_type_records.append(record)
+        aircraft_type_records = sorted(
+            aircraft_type_records, key=lambda x: (-x["count"], x["name"])
+        )
+        return aircraft_type_records
 
     def _collect_airline_records(
         self, flight_records, operators=False,
@@ -294,6 +347,16 @@ class StaticHTMLBuilder():
         ]
         return records
 
+    def _filter_flights_by_aircraft_type(
+            self, flight_records, aircraft_type_fid,
+    ) -> list[dict]:
+        """Filters flight records by an aircraft type."""
+        records = [
+            r for r in flight_records
+            if r["aircraft_type_fid"] == aircraft_type_fid
+        ]
+        return records
+
     def _filter_flights_by_airport(
         self, flight_records, airport_fid,
     ) -> list[dict]:
@@ -339,6 +402,7 @@ class StaticHTMLBuilder():
             ),
             "name": _flight_name(row),
             "tail_number": row["tail_number"],
+            "aircraft_type_fid": row["aircraft_type_fid"],
             "aircraft_type_name": row["aircraft_type_name"],
             "aircraft_type_family": row["aircraft_type_family"],
             "aircraft_type_category": row["aircraft_type_category"],

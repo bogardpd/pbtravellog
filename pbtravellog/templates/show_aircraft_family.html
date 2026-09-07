@@ -16,6 +16,9 @@
   </tbody>
 </table>
 
+<h2>Subtypes ({{ aircraft_types | length }})</h2>
+{% include "partials/aircraft_type_table.html" %}
+
 <h2>Airlines Using {{ aircraft_family.name }} ({{ airlines | length }})</h2>
 {% with airlines=airlines %}
   {% include "partials/airline_table.html" %}

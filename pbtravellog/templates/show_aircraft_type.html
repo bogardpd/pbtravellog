@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ aircraft_type.name }}{% endblock %}
+{% block content %}
+<p>Subtype of <a href="/aircraft/{{ aircraft_family.slug }}.html">{{ aircraft_family.name }}</a></p>
+<table class="summary">
+  <thead>
+    <tr>
+      <th>IATA</th>
+      <th>ICAO</th>
+      <th>Category</th>
+      <th>Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="code">{{ aircraft_type.iata_code }}</span></td>
+      <td><span class="code">{{ aircraft_type.icao_code }}</span></td>
+      <td>{{ aircraft_type.category | title }}</td>
+      <td>{{ flights | length }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Airlines Using {{ aircraft_type.name }} ({{ airlines | length }})</h2>
+{% with airlines=airlines %}
+  {% include "partials/airline_table.html" %}
+{% endwith %}
+
+<h2>Operators Using {{ aircraft_type.name }} ({{ operators | length }})</h2>
+{% with airlines=operators %}
+  {% include "partials/airline_table.html" %}
+{% endwith %}
+
+<h2>Flights Using {{ aircraft_type.name }} ({{ flights | length }})</h2>
+{% include "partials/flight_table.html" %}
+{% endblock content %}
