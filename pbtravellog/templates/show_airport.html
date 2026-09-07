@@ -22,17 +22,17 @@
   </tbody>
 </table>
 
-<h2>Airlines Using {{ airport.code if airport.code else airport.name }} ({{ airlines | length }})</h2>
+<h2>Airlines Using {{ airport.iata_code if airport.iata_code else airport.name }} ({{ airlines | length }})</h2>
 
 {% with airlines=airlines %}
   {% include "partials/airline_table.html" %}
 {% endwith %}
 
-<h2>Operators Using {{ airport.code if airport.code else airport.name }} ({{ operators | length }})</h2>
+<h2>Operators Using {{ airport.iata_code if airport.iata_code else airport.name }} ({{ operators | length }})</h2>
 {% with airlines=operators %}
   {% include "partials/airline_table.html" %}
 {% endwith %}
 
-<h2>Flights Using {{ airport.code if airport.code else airport.name }} ({{ flights | length }})</h2>
+<h2>Flights Using {{ airport.iata_code if airport.iata_code else airport.name }} ({{ flights | length }})</h2>
 {% include "partials/flight_table.html" %}
 {% endblock content %}
