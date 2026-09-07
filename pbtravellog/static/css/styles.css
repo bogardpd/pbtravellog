@@ -21,7 +21,8 @@
 }
 
 :root {
-    --border-color: #cccccc;
+    --color-border: #cccccc;
+    --color-text-light: #999999;
     --weight-bold: 700;
 }
 
@@ -72,6 +73,10 @@ img.icon {
     height: 24px;
     vertical-align: text-bottom;
 }
+p.build-time {
+    font-size: 80%;
+    color: var(--color-text-light);
+}
 span.code, a.code {
     font-family: 'IBM Plex Mono', monospace;
 }
@@ -80,7 +85,7 @@ span.current-airport {
 }
 table {
     border-collapse: collapse;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--color-border);
 }
 th, td {
     padding: 0.5em;
@@ -92,13 +97,13 @@ table.summary {
     }
 }
 thead {
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--color-border);
 }
 tr {
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--color-border);
 }
 tr.continue {
-    border-bottom: 1px dotted var(--border-color);
+    border-bottom: 1px dotted var(--color-border);
 }
 th.airport-visits, td.airport-visits, th.count, td.count {
     text-align: center;
@@ -114,5 +119,5 @@ th.rank, td.rank {
     text-align: center;
 }
 td.rank {
-    color: #999999;
+    color: var(--color-text-light);
 }

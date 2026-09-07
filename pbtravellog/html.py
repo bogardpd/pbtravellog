@@ -2,6 +2,7 @@
 
 # Standard imports
 from collections import defaultdict
+from datetime import datetime, UTC
 from functools import partial
 import http.server
 from importlib.resources import files, as_file
@@ -294,6 +295,7 @@ class StaticHTMLBuilder():
             autoescape=True,
         )
         env.filters["format_utc"] = _format_utc
+        env.globals["build_time"] = datetime.now(UTC)
         return env
 
     def _load_joined_flight_records(self) -> list[dict]:
