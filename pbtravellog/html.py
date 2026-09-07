@@ -12,13 +12,12 @@ import shutil
 import webbrowser
 
 # Third-party imports
-import geopandas as gpd
 from jinja2 import Environment, PackageLoader
 import pandas as pd
 
 # Project imports
 from pbtravellog.flight_log import (
-    Flight, Airport, Airline, airport_visits
+    Flight, Airport, Airline
 )
 
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
@@ -26,38 +25,6 @@ if HTML_PATH is None:
     raise KeyError(
         "Environment variable PBTRAVELLOG_HTML_PATH is missing."
     )
-
-class FlightsTable(gpd.GeoDataFrame):
-    """Contains a fully joined table of flights."""
-
-    def __init__(self, gdf):
-        super().__init__(gdf)
-
-    def airport_records(self, fid) -> list[dict]:
-        """Returns records matching an airport."""
-        ft = self.copy()
-        ft = ft[
-            (ft["origin_airport_fid"] == fid)
-            | (ft["destination_airport_fid"] == fid)
-        ]
-        ft = self._calculate_layovers(ft)
-        return [_recordify_flight(_, r) for _, r in ft.iterrows()]
-
-    def flight_records(self) -> list[dict]:
-        """Returns records for all flights in table."""
-        ft = self._calculate_layovers(self.copy())
-        return [_recordify_flight(_, r) for _, r in ft.iterrows()]
-
-    def _calculate_layovers(self, gdf):
-        """Normalizes flights for Jinja output."""
-        gdf = gdf.sort_values(by="departure_utc")
-        gdf["continues_via_layover"] = (
-            gdf["trip_fid"].notna()
-            & gdf["trip_section"].notna()
-            & (gdf["trip_fid"] == gdf["trip_fid"].shift(-1))
-            & (gdf["trip_section"] == gdf["trip_section"].shift(-1))
-        ).fillna(False)
-        return gdf
 
 class StaticHTMLBuilder():
     """Manages generation of static HTML travel data."""
@@ -78,9 +45,9 @@ class StaticHTMLBuilder():
         self._build_home()
         self._build_flights()
         self._build_aircraft()
-        # self._build_airlines()
+        self._build_airlines()
         self._build_airports()
-        # self._build_tails()
+        self._build_tails()
 
         print(f"Wrote static site to \"{self.html_dir}\".")
 
@@ -93,17 +60,6 @@ class StaticHTMLBuilder():
         aircraft_family_records = self._collect_aircraft_family_records(
             self.all_flights
         )
-
-        # aircraft_families_table = self._tabulate_aircraft_families(
-        #     self.all_flights
-        # )
-        # aircraft_family_items = []
-        # for idx, row in aircraft_families_table.iterrows():
-        #     aircraft_family_items.append({
-        #         "rank": row["rank"],
-        #         "name": idx,
-        #         "count": row["count"],
-        #     })
         index_aircraft_families_html = self.env.get_template(
             "index_aircraft_families.html"
         ).render(aircraft_families=aircraft_family_records)
@@ -117,32 +73,14 @@ class StaticHTMLBuilder():
         print("- Building airlines…")
         airlines_dir = self.html_dir / "airlines"
         airlines_dir.mkdir()
-
-        tables = {
-            "airlines": self._tabulate_airlines(
-                self.all_flights,
-                column="airline_fid",
-            ),
-            "operators": self._tabulate_airlines(
-                self.all_flights,
-                column="operator_fid",
-            ),
-        }
-        items = {
-            "airlines": [],
-            "operators": [],
-        }
-        for airline_type, airline_table in tables.items():
-            for idx, row in airline_table.iterrows():
-                items[airline_type].append({
-                    "fid": idx,
-                    "rank": row["rank"],
-                    "name": row["name"],
-                    "iata_code": _blank_if_na(row["iata_code"]),
-                    "count": row["count"],
-                })
+        airline_records = self._collect_airline_records(
+            self.all_flights, operators=False,
+        )
+        operator_records = self._collect_airline_records(
+            self.all_flights, operators=True,
+        )
         index_airlines_html = self.env.get_template("index_airlines.html") \
-            .render(airlines=items["airlines"], operators=items["operators"])
+            .render(airlines=airline_records, operators=operator_records)
         (airlines_dir / "index.html").write_text(
             index_airlines_html,
             encoding="utf-8",
@@ -209,18 +147,9 @@ class StaticHTMLBuilder():
         print("- Building tail numbers…")
         tails_dir = self.html_dir / "tails"
         tails_dir.mkdir()
-
-        tails_table = self._tabulate_tails(self.all_flights)
-        tail_items = []
-        for idx, row in tails_table.iterrows():
-            tail_items.append({
-                "rank": row["rank"],
-                "tail_number": idx,
-                "aircraft_type_name": _blank_if_na(row["equipment"]),
-                "count": row["count"],
-            })
+        tail_records = self._collect_tail_records(self.all_flights)
         index_tails_html = self.env.get_template("index_tails.html") \
-            .render(tails=tail_items)
+            .render(tails=tail_records)
         (tails_dir / "index.html").write_text(
             index_tails_html,
             encoding="utf-8",
@@ -231,9 +160,9 @@ class StaticHTMLBuilder():
         aircraft_family_flight_count = defaultdict(int)
         for flight in flight_records:
             aircraft_family_flight_count[flight["aircraft_type_family"]] += 1
+        aircraft_family_flight_count.pop(None, None) # Remove None count
         sorted_count_tuples = sorted(
-            aircraft_family_flight_count.items(),
-            key=lambda x: -x[1],
+            aircraft_family_flight_count.items(), key=lambda x: -x[1],
         )
         aircraft_family_records = []
         prev_count = None
@@ -249,11 +178,46 @@ class StaticHTMLBuilder():
             aircraft_family_records.append(record)
             prev_count = count
             prev_rank = rank
-            aircraft_family_records = sorted(
-                aircraft_family_records,
-                key=lambda x: (-x["count"], x["name"]),
-            )
+        aircraft_family_records = sorted(
+            aircraft_family_records, key=lambda x: (-x["count"], x["name"]),
+        )
         return aircraft_family_records
+
+    def _collect_airline_records(
+        self, flight_records, operators=False,
+    ) -> list[dict]:
+        """Builds airline records from flight records."""
+        column = "operator_fid" if operators else "airline_fid"
+        airline_flight_count = defaultdict(int)
+        for flight in flight_records:
+            airline_flight_count[flight[column]] += 1
+        airline_flight_count.pop(None, None) # Remove None count
+        sorted_count_tuples = sorted(
+            airline_flight_count.items(), key=lambda x: -x[1],
+        )
+        airline_records = []
+        prev_count = None
+        prev_rank = None
+        for idx, (airline_fid, count) in enumerate(sorted_count_tuples):
+            rank = prev_rank if count == prev_count else idx + 1
+            airline_row = self.all_airlines.loc[airline_fid]
+            record = {
+                "fid": airline_fid,
+                "name": airline_row["name"],
+                "iata_code": airline_row["iata_code"],
+                "count": count,
+                "rank": rank,
+            }
+            record = {
+                k: (None if pd.isna(v) else v) for k, v in record.items()
+            }
+            airline_records.append(record)
+            prev_count = count
+            prev_rank = rank
+        airline_records = sorted(
+            airline_records, key=lambda x: (-x["count"], x["name"])
+        )
+        return airline_records
 
     def _collect_airport_records(self, flight_records) -> list[dict]:
         """Builds airport records from flight records."""
@@ -266,6 +230,7 @@ class StaticHTMLBuilder():
                 airport_visit_count[flight["origin_airport_fid"]] += 1
             airport_visit_count[flight["destination_airport_fid"]] += 1
             prev_trip_sec = curr_trip_sec
+        airport_visit_count.pop(None, None) # Remove None count
         sorted_visit_tuples = sorted(
             airport_visit_count.items(),
             key=lambda x: -x[1],
@@ -297,7 +262,40 @@ class StaticHTMLBuilder():
         )
         return airport_records
 
-    def _filter_flights_by_airport(self, flight_records, airport_fid):
+    def _collect_tail_records(self, flight_records) -> list[dict]:
+        """Builds tail records from flight records."""
+        tail_flight_count = defaultdict(int)
+        equipment = dict()
+        for flight in flight_records:
+            tail_flight_count[flight["tail_number"]] += 1
+            equipment[flight["tail_number"]] = flight["aircraft_type_name"]
+        tail_flight_count.pop(None, None) # Remove None count
+        sorted_count_tuples = sorted(
+            tail_flight_count.items(), key=lambda x: -x[1],
+        )
+        tail_records = []
+        prev_count = None
+        prev_rank = 0
+        for idx, (tail_number, count) in enumerate(sorted_count_tuples):
+            rank = prev_rank if count == prev_count else idx + 1
+            record = {
+                "index_id": idx,
+                "tail_number": tail_number,
+                "aircraft_type_name": equipment[tail_number],
+                "count": count,
+                "rank": rank,
+            }
+            tail_records.append(record)
+            prev_count = count
+            prev_rank = rank
+        tail_records = sorted(
+            tail_records, key=lambda x: (-x["count"], x["tail_number"]),
+        )
+        return tail_records
+
+    def _filter_flights_by_airport(
+        self, flight_records, airport_fid,
+    ) -> list[dict]:
         """Filters flight records by an airport."""
         records = [
             r for r in flight_records
@@ -334,8 +332,11 @@ class StaticHTMLBuilder():
             "fid": flight_fid,
             "departure_utc": row["departure_utc"].to_pydatetime(),
             "name": _flight_name(row),
+            "tail_number": row["tail_number"],
+            "aircraft_type_name": row["aircraft_type_name"],
             "aircraft_type_family": row["aircraft_type_family"],
             "airline_fid": row["airline_fid"],
+            "operator_fid": row["operator_fid"],
             "origin_airport_fid": row["origin_airport_fid"],
             "origin_airport_code": airport_codes[0],
             "destination_airport_fid": row["destination_airport_fid"],
@@ -348,73 +349,6 @@ class StaticHTMLBuilder():
         }
         return record
 
-    def _tabulate_aircraft_families(self, flights_table) -> pd.DataFrame:
-        """Creates a table of aircraft families from a table of flights."""
-        ft = flights_table.copy()
-        df = ft.groupby("aircraft_type_family").agg(
-            count=("aircraft_type_family", "count"),
-        )
-        df = df.sort_values(
-            by=["count", "aircraft_type_family"],
-            ascending=[False, True],
-        )
-        df["rank"] = df["count"].rank(method="min", ascending=False) \
-            .astype("Int64")
-        return df
-
-    def _tabulate_airlines(
-        self, flights_table, column="airline_fid"
-    ) -> pd.DataFrame:
-        """Creates a table of airlines from a table of flights."""
-        df = pd.DataFrame(self.all_airlines.copy())
-        count = flights_table[column].value_counts()
-        df = df.join(count, how="right")
-        df = df.sort_values(
-            by=["count", "name"],
-            ascending=[False, True],
-        )
-        df["rank"] = df["count"].rank(method="min", ascending=False)
-        return df
-
-    def _tabulate_airports(self, flights_table) -> gpd.GeoDataFrame:
-        """Creates a table of airports from a table of flights."""
-        gdf = self.all_airports.copy()
-        visits = airport_visits(flights_table)
-        gdf = gdf.join(visits)
-        gdf = gdf.rename(columns={"count": "visits"})
-        gdf = gdf.dropna(subset=["visits"])
-        gdf = gdf.sort_values(
-            by=["visits", "name"],
-            ascending=[False, True],
-        )
-        gdf["rank"] = gdf["visits"].rank(method="min", ascending=False)
-        return gdf
-
-    def _tabulate_flights(self, flights_table) -> gpd.GeoDataFrame:
-        """Normalizes a table of flights for Jinja output."""
-        gdf = flights_table.copy()
-        gdf["continues_via_layover"] = (
-            gdf["trip_fid"].notna()
-            & gdf["trip_section"].notna()
-            & (gdf["trip_fid"] == gdf["trip_fid"].shift(-1))
-            & (gdf["trip_section"] == gdf["trip_section"].shift(-1))
-        ).fillna(False)
-        return gdf
-
-    def _tabulate_tails(self, flights_table) -> pd.DataFrame:
-        """Create a table of tail numbers from a table of flights."""
-        ft = flights_table.copy().sort_values("departure_utc")
-        df = ft.groupby("tail_number").agg(
-            count=("tail_number", "count"),
-            equipment=("aircraft_type_name", "last")
-        )
-        df = df.sort_values(
-            by=["count", "tail_number"],
-            ascending=[False, True],
-        )
-        df["rank"] = df["count"].rank(method="min", ascending=False) \
-            .astype("Int64")
-        return df
 
 def build():
     """Builds a directory of static HTML pages."""
@@ -463,12 +397,6 @@ def _airport_codes(row) -> tuple[str]:
     dest = [v for v in dest if pd.notna(v)][0]
     return (orig, dest)
 
-def _blank_if_na(value):
-    """Returns an empty string if a row value is empty."""
-    if pd.isna(value):
-        return ""
-    return value
-
 def _flight_name(row) -> str:
     """Formats a flight name."""
     if pd.notna(row.airline_name):
@@ -481,15 +409,3 @@ def _format_utc(dt) -> str:
     if dt is None:
         return ""
     return dt.strftime("%Y-%m-%d %H:%M")
-
-def _recordify_flight(_, row) -> dict:
-    """Turns a flight row into a record."""
-    airport_codes = _airport_codes(row)
-    return {
-        "name": _flight_name(row),
-        "airline_fid": row["airline_fid"],
-        "origin_airport_code": airport_codes[0],
-        "destination_airport_code": airport_codes[1],
-        "departure_utc": row["departure_utc"],
-        "continues_via_layover": row["continues_via_layover"],
-    }
