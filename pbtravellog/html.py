@@ -101,11 +101,13 @@ class StaticHTMLBuilder():
             )
             airlines = self._collect_airline_records(flights, operators=False)
             operators = self._collect_airline_records(flights, operators=True)
+            aircraft_families = self._collect_aircraft_family_records(flights)
             show_airport_html = self.env.get_template("show_airport.html") \
                 .render(
                     airport=airport,
                     airlines=airlines,
                     operators=operators,
+                    aircraft_families=aircraft_families,
                     flights=flights,
                 )
             (airports_dir / f"{airport["fid"]}.html").write_text(

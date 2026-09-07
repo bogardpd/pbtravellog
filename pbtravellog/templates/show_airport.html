@@ -33,6 +33,9 @@
   {% include "partials/airline_table.html" %}
 {% endwith %}
 
+<h2>Aircraft Families Using {{ airport.iata_code if airport.iata_code else airport.name }} ({{ operators | length }})</h2>
+{% include "partials/aircraft_family_table.html" %}
+
 <h2>Flights Using {{ airport.iata_code if airport.iata_code else airport.name }} ({{ flights | length }})</h2>
 {% include "partials/flight_table.html" %}
 {% endblock content %}
