@@ -11,6 +11,7 @@ from pathlib import Path
 import sys
 import shutil
 import webbrowser
+from zoneinfo import ZoneInfo
 
 # Third-party imports
 from jinja2 import Environment, PackageLoader
@@ -294,7 +295,7 @@ class StaticHTMLBuilder():
             loader=PackageLoader("pbtravellog"),
             autoescape=True,
         )
-        env.filters["format_utc"] = _format_utc
+        env.filters["format_dt"] = _format_dt
         env.globals["build_time"] = datetime.now(UTC)
         return env
 
@@ -311,9 +312,13 @@ class StaticHTMLBuilder():
     def _recordize_flight_row(self, flight_fid, row) -> dict:
         """Turns a flight row into a record."""
         airport_codes = _airport_codes(row)
+        departure_utc = row["departure_utc"].to_pydatetime()
         record = {
             "fid": flight_fid,
-            "departure_utc": row["departure_utc"].to_pydatetime(),
+            "departure_utc": departure_utc,
+            "departure_local": departure_utc.astimezone(
+                ZoneInfo(row["origin_airport_time_zone"])
+            ),
             "name": _flight_name(row),
             "tail_number": row["tail_number"],
             "aircraft_type_name": row["aircraft_type_name"],
@@ -388,10 +393,14 @@ def _flight_name(row) -> str:
         return row.airline_name
     return "Unnamed Flight"
 
-def _format_utc(dt) -> str:
+def _format_dt(dt, include_time=True) -> str:
+    """Formats a datetime."""
     if dt is None:
         return ""
-    return dt.strftime("%Y-%m-%d %H:%M")
+    parts = ["%d %b %Y"]
+    if include_time:
+        parts.append("%H:%M")
+    return dt.strftime(" ".join(parts))
 
 def _rank_count(count_dict: dict) -> dict:
     """Ranks a dictionary of item counts."""

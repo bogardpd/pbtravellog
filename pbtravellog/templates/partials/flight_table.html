@@ -5,7 +5,7 @@
       <th class="rank">#</th>
       <th colspan="2">Flight</th>
       <th class="flight-route">Route</th>
-      <th>Departure UTC</th>
+      <th class="departure">Departure</th>
     </tr>
   </thead>
   <tbody>
@@ -15,7 +15,7 @@
       <td>{{ icons.airline(flight.airline_fid) }}</td>
       <td>{{ flight.name }}</td>
       <td class="flight-route">{% if airport and airport.fid == flight.origin_airport_fid %}<span class="code current-airport">{{ flight.origin_airport_code }}</span>{% else %}<a href="/airports/{{ flight.origin_airport_fid }}.html" class="code">{{ flight.origin_airport_code }}</a>{% endif %} &rarr; {% if airport and airport.fid == flight.destination_airport_fid %}<span class="code current-airport">{{ flight.destination_airport_code }}</span>{% else %}<a href="/airports/{{ flight.destination_airport_fid }}.html" class="code">{{ flight.destination_airport_code }}</a>{% endif %}</td>
-      <td>{{ flight.departure_utc | format_utc }}</td>
+      <td class="departure">{{ flight.departure_local | format_dt(include_time=False) }}</td>
     </tr>
     {% endfor %}
   </tbody>
