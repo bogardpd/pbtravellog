@@ -58,42 +58,57 @@ class StaticHTMLBuilder():
         print("- Building aircraft…")
         aircraft_dir = self.html_dir / "aircraft"
         aircraft_dir.mkdir()
-
+        index_template = self.env.get_template("index_aircraft_families.html")
+        show_template = self.env.get_template("show_aircraft_family.html")
         aircraft_family_records = self._collect_aircraft_family_records(
             self.all_flights
         )
-        index_aircraft_families_html = self.env.get_template(
-            "index_aircraft_families.html"
-        ).render(aircraft_families=aircraft_family_records)
-        (aircraft_dir / "index.html").write_text(
-            index_aircraft_families_html,
-            encoding="utf-8",
+        for aircraft_family in aircraft_family_records:
+            flights = self._filter_flights_by_aircraft_family(
+                self.all_flights, aircraft_family["name"]
+            )
+            airlines = self._collect_airline_records(flights, operators=False)
+            operators = self._collect_airline_records(flights, operators=True)
+            show_html = show_template.render(
+                aircraft_family=aircraft_family,
+                airlines=airlines,
+                operators=operators,
+                flights=flights,
+            )
+            page_path = (
+                aircraft_dir / f"{_slugify(aircraft_family["name"])}.html"
+            )
+            page_path.write_text(show_html, encoding="utf_8")
+        index_html = index_template.render(
+            aircraft_families=aircraft_family_records,
         )
+        (aircraft_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     def _build_airlines(self) -> None:
         """Builds airline pages."""
         print("- Building airlines…")
         airlines_dir = self.html_dir / "airlines"
         airlines_dir.mkdir()
+        index_template = self.env.get_template("index_airlines.html")
         airline_records = self._collect_airline_records(
             self.all_flights, operators=False,
         )
         operator_records = self._collect_airline_records(
             self.all_flights, operators=True,
         )
-        index_airlines_html = self.env.get_template("index_airlines.html") \
-            .render(airlines=airline_records, operators=operator_records)
-        (airlines_dir / "index.html").write_text(
-            index_airlines_html,
-            encoding="utf-8",
+        index_html = index_template.render(
+            airlines=airline_records,
+            operators=operator_records,
         )
+        (airlines_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     def _build_airports(self) -> None:
         """Builds airport pages."""
         print("- Building airports…")
         airports_dir = self.html_dir / "airports"
         airports_dir.mkdir()
-
+        index_template = self.env.get_template("index_airports.html")
+        show_template = self.env.get_template("show_airport.html")
         airport_records = self._collect_airport_records(self.all_flights)
         for airport in airport_records:
             flights = self._filter_flights_by_airport(
@@ -102,36 +117,26 @@ class StaticHTMLBuilder():
             airlines = self._collect_airline_records(flights, operators=False)
             operators = self._collect_airline_records(flights, operators=True)
             aircraft_families = self._collect_aircraft_family_records(flights)
-            show_airport_html = self.env.get_template("show_airport.html") \
-                .render(
-                    airport=airport,
-                    airlines=airlines,
-                    operators=operators,
-                    aircraft_families=aircraft_families,
-                    flights=flights,
-                )
-            (airports_dir / f"{airport["fid"]}.html").write_text(
-                show_airport_html,
-                encoding="utf-8",
+            show_html = show_template.render(
+                airport=airport,
+                airlines=airlines,
+                operators=operators,
+                aircraft_families=aircraft_families,
+                flights=flights,
             )
-        index_airports_html = self.env.get_template("index_airports.html") \
-            .render(airports=airport_records)
-        (airports_dir / "index.html").write_text(
-            index_airports_html,
-            encoding="utf-8",
-        )
+            page_path = airports_dir / f"{airport["fid"]}.html"
+            page_path.write_text(show_html, encoding="utf-8")
+        index_html = index_template.render(airports=airport_records)
+        (airports_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     def _build_flights(self) -> None:
         """Builds flight pages."""
         print("- Building flights…")
         flights_dir = self.html_dir / "flights"
         flights_dir.mkdir()
-        index_flights_html = self.env.get_template("index_flights.html") \
-            .render(flights=self.all_flights)
-        (flights_dir / "index.html").write_text(
-            index_flights_html,
-            encoding="utf-8",
-        )
+        index_template = self.env.get_template("index_flights.html")
+        index_html = index_template.render(flights=self.all_flights)
+        (flights_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     def _build_home(self) -> None:
         """Builds home page."""
@@ -155,19 +160,19 @@ class StaticHTMLBuilder():
         print("- Building tail numbers…")
         tails_dir = self.html_dir / "tails"
         tails_dir.mkdir()
+        index_template = self.env.get_template("index_tails.html")
         tail_records = self._collect_tail_records(self.all_flights)
-        index_tails_html = self.env.get_template("index_tails.html") \
-            .render(tails=tail_records)
-        (tails_dir / "index.html").write_text(
-            index_tails_html,
-            encoding="utf-8",
-        )
+        index_html = index_template.render(tails=tail_records)
+        (tails_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     def _collect_aircraft_family_records(self, flight_records) -> list[dict]:
         """Builds aircraft family records from flight records."""
         aircraft_family_flight_count = defaultdict(int)
+        category = {}
         for flight in flight_records:
-            aircraft_family_flight_count[flight["aircraft_type_family"]] += 1
+            key = flight["aircraft_type_family"]
+            aircraft_family_flight_count[key] += 1
+            category[key] = flight["aircraft_type_category"]
         aircraft_family_flight_count.pop(None, None) # Remove None count
         ranks = _rank_count(aircraft_family_flight_count)
         aircraft_family_records = []
@@ -175,8 +180,9 @@ class StaticHTMLBuilder():
             aircraft_family_flight_count.items()
         ):
             record = {
-                "index_id": idx,
+                "slug": _slugify(aircraft_family),
                 "name": aircraft_family,
+                "category": category[aircraft_family].replace("_", " "),
                 "count": count,
                 "rank": ranks[aircraft_family],
             }
@@ -278,6 +284,16 @@ class StaticHTMLBuilder():
         )
         return tail_records
 
+    def _filter_flights_by_aircraft_family(
+        self, flight_records, aircraft_family_name,
+    ) -> list[dict]:
+        """Filters flight records by an aircraft family."""
+        records = [
+            r for r in flight_records
+            if r["aircraft_type_family"] == aircraft_family_name
+        ]
+        return records
+
     def _filter_flights_by_airport(
         self, flight_records, airport_fid,
     ) -> list[dict]:
@@ -325,6 +341,7 @@ class StaticHTMLBuilder():
             "tail_number": row["tail_number"],
             "aircraft_type_name": row["aircraft_type_name"],
             "aircraft_type_family": row["aircraft_type_family"],
+            "aircraft_type_category": row["aircraft_type_category"],
             "airline_fid": row["airline_fid"],
             "operator_fid": row["operator_fid"],
             "origin_airport_fid": row["origin_airport_fid"],
@@ -369,7 +386,6 @@ def run(port):
         except KeyboardInterrupt:
             print("\nShutting down server.")
             sys.exit(0)
-
 
 def _airport_codes(row) -> tuple[str]:
     """Returns a default origin and destination code."""
@@ -416,3 +432,7 @@ def _rank_count(count_dict: dict) -> dict:
         prev_count = count
         prev_rank = rank
     return ranks
+
+def _slugify(input_str) -> str:
+    """Converts a string to a filename and URL safe string."""
+    return input_str.replace(" ", "_")

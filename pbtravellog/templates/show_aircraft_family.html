@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ aircraft_family.name }}{% endblock %}
+{% block content %}
+<table class="summary">
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ aircraft_family.category | title }}</td>
+      <td>{{ flights | length }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Airlines Using {{ aircraft_family.name }} ({{ airlines | length }})</h2>
+{% with airlines=airlines %}
+  {% include "partials/airline_table.html" %}
+{% endwith %}
+
+<h2>Operators Using {{ aircraft_family.name }} ({{ operators | length }})</h2>
+{% with airlines=operators %}
+  {% include "partials/airline_table.html" %}
+{% endwith %}
+
+<h2>Flights Using {{ aircraft_family.name }} ({{ flights | length }})</h2>
+{% include "partials/flight_table.html" %}
+{% endblock content %}

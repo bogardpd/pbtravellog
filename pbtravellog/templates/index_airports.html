@@ -1,24 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Airports{% endblock %}
 {% block content %}
-<table>
-  <thead>
-    <tr>
-      <th class="rank">#</th>
-      <th>Airport</th>
-      <th class="iata-code">IATA</th>
-      <th class="airport-visits">Visits</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for airport in airports %}
-    <tr>
-      <td class="rank">{% if loop.first or airport.rank != loop.previtem.rank %}{{ airport.rank }}{% else %}⋮{% endif %}</td>
-      <td><a href="/airports/{{ airport.fid }}.html">{{ airport.name }}</a></td>
-      <td class="iata-code"><span class="code">{{ airport.iata_code if airport.iata_code }}</span></td>
-      <td class="airport-visits">{{ airport.visits }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% include "partials/airport_table.html" %}
 {% endblock content %}
