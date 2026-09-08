@@ -31,7 +31,7 @@ def main():
     # Parse arguments
     args = parser.parse_args()
     if args.command == "build":
-        html.build()
+        html.build(force_refresh=args.force_refresh)
     elif args.command == "extract-photo-metadata":
         epm.extract_photo_metadata(args.source, args.output)
     elif args.command == "import":
@@ -69,9 +69,13 @@ def main():
 
 def _add_parsers_build(subparsers) -> None:
     """Adds parsers for build command."""
-    subparsers.add_parser(
+    build_parser = subparsers.add_parser(
         "build",
         help="Build static HTML log"
+    )
+    build_parser.add_argument("--force-refresh",
+        action="store_true",
+        help="Update all files, including unchanged files"
     )
 
 def _add_parsers_extract_photo_metadata(subparsers) -> None:
@@ -221,7 +225,7 @@ def _add_parsers_show(subparsers) -> None:
         "show",
         help="Show details for specific entities",
     )
-    
+
     show_parser_subparsers = show_parser.add_subparsers(
         dest="entity",
         required=True,
@@ -244,7 +248,5 @@ def _add_parsers_show(subparsers) -> None:
     )
     show_tail_parser.add_argument("tail_number",
         help="Tail number",
-        type=str,           
+        type=str,
     )
-
-

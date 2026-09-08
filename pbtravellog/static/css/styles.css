@@ -78,10 +78,6 @@ img.icon {
     height: 24px;
     vertical-align: text-bottom;
 }
-p.build-time {
-    font-size: 80%;
-    color: var(--color-text-light);
-}
 span.code, a.code {
     font-family: 'IBM Plex Mono', monospace;
 }

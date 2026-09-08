@@ -3,6 +3,7 @@
 # Standard imports
 from collections import defaultdict
 from datetime import datetime, UTC
+import filecmp
 from functools import partial
 import http.server
 from importlib.resources import files, as_file
@@ -31,7 +32,7 @@ if HTML_PATH is None:
 class StaticHTMLBuilder():
     """Manages generation of static HTML travel data."""
 
-    def __init__(self):
+    def __init__(self, force_refresh=False):
         """Initialize the static HTML builder."""
         self.all_flights = self._load_joined_flight_records()
         self.all_airlines = Airline.all()
@@ -39,6 +40,8 @@ class StaticHTMLBuilder():
         self.all_aircraft_types = AircraftType.all()
         self.html_dir = Path(HTML_PATH)
         self.env = self._jinja_env()
+        self.file_count = {"new": 0, "updated": 0, "unchanged": 0}
+        self.force_refresh = force_refresh
 
     def build(self):
         """Builds a directory of static HTML pages."""
@@ -53,12 +56,18 @@ class StaticHTMLBuilder():
         self._build_tails()
 
         print(f"Wrote static site to \"{self.html_dir}\".")
+        print(
+            f"{sum(self.file_count.values())} files "
+            f"({self.file_count["new"]} new, "
+            f"{self.file_count["updated"]} updated, "
+            f"{self.file_count["unchanged"]} unchanged)"
+        )
 
     def _build_aircraft(self) -> None:
         """Builds aircraft pages."""
         print("- Building aircraft…")
         aircraft_dir = self.html_dir / "aircraft"
-        aircraft_dir.mkdir()
+        aircraft_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_aircraft_types.html")
         show_template = self.env.get_template("show_aircraft_type.html")
         aircraft_type_records = self._collect_aircraft_type_records(
@@ -81,19 +90,19 @@ class StaticHTMLBuilder():
                 flights=type_flights,
             )
             page_path = aircraft_dir / f"{aircraft_type["fid"]}.html"
-            page_path.write_text(show_type_html, encoding="utf-8")
+            self._write(page_path, show_type_html)
         index_html = index_template.render(
             aircraft_types=aircraft_type_records,
         )
-        (aircraft_dir / "index.html").write_text(index_html, encoding="utf-8")
+        self._write(aircraft_dir / "index.html", index_html)
 
     def _build_airlines(self) -> None:
         """Builds airline pages."""
         print("- Building airlines…")
         airlines_dir = self.html_dir / "airlines"
-        airlines_dir.mkdir()
+        airlines_dir.mkdir(exist_ok=True)
         operators_dir = airlines_dir / "operators"
-        operators_dir.mkdir()
+        operators_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_airlines.html")
         show_airline_template = self.env.get_template("show_airline.html")
         show_operator_template = self.env.get_template("show_operator.html")
@@ -120,7 +129,7 @@ class StaticHTMLBuilder():
                 flights=airline_flights,
             )
             airline_page_path = airlines_dir / f"{airline["fid"]}.html"
-            airline_page_path.write_text(show_airline_html, encoding="utf-8")
+            self._write(airline_page_path, show_airline_html)
         for operator in operator_records:
             operator_flights = self._filter_flights_by_airline(
                 self.all_flights, operator["fid"], operator=True,
@@ -138,18 +147,18 @@ class StaticHTMLBuilder():
                 flights=operator_flights,
             )
             operator_page_path = operators_dir / f"{operator["fid"]}.html"
-            operator_page_path.write_text(show_operator_html, encoding="utf-8")
+            self._write(operator_page_path, show_operator_html)
         index_html = index_template.render(
             airlines=airline_records,
             operators=operator_records,
         )
-        (airlines_dir / "index.html").write_text(index_html, encoding="utf-8")
+        self._write(airlines_dir / "index.html", index_html)
 
     def _build_airports(self) -> None:
         """Builds airport pages."""
         print("- Building airports…")
         airports_dir = self.html_dir / "airports"
-        airports_dir.mkdir()
+        airports_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_airports.html")
         show_template = self.env.get_template("show_airport.html")
         airport_records = self._collect_airport_records(self.all_flights)
@@ -168,45 +177,59 @@ class StaticHTMLBuilder():
                 flights=flights,
             )
             page_path = airports_dir / f"{airport["fid"]}.html"
-            page_path.write_text(show_html, encoding="utf-8")
+            self._write(page_path, show_html)
         index_html = index_template.render(airports=airport_records)
-        (airports_dir / "index.html").write_text(index_html, encoding="utf-8")
+        self._write(airports_dir / "index.html", index_html)
 
     def _build_flights(self) -> None:
         """Builds flight pages."""
         print("- Building flights…")
         flights_dir = self.html_dir / "flights"
-        flights_dir.mkdir()
+        flights_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_flights.html")
         index_html = index_template.render(flights=self.all_flights)
-        (flights_dir / "index.html").write_text(index_html, encoding="utf-8")
+        self._write(flights_dir / "index.html", index_html)
 
     def _build_home(self) -> None:
         """Builds home page."""
+        print("- Building home…")
         home_html = self.env.get_template("home.html").render()
-        (self.html_dir / "index.html").write_text(home_html, encoding="utf-8")
+        self._write(self.html_dir / "index.html", home_html)
 
     def _build_structure(self) -> None:
         """Ensures empty HTML folder and copies static files."""
+        print("- Building structure…")
         self.html_dir.mkdir(parents=True, exist_ok=True)
-        for item in self.html_dir.iterdir():
-            if item.is_file():
-                item.unlink()
-            elif item.is_dir():
-                shutil.rmtree(item)
         static_dir = files("pbtravellog") / "static"
-        with as_file(static_dir) as static_path:
-            shutil.copytree(static_path, self.html_dir, dirs_exist_ok=True)
+        for src in static_dir.rglob("*"):
+            if src.is_dir():
+                continue
+            dest = self.html_dir / src.relative_to(static_dir)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            if dest.exists():
+                if (
+                    self.force_refresh
+                    or not filecmp.cmp(src, dest, shallow=False)
+                ):
+                    shutil.copy2(src, dest)
+                    self.file_count["updated"] += 1
+                    print(f"  - Updated \"{src}\".")
+                else:
+                    self.file_count["unchanged"] += 1
+            else:
+                shutil.copy2(src, dest)
+                self.file_count["new"] += 1
+                print(f"  - Created \"{src}\".")
 
     def _build_tails(self) -> None:
         """Builds tail number pages."""
         print("- Building tail numbers…")
         tails_dir = self.html_dir / "tails"
-        tails_dir.mkdir()
+        tails_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_tails.html")
         tail_records = self._collect_tail_records(self.all_flights)
         index_html = index_template.render(tails=tail_records)
-        (tails_dir / "index.html").write_text(index_html, encoding="utf-8")
+        self._write(tails_dir / "index.html", index_html)
 
     def _collect_aircraft_type_records(self, flight_records) -> list[dict]:
         """Builds aircraft type records from flight records."""
@@ -412,10 +435,27 @@ class StaticHTMLBuilder():
         }
         return record
 
+    def _write(self, file_path: Path, contents: str) -> None:
+        """Writes a file while checking for changes."""
+        if file_path.exists():
+            if (
+                self.force_refresh
+                or file_path.read_text(encoding="utf-8") != contents
+            ):
+                file_path.write_text(contents, encoding="utf-8", newline="\n")
+                self.file_count["updated"] += 1
+                print(f"  - Updated \"{file_path}\".")
+            else:
+                self.file_count["unchanged"] += 1
+        else:
+            file_path.write_text(contents, encoding="utf-8", newline="\n")
+            self.file_count["new"] += 1
+            print(f"  - Created \"{file_path}\".")
 
-def build():
+
+def build(force_refresh=False):
     """Builds a directory of static HTML pages."""
-    b = StaticHTMLBuilder()
+    b = StaticHTMLBuilder(force_refresh=force_refresh)
     b.build()
 
 def run(port):
