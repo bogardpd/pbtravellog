@@ -199,6 +199,9 @@ class StaticHTMLBuilder():
     def _build_structure(self) -> None:
         """Ensures HTML folder exists and copies static files."""
         print("- Building structure…")
+        if self.force_refresh:
+            # Delete all contents of html_dir.
+            shutil.rmtree(self.html_dir, ignore_errors=True)
         self.html_dir.mkdir(parents=True, exist_ok=True)
         static_dir = files("pbtravellog") / "static"
         for src in static_dir.rglob("*"):
@@ -207,15 +210,12 @@ class StaticHTMLBuilder():
             dest = self.html_dir / src.relative_to(static_dir)
             dest.parent.mkdir(parents=True, exist_ok=True)
             if dest.exists():
-                if (
-                    self.force_refresh
-                    or not filecmp.cmp(src, dest, shallow=False)
-                ):
+                if filecmp.cmp(src, dest, shallow=False):
+                    self.file_count["unchanged"] += 1
+                else:
                     shutil.copy2(src, dest)
                     self.file_count["updated"] += 1
                     print(f"  - Updated \"{src}\".")
-                else:
-                    self.file_count["unchanged"] += 1
             else:
                 shutil.copy2(src, dest)
                 self.file_count["new"] += 1
