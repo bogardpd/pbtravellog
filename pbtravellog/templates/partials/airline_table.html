@@ -3,7 +3,7 @@
   <thead>
     <tr>
       <th class="rank">#</th>
-      <th colspan="2">Airline</th>
+      <th colspan="2">{% if operators %}Operator{% else %}Airline{% endif %}</th>
       <th class="iata-code">IATA</th>
       <th class="count">Flights</th>
     </tr>
@@ -18,5 +18,8 @@
       <td class="count">{{ airline.count }}</td>
     </tr>
     {% endfor %}
+    <tr class="total">
+      <td colspan="5">{{ airlines | length }} {% if operators %}operator{% else %}airline{% endif %}{% if (airlines | length) != 1 %}s{% endif %}</td>
+    </tr>
   </tbody>
 </table>

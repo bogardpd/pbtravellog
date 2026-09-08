@@ -18,5 +18,8 @@
       <td class="departure">{{ flight.departure_local | format_dt(include_time=False) }}</td>
     </tr>
     {% endfor %}
+    <tr class="total">
+      <td colspan="5">{{ flights | length }} flight{% if (flights | length) != 1 %}s{% endif %}</td>
+    </tr>
   </tbody>
 </table>

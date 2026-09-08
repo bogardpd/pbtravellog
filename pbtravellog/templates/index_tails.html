@@ -1,24 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Tail Numbers{% endblock %}
 {% block content %}
-<table>
-  <thead>
-    <tr>
-      <th class="rank">#</th>
-      <th>Tail</th>
-      <th>Equipment</th>
-      <th class="count">Flights</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for tail in tails %}
-    <tr>
-      <td class="rank">{% if loop.first or tail.rank != loop.previtem.rank %}{{ tail.rank }}{% else %}⋮{% endif %}</td>
-      <td>{{ tail.tail_number }}</td>
-      <td>{{ tail.aircraft_type_name }}</td>
-      <td class="count">{{ tail.count }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% include "partials/tail_table.html" %}
 {% endblock content %}

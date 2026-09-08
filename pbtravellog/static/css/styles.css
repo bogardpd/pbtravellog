@@ -22,8 +22,13 @@
 
 :root {
     --color-border: #cccccc;
+    --color-background-light: #eeeeee;
     --color-text-light: #999999;
     --weight-bold: 700;
+
+    --border-heavy: 2px solid var(--color-border);
+    --border-normal: 1px solid var(--color-border);
+    --border-light: 1px dotted var(--color-border);
 }
 
 body {
@@ -85,7 +90,8 @@ span.current-airport {
 }
 table {
     border-collapse: collapse;
-    border-top: 1px solid var(--color-border);
+    border-top: var(--border-normal);
+    border-bottom: var(--border-normal);
 }
 th, td {
     padding: 0.5em;
@@ -97,13 +103,22 @@ table.summary {
     }
 }
 thead {
-    border-bottom: 2px solid var(--color-border);
+    background-color: var(--color-background-light);
+    border-bottom: var(--border-heavy);
 }
 tr {
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: var(--border-normal);
 }
 tr.continue {
-    border-bottom: 1px dotted var(--color-border);
+    border-bottom: var(--border-light);
+}
+tr.total {
+    border-top: var(--border-heavy);
+    background-color: var(--color-background-light);
+    td {
+        text-align: center;
+        font-weight: var(--weight-bold);
+    }
 }
 th.airport-visits, td.airport-visits, th.count, td.count {
     text-align: center;

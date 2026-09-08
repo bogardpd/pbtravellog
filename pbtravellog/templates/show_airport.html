@@ -22,20 +22,20 @@
   </tbody>
 </table>
 
-<h2>Airlines Using {{ airport.iata_code if airport.iata_code else airport.name }} ({{ airlines | length }})</h2>
+<h2>{{ airport.iata_code if airport.iata_code else airport.name }} Airlines</h2>
 
-{% with airlines=airlines %}
+{% with airlines=airlines, operators=False %}
   {% include "partials/airline_table.html" %}
 {% endwith %}
 
-<h2>Operators Using {{ airport.iata_code if airport.iata_code else airport.name }} ({{ operators | length }})</h2>
-{% with airlines=operators %}
+<h2>{{ airport.iata_code if airport.iata_code else airport.name }} Operators</h2>
+{% with airlines=operators, operators=True %}
   {% include "partials/airline_table.html" %}
 {% endwith %}
 
-<h2>Aircraft Families Using {{ airport.iata_code if airport.iata_code else airport.name }} ({{ operators | length }})</h2>
-{% include "partials/aircraft_family_table.html" %}
+<h2>{{ airport.iata_code if airport.iata_code else airport.name }} Aircraft Types</h2>
+{% include "partials/aircraft_type_table.html" %}
 
-<h2>Flights Using {{ airport.iata_code if airport.iata_code else airport.name }} ({{ flights | length }})</h2>
+<h2>{{ airport.iata_code if airport.iata_code else airport.name }} Flights</h2>
 {% include "partials/flight_table.html" %}
 {% endblock content %}

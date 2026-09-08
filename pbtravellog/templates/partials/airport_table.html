@@ -16,5 +16,8 @@
       <td class="airport-visits">{{ airport.visits }}</td>
     </tr>
     {% endfor %}
+    <tr class="total">
+      <td colspan="4">{{ airports | length }} airport{% if (airports | length) != 1 %}s{% endif %}</td>
+    </tr>
   </tbody>
 </table>

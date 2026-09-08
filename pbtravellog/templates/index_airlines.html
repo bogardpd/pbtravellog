@@ -3,12 +3,12 @@
 {% block content %}
 
 <h2>Marketing Airlines</h2>
-{% with airlines=airlines %}
+{% with airlines=airlines, operators=False %}
   {% include "partials/airline_table.html" %}
 {% endwith %}
 
 <h2>Operators</h2>
-{% with airlines=operators %}
+{% with airlines=operators, operators=True %}
   {% include "partials/airline_table.html" %}
 {% endwith %}
 
