@@ -197,7 +197,7 @@ class StaticHTMLBuilder():
         self._write(self.html_dir / "index.html", home_html)
 
     def _build_structure(self) -> None:
-        """Ensures empty HTML folder and copies static files."""
+        """Ensures HTML folder exists and copies static files."""
         print("- Building structure…")
         self.html_dir.mkdir(parents=True, exist_ok=True)
         static_dir = files("pbtravellog") / "static"
