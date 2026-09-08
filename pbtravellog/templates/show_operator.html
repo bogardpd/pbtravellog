@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ operator.name }} (as Operator){% endblock %}
+{% block content %}
+<table class="summary">
+  <thead>
+    <tr>
+      <th>IATA</th>
+      <th>ICAO</th>
+      <th>Operated Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="code">{{ operator.iata_code }}</span></td>
+      <td><span class="code">{{ operator.icao_code }}</span></td>
+      <td>{{ flights | length }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>{{ operator.name }} Operated Airlines</h2>
+{% include "partials/airline_table.html" %}
+
+<h2>{{ operator.name }} Operated Aircraft Types</h2>
+{% include "partials/aircraft_type_table.html" %}
+
+<h2>{{ operator.name }} Operated Flights</h2>
+{% include "partials/flight_table.html" %}
+{% endblock content %}

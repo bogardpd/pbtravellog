@@ -92,13 +92,53 @@ class StaticHTMLBuilder():
         print("- Building airlines…")
         airlines_dir = self.html_dir / "airlines"
         airlines_dir.mkdir()
+        operators_dir = airlines_dir / "operators"
+        operators_dir.mkdir()
         index_template = self.env.get_template("index_airlines.html")
+        show_airline_template = self.env.get_template("show_airline.html")
+        show_operator_template = self.env.get_template("show_operator.html")
         airline_records = self._collect_airline_records(
             self.all_flights, operators=False,
         )
         operator_records = self._collect_airline_records(
             self.all_flights, operators=True,
         )
+        for airline in airline_records:
+            airline_flights = self._filter_flights_by_airline(
+                self.all_flights, airline["fid"], operator=False,
+            )
+            airline_operators = self._collect_airline_records(
+                airline_flights, operators=True,
+            )
+            airline_aircraft_types = self._collect_aircraft_type_records(
+                airline_flights,
+            )
+            show_airline_html = show_airline_template.render(
+                airline=airline,
+                operators=airline_operators,
+                aircraft_types=airline_aircraft_types,
+                flights=airline_flights,
+            )
+            airline_page_path = airlines_dir / f"{airline["fid"]}.html"
+            airline_page_path.write_text(show_airline_html, encoding="utf-8")
+        for operator in operator_records:
+            operator_flights = self._filter_flights_by_airline(
+                self.all_flights, operator["fid"], operator=True,
+            )
+            operator_airlines = self._collect_airline_records(
+                operator_flights, operators=False,
+            )
+            operator_aircraft_types = self._collect_aircraft_type_records(
+                operator_flights,
+            )
+            show_operator_html = show_operator_template.render(
+                operator=operator,
+                airlines=operator_airlines,
+                aircraft_types=operator_aircraft_types,
+                flights=operator_flights,
+            )
+            operator_page_path = operators_dir / f"{operator["fid"]}.html"
+            operator_page_path.write_text(show_operator_html, encoding="utf-8")
         index_html = index_template.render(
             airlines=airline_records,
             operators=operator_records,
@@ -216,6 +256,7 @@ class StaticHTMLBuilder():
                 "fid": airline_fid,
                 "name": airline_row["name"],
                 "iata_code": airline_row["iata_code"],
+                "icao_code": airline_row["icao_code"],
                 "count": count,
                 "rank": ranks[airline_fid],
             }
@@ -299,16 +340,27 @@ class StaticHTMLBuilder():
         ]
         return records
 
+    def _filter_flights_by_airline(
+        self, flight_records, airline_fid, operator=False,
+    ) -> list[dict]:
+        """Filters flight records by an airline."""
+        column = "operator_fid" if operator else "airline_fid"
+        records = [
+            r for r in flight_records
+            if r[column] == airline_fid
+        ]
+        return records
+
     def _filter_flights_by_airport(
         self, flight_records, airport_fid,
     ) -> list[dict]:
         """Filters flight records by an airport."""
         records = [
             r for r in flight_records
-            if (
-                r["origin_airport_fid"] == airport_fid
-                or r["destination_airport_fid"] == airport_fid
-            )
+            if airport_fid in [
+                r["origin_airport_fid"],
+                r["destination_airport_fid"],
+            ]
         ]
         return records
 

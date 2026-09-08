@@ -23,15 +23,10 @@
 </table>
 
 <h2>{{ airport.iata_code if airport.iata_code else airport.name }} Airlines</h2>
-
-{% with airlines=airlines, operators=False %}
-  {% include "partials/airline_table.html" %}
-{% endwith %}
+{% include "partials/airline_table.html" %}
 
 <h2>{{ airport.iata_code if airport.iata_code else airport.name }} Operators</h2>
-{% with airlines=operators, operators=True %}
-  {% include "partials/airline_table.html" %}
-{% endwith %}
+{% include "partials/operator_table.html" %}
 
 <h2>{{ airport.iata_code if airport.iata_code else airport.name }} Aircraft Types</h2>
 {% include "partials/aircraft_type_table.html" %}

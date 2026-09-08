@@ -1,0 +1,25 @@
+{% import "macros/icons.html" as icons %}
+<table>
+  <thead>
+    <tr>
+      <th class="rank">#</th>
+      <th colspan="2">Operator</th>
+      <th class="iata-code">IATA</th>
+      <th class="count">Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for operator in operators %}
+    <tr>
+      <td class="rank">{% if loop.first or operator.rank != loop.previtem.rank %}{{ operator.rank }}{% else %}⋮{% endif %}</td>
+      <td>{{ icons.airline(operator.fid) }}</td>
+      <td><a href="/airlines/operators/{{ operator.fid }}.html">{{ operator.name }}</a></td>
+      <td class="iata-code"><span class="code">{{ operator.iata_code if operator.iata_code }}</span></td>
+      <td class="count">{{ operator.count }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total">
+      <td colspan="5">{{ operators | length }} operator{% if (operators | length) != 1 %}s{% endif %}</td>
+    </tr>
+  </tbody>
+</table>
