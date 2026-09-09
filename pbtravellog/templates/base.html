@@ -1,3 +1,4 @@
+{% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +14,7 @@
         <li>
           <a href="/flights/">Flights</a>
           <ul>
-            <li><a href="/aircraft/">Aircraft</a></li>
+            <li><a href="/aircraft/">Aircraft Types</a></li>
             <li><a href="/airlines/">Airlines</a></li>
             <li><a href="/airports/">Airports</a></li>
             <li><a href="/tails/">Tail Numbers</a></li>
@@ -22,6 +23,7 @@
       </ul>
     </nav>
     <main>
+      <nav id="breadcrumbs">{% block breadcrumbs %}{% if breadcrumbs %}{{ render_breadcrumbs(breadcrumbs) }}{% endif %}{% endblock %}</nav>
       <h1>{{ self.title() }}</h1>
       {% block content %}{% endblock %}
     </main>

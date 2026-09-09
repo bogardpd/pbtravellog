@@ -50,6 +50,23 @@ div.body-container {
     }
 }
 
+main {
+    padding: 1em;
+    background-color: #ffffff;
+}
+nav#breadcrumbs {
+    ul {
+        margin-top: 0;
+        margin-bottom: 1.5em;
+        display: flex;
+        list-style: none;
+        padding: 0;
+    }
+    li + li::before {
+        content: "›";
+        margin: 0 0.5em;
+    }
+}
 nav#sidebar {
     background-color: #cccccc;
     padding: 0.5em;
@@ -66,10 +83,7 @@ nav#sidebar {
         padding-left: 0;
     }
 }
-main {
-    padding: 1em;
-    background-color: #ffffff;
-}
+
 h1 {
     margin-top: 0;
 }
