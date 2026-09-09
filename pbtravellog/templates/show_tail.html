@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ tail.tail_number }}{% endblock %}
+{% block content %}
+<table class="summary">
+  <thead>
+    <tr>
+      <th>Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ flights | length }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>{{ tail.tail_number }} Airlines</h2>
+{% include "partials/airline_table.html" %}
+
+<h2>{{ tail.tail_number }} Operators</h2>
+{% include "partials/operator_table.html" %}
+
+<h2>{{ tail.tail_number }} Aircraft Types</h2>
+{% include "partials/aircraft_type_table.html" %}
+
+<h2>{{ tail.tail_number }} Flights</h2>
+{% include "partials/flight_table.html" %}
+{% endblock content %}
