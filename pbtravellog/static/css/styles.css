@@ -98,24 +98,15 @@ div.flight-card {
     grid-template-columns: 1fr auto 1fr;
     gap: 0.5em 0.5em;
     background-color: #eeeeee;
-    .flight-card-orig {
-        text-align: right;
-    }
-    .flight-card-sep {
+    border: var(--border-normal);
+    div {
         text-align: center;
     }
-    .flight-card-dest {
-        text-align: left;
-    }
     .flight-card-head {
-        font-size: 300%;
+        font-size: 250%;
     }
     .flight-card-airport {
         font-weight: var(--weight-bold);
-        padding-bottom: 0.5em;
-    }
-    .flight-card-dt-utc {
-        font-weight: var(--weight-light);
     }
 }
 

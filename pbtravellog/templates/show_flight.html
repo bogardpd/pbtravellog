@@ -6,17 +6,20 @@
 
 <div class="flight-card">
   <!-- Code -->
-  <div class="flight-card-orig flight-card-airport"><span class="flight-card-head">{{ flight.origin_airport_code }}</span><br>{{ flight.origin_airport_name }}</div>
-  <div class="flight-card-sep flight-card-airport"><span class="flight-card-head">&rarr;</span></div>
-  <div class="flight-card-dest flight-card-airport"><span class="flight-card-head">{{ flight.destination_airport_code }}</span><br>{{ flight.destination_airport_name }}</div>
+  <div class="flight-card-airport">
+    <span class="flight-card-head">{{ flight.origin_airport_code }}</span><br>
+    <a href="/airports/{{ flight.origin_airport_fid }}.html">{{ flight.origin_airport_name }}</a></div>
+  <div class="flight-card-airport">
+    <span class="flight-card-head">&rarr;</span>
+  </div>
+  <div class="flight-card-airport">
+    <span class="flight-card-head">{{ flight.destination_airport_code }}</span><br>
+    <a href="/airports/{{ flight.destination_airport_fid }}.html">{{ flight.destination_airport_name }}</a>
+  </div>
   <!-- Local Time -->
-  <div class="flight-card-orig flight-card-dt-local">{{ flight.departure_local | format_dt(include_time=True) }}</div>
-  <div class="flight-card-sep">local</div>
-  <div class="flight-card-dest flight-card-dt-local">{{ flight.arrival_local | format_dt(include_time=True) }}</div>
-  <!-- UTC -->
-  <div class="flight-card-orig flight-card-dt-utc">{{ flight.departure_utc | format_dt(include_time=True) }}</div>
-  <div class="flight-card-sep flight-card-dt-utc">UTC</div>
-  <div class="flight-card-dest flight-card-dt-utc">{{ flight.arrival_utc | format_dt(include_time=True) }}</div>
+  <div class="flight-card-dt-local">{{ flight.departure_local | format_dt(include_time=True, include_tz=True) }}</div>
+  <div class="flight-card-dt-local">{% if flight.duration_h_m %}{{ flight.duration_h_m[0] }}h {{ flight.duration_h_m[1] }}s{% endif %}</div>
+  <div class="flight-card-dt-local">{{ flight.arrival_local | format_dt(include_time=True, include_tz=True) }}</div>
 </div>
 
 <table>

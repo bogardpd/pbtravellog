@@ -6,7 +6,7 @@ from datetime import datetime, UTC
 import filecmp
 from functools import partial
 import http.server
-from importlib.resources import files, as_file
+from importlib.resources import files
 import os
 from pathlib import Path
 import sys
@@ -453,21 +453,27 @@ class StaticHTMLBuilder():
             departure_utc,
             row["origin_airport_time_zone"]
         )
-        if row["arrival_utc"] is None:
+        if pd.isna(row["arrival_utc"]):
             arrival_utc = None
             arrival_local = None
+            duration_h_m = None
         else:
             arrival_utc = row["arrival_utc"].to_pydatetime()
             arrival_local = _local_dt(
                 arrival_utc,
                 row["destination_airport_time_zone"]
             )
+            dur_s = (arrival_utc-departure_utc).total_seconds()
+            hours, remainder = divmod(dur_s, 3600)
+            minutes = remainder // 60
+            duration_h_m = (int(hours), int(minutes))
         record = {
             "fid": flight_fid,
             "departure_utc": departure_utc,
             "departure_local": departure_local,
             "arrival_utc": arrival_utc,
             "arrival_local": arrival_local,
+            "duration_h_m": duration_h_m,
             "name": _flight_name(row),
             "tail_number": row["tail_number"],
             "aircraft_type_fid": row["aircraft_type_fid"],
@@ -561,13 +567,15 @@ def _flight_name(row) -> str:
         return row.airline_name
     return "Unnamed Flight"
 
-def _format_dt(dt, include_time=True) -> str:
+def _format_dt(dt, include_time=True, include_tz=False) -> str:
     """Formats a datetime."""
     if dt is None:
         return ""
     parts = ["%d %b %Y"]
     if include_time:
         parts.append("%H:%M")
+    if include_tz:
+        parts.append("%Z")
     return dt.strftime(" ".join(parts))
 
 def _local_dt(dt_utc, tz):
