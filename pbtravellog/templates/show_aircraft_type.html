@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% set breadcrumbs=[("Home", "/"), ("Aircraft Types", "/aircraft/"), (aircraft_type.name, None)] %}
 {% block title %}{{ aircraft_type.manufacturer }} {{ aircraft_type.name }}{% endblock %}
 {% block content %}
 <table class="summary">

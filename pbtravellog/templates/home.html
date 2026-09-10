@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% set breadcrumbs=[("Home", None)] %}
 {% block title %}PBTravelLog{% endblock %}
 {% block content %}
 <p>Travel log built {{ build_time | format_dt }} UTC</p>

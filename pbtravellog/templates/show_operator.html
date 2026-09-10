@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% set breadcrumbs=[("Home", "/"), ("Airlines", "/airlines/"), (operator.name + " (Operator)", None)] %}
 {% block title %}{{ operator.name }} (as Operator){% endblock %}
 {% block content %}
 <table class="summary">

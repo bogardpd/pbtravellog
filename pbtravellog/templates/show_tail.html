@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% set breadcrumbs=[("Home", "/"), ("Tail Numbers", "/tails/"), (tail.tail_number, None)] %}
 {% block title %}{{ tail.tail_number }}{% endblock %}
 {% block content %}
 <table class="summary">

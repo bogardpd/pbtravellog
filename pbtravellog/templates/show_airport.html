@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% set breadcrumbs=[("Home", "/"), ("Airports", "/airports/"), (airport.iata_code if airport.iata_code else airport.name, None)] %}
 {% block title %}{{ airport.name }}{% endblock %}
 {% block content %}
 <table class="summary">

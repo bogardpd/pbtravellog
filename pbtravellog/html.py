@@ -70,15 +70,10 @@ class StaticHTMLBuilder():
         aircraft_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_aircraft_types.html")
         show_template = self.env.get_template("show_aircraft_type.html")
-        index_breadcrumbs = [("Home", "/"),("Aircraft Types", "/aircraft/")]
         aircraft_type_records = self._collect_aircraft_type_records(
             self.all_flights,
         )
         for aircraft_type in aircraft_type_records:
-            show_breadcrumbs = [
-                *index_breadcrumbs,
-                (aircraft_type["name"], None),
-            ]
             flights = self._filter_flights_by_aircraft_type(
                 self.all_flights, aircraft_type["fid"],
             )
@@ -89,7 +84,6 @@ class StaticHTMLBuilder():
                 flights, operators=True,
             )
             show_type_html = show_template.render(
-                breadcrumbs=show_breadcrumbs,
                 aircraft_type=aircraft_type,
                 airlines=airlines,
                 operators=operators,
@@ -98,7 +92,6 @@ class StaticHTMLBuilder():
             show_path = aircraft_dir / f"{aircraft_type["fid"]}.html"
             self._write(show_path, show_type_html)
         index_html = index_template.render(
-            breadcrumbs=index_breadcrumbs,
             aircraft_types=aircraft_type_records,
         )
         self._write(aircraft_dir / "index.html", index_html)
@@ -113,7 +106,6 @@ class StaticHTMLBuilder():
         index_template = self.env.get_template("index_airlines.html")
         show_airline_template = self.env.get_template("show_airline.html")
         show_operator_template = self.env.get_template("show_operator.html")
-        index_breadcrumbs = [("Home", "/"),("Airlines", "/airlines/")]
         airline_records = self._collect_airline_records(
             self.all_flights, operators=False,
         )
@@ -121,10 +113,6 @@ class StaticHTMLBuilder():
             self.all_flights, operators=True,
         )
         for airline in airline_records:
-            show_airline_breadcrumbs = [
-                *index_breadcrumbs,
-                (airline["name"], None),
-            ]
             airline_flights = self._filter_flights_by_airline(
                 self.all_flights, airline["fid"], operator=False,
             )
@@ -135,7 +123,6 @@ class StaticHTMLBuilder():
                 airline_flights,
             )
             show_airline_html = show_airline_template.render(
-                breadcrumbs=show_airline_breadcrumbs,
                 airline=airline,
                 operators=airline_operators,
                 aircraft_types=airline_aircraft_types,
@@ -144,10 +131,6 @@ class StaticHTMLBuilder():
             show_airline_path = airlines_dir / f"{airline["fid"]}.html"
             self._write(show_airline_path, show_airline_html)
         for operator in operator_records:
-            show_operator_breadcrumbs = [
-                *index_breadcrumbs,
-                (f"{operator["name"]} (Operator)", None),
-            ]
             operator_flights = self._filter_flights_by_airline(
                 self.all_flights, operator["fid"], operator=True,
             )
@@ -158,7 +141,6 @@ class StaticHTMLBuilder():
                 operator_flights,
             )
             show_operator_html = show_operator_template.render(
-                breadcrumbs=show_operator_breadcrumbs,
                 operator=operator,
                 airlines=operator_airlines,
                 aircraft_types=operator_aircraft_types,
@@ -167,7 +149,6 @@ class StaticHTMLBuilder():
             show_operator_path = operators_dir / f"{operator["fid"]}.html"
             self._write(show_operator_path, show_operator_html)
         index_html = index_template.render(
-            breadcrumbs=index_breadcrumbs,
             airlines=airline_records,
             operators=operator_records,
         )
@@ -180,15 +161,8 @@ class StaticHTMLBuilder():
         airports_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_airports.html")
         show_template = self.env.get_template("show_airport.html")
-        index_breadcrumbs = [("Home", "/"),("Airports", "/airports/")]
         airport_records = self._collect_airport_records(self.all_flights)
         for airport in airport_records:
-            airport_str = airport["iata_code"] if airport["iata_code"] \
-                else airport["name"]
-            show_breadcrumbs = [
-                *index_breadcrumbs,
-                (airport_str, None),
-            ]
             flights = self._filter_flights_by_airport(
                 self.all_flights, airport["fid"]
             )
@@ -196,7 +170,6 @@ class StaticHTMLBuilder():
             operators = self._collect_airline_records(flights, operators=True)
             aircraft_types = self._collect_aircraft_type_records(flights)
             show_html = show_template.render(
-                breadcrumbs=show_breadcrumbs,
                 airport=airport,
                 airlines=airlines,
                 operators=operators,
@@ -205,10 +178,7 @@ class StaticHTMLBuilder():
             )
             show_path = airports_dir / f"{airport["fid"]}.html"
             self._write(show_path, show_html)
-        index_html = index_template.render(
-            breadcrumbs=index_breadcrumbs,
-            airports=airport_records,
-        )
+        index_html = index_template.render(airports=airport_records)
         self._write(airports_dir / "index.html", index_html)
 
     def _build_flights(self) -> None:
@@ -217,19 +187,13 @@ class StaticHTMLBuilder():
         flights_dir = self.html_dir / "flights"
         flights_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_flights.html")
-        index_breadcrumbs = [("Home", "/"),("Flights", "/flights/")]
-        index_html = index_template.render(
-            breadcrumbs=index_breadcrumbs,
-            flights=self.all_flights,
-        )
+        index_html = index_template.render(flights=self.all_flights)
         self._write(flights_dir / "index.html", index_html)
 
     def _build_home(self) -> None:
         """Builds home page."""
         print("- Building home…")
-        home_html = self.env.get_template("home.html").render(
-            breadcrumbs = [("Home", None)],
-        )
+        home_html = self.env.get_template("home.html").render()
         self._write(self.html_dir / "index.html", home_html)
 
     def _build_structure(self) -> None:
@@ -264,13 +228,8 @@ class StaticHTMLBuilder():
         tails_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_tails.html")
         show_template = self.env.get_template("show_tail.html")
-        index_breadcrumbs = [("Home", "/"),("Tail Numbers", "/tails/")]
         tail_records = self._collect_tail_records(self.all_flights)
         for tail in tail_records:
-            show_breadcrumbs = [
-                *index_breadcrumbs,
-                (tail["tail_number"], None),
-            ]
             flights = self._filter_flights_by_tail(
                 self.all_flights, tail["tail_number"],
             )
@@ -284,7 +243,6 @@ class StaticHTMLBuilder():
                 flights,
             )
             show_html = show_template.render(
-                breadcrumbs=show_breadcrumbs,
                 tail=tail,
                 airlines=airlines,
                 operators=operators,
@@ -293,10 +251,7 @@ class StaticHTMLBuilder():
             )
             show_path = tails_dir / f"{tail["tail_number"]}.html"
             self._write(show_path, show_html)
-        index_html = index_template.render(
-            breadcrumbs=index_breadcrumbs,
-            tails=tail_records,
-        )
+        index_html = index_template.render(tails=tail_records)
         self._write(tails_dir / "index.html", index_html)
 
     def _collect_aircraft_type_records(self, flight_records) -> list[dict]:

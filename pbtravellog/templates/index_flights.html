@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "macros/icons.html" as icons %}
+{% set breadcrumbs=[("Home", "/"), ("Flights", None)] %}
 {% block title %}Flights{% endblock %}
 {% block content %}
 {% include "partials/flight_table.html" %}
