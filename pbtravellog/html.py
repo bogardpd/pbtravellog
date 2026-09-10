@@ -469,7 +469,7 @@ class StaticHTMLBuilder():
         return record
 
     def _write(self, file_path: Path, contents: str) -> None:
-        """Writes a file while checking for changes."""
+        """Writes a generated file if the file is new or changed."""
         if file_path.exists():
             if (
                 self.force_refresh
