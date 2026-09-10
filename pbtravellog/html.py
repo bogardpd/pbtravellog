@@ -187,6 +187,11 @@ class StaticHTMLBuilder():
         flights_dir = self.html_dir / "flights"
         flights_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_flights.html")
+        show_template = self.env.get_template("show_flight.html")
+        for flight in self.all_flights:
+            show_html = show_template.render(flight=flight)
+            show_path = flights_dir / f"{flight["fid"]}.html"
+            self._write(show_path, show_html)
         index_html = index_template.render(flights=self.all_flights)
         self._write(flights_dir / "index.html", index_html)
 
@@ -444,22 +449,38 @@ class StaticHTMLBuilder():
         """Turns a flight row into a record."""
         airport_codes = _airport_codes(row)
         departure_utc = row["departure_utc"].to_pydatetime()
+        departure_local = _local_dt(
+            departure_utc,
+            row["origin_airport_time_zone"]
+        )
+        if row["arrival_utc"] is None:
+            arrival_utc = None
+            arrival_local = None
+        else:
+            arrival_utc = row["arrival_utc"].to_pydatetime()
+            arrival_local = _local_dt(
+                arrival_utc,
+                row["destination_airport_time_zone"]
+            )
         record = {
             "fid": flight_fid,
             "departure_utc": departure_utc,
-            "departure_local": departure_utc.astimezone(
-                ZoneInfo(row["origin_airport_time_zone"])
-            ),
+            "departure_local": departure_local,
+            "arrival_utc": arrival_utc,
+            "arrival_local": arrival_local,
             "name": _flight_name(row),
             "tail_number": row["tail_number"],
             "aircraft_type_fid": row["aircraft_type_fid"],
             "aircraft_type_name": row["aircraft_type_name"],
             "airline_fid": row["airline_fid"],
+            "airline_name": row["airline_name"],
             "operator_fid": row["operator_fid"],
             "origin_airport_fid": row["origin_airport_fid"],
             "origin_airport_code": airport_codes[0],
+            "origin_airport_name": row["origin_airport_name"],
             "destination_airport_fid": row["destination_airport_fid"],
             "destination_airport_code": airport_codes[1],
+            "destination_airport_name": row["destination_airport_name"],
             "trip_fid": row["trip_fid"],
             "trip_section": row["trip_section"],
         }
@@ -548,6 +569,12 @@ def _format_dt(dt, include_time=True) -> str:
     if include_time:
         parts.append("%H:%M")
     return dt.strftime(" ".join(parts))
+
+def _local_dt(dt_utc, tz):
+    """Converts a UTC datetime to local time."""
+    if pd.isna(dt_utc) or pd.isna(tz):
+        return None
+    return dt_utc.astimezone(ZoneInfo(tz))
 
 def _rank_count(count_dict: dict) -> dict:
     """Ranks a dictionary of item counts."""

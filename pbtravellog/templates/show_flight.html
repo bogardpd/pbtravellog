@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "macros/icons.html" as icons %}
+{% set breadcrumbs=[("Home", "/"), ("Flights", "/flights/"), (flight.name, None)] %}
+{% block title %}{{ flight.name }}{% endblock %}
+{% block content %}
+
+<div class="flight-card">
+  <!-- Code -->
+  <div class="flight-card-orig flight-card-airport"><span class="flight-card-head">{{ flight.origin_airport_code }}</span><br>{{ flight.origin_airport_name }}</div>
+  <div class="flight-card-sep flight-card-airport"><span class="flight-card-head">&rarr;</span></div>
+  <div class="flight-card-dest flight-card-airport"><span class="flight-card-head">{{ flight.destination_airport_code }}</span><br>{{ flight.destination_airport_name }}</div>
+  <!-- Local Time -->
+  <div class="flight-card-orig flight-card-dt-local">{{ flight.departure_local | format_dt(include_time=True) }}</div>
+  <div class="flight-card-sep">local</div>
+  <div class="flight-card-dest flight-card-dt-local">{{ flight.arrival_local | format_dt(include_time=True) }}</div>
+  <!-- UTC -->
+  <div class="flight-card-orig flight-card-dt-utc">{{ flight.departure_utc | format_dt(include_time=True) }}</div>
+  <div class="flight-card-sep flight-card-dt-utc">UTC</div>
+  <div class="flight-card-dest flight-card-dt-utc">{{ flight.arrival_utc | format_dt(include_time=True) }}</div>
+</div>
+
+<table>
+  <tr>
+    <th scope="row">Airline</th>
+    <td>{{ icons.airline(flight.airline_fid) }} <a href="/airlines/">{{ flight.airline_name }}</a></td>
+  </tr>
+</table>
+{% endblock content %}

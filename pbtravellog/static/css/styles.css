@@ -25,6 +25,8 @@
     --color-background-light: #eeeeee;
     --color-text-light: #999999;
     --weight-bold: 700;
+    --weight-text: 450;
+    --weight-light: 300;
 
     --border-heavy: 2px solid var(--color-border);
     --border-normal: 1px solid var(--color-border);
@@ -33,7 +35,7 @@
 
 body {
     font-size: 14pt;
-    font-weight: 450;
+    font-weight: var(--weight-text);
     font-family: 'IBM Plex Sans', sans-serif;
     background-color: #eeeeee;
 }
@@ -87,6 +89,36 @@ nav#sidebar {
 h1 {
     margin-top: 0;
 }
+
+div.flight-card {
+    width: 100%;
+    margin: 1em 0;
+    padding: 0.5em 0;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.5em 0.5em;
+    background-color: #eeeeee;
+    .flight-card-orig {
+        text-align: right;
+    }
+    .flight-card-sep {
+        text-align: center;
+    }
+    .flight-card-dest {
+        text-align: left;
+    }
+    .flight-card-head {
+        font-size: 300%;
+    }
+    .flight-card-airport {
+        font-weight: var(--weight-bold);
+        padding-bottom: 0.5em;
+    }
+    .flight-card-dt-utc {
+        font-weight: var(--weight-light);
+    }
+}
+
 img.icon {
     width: 48px;
     height: 24px;
@@ -112,6 +144,7 @@ table.summary {
         text-align: center;
     }
 }
+
 thead {
     background-color: var(--color-background-light);
     border-bottom: var(--border-heavy);
