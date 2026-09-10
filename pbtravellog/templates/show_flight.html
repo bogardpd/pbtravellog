@@ -22,7 +22,7 @@
   <div class="flight-card-dt-local">{{ flight.arrival_local | format_dt(include_time=True, include_tz=True) }}</div>
 </div>
 
-<table>
+<table class="data-table">
   <tr>
     <th scope="row">Airline</th>
     <td>{{ icons.airline(flight.airline_fid) }} <a href="/airlines/">{{ flight.airline_name }}</a></td>

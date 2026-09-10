@@ -126,6 +126,10 @@ table {
     border-top: var(--border-normal);
     border-bottom: var(--border-normal);
 }
+table.data-table {
+    margin-left: auto;
+    margin-right: auto;
+}
 th, td {
     padding: 0.5em;
     text-align: left;
