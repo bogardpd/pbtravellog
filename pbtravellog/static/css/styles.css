@@ -176,9 +176,6 @@ th.airport-visits, td.airport-visits, th.count, td.count {
     text-align: center;
     font-variant-numeric: tabular-nums;
 }
-th[scope="row"] {
-    min-width: 125px;
-}
 th.departure, td.departure {
     text-align: right;
     font-variant-numeric: tabular-nums;
@@ -189,8 +186,13 @@ th.iata-code, td.iata-code, th.icao-code, td.icao-code {
 td.icon {
     text-align: center;
 }
-td.icon-right {
-    text-align: right;
+table.flight-data-table {
+    th, td {
+        text-align: center;
+        img {
+            margin-bottom: 0.25em;
+        }
+    }
 }
 th.flight-route, td.flight-route {
     text-align: center;
