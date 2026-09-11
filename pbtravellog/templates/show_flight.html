@@ -25,7 +25,39 @@
 <table class="data-table">
   <tr>
     <th scope="row">Airline</th>
-    <td>{{ icons.airline(flight.airline_fid) }} <a href="/airlines/">{{ flight.airline_name }}</a></td>
+    <td>{{ icons.airline(flight.airline_fid, float=True) }} <a href="/airlines/{{ flight.airline_fid }}.html">{{ flight.airline_name }}</a></td>
   </tr>
+  <tr>
+    <th scope="row">Operated By</th>
+    <td>{{ icons.airline(flight.operator_fid, float=True) }} <a href="/airlines/operators/{{ flight.operator_fid }}.html">{{ flight.operator_name }}</a></td>
+  </tr>
+  {% if flight.codeshare_airline_fid %}
+  <tr>
+    <th scope="row">Codeshare</th>
+    <td>{{ icons.airline(flight.codeshare_airline_fid, float=True) }} {{ flight.codeshare_airline_name }}{% if flight.codeshare_flight_number %} {{ flight.codeshare_flight_number }}{% endif %}</td>
+  </tr>
+  {% endif %}
+  <tr>
+    <th scope="row">Aircraft Type</th>
+    <td><a href="/aircraft/{{ flight.aircraft_type_fid }}.html">{{ flight.aircraft_type_manufacturer }} {{ flight.aircraft_type_name }}</a></td>
+  </tr>
+  {% if flight.aircraft_name %}
+  <tr>
+    <th scope="row">Aircraft Name</th>
+    <td class="aircraft-name">{{ flight.aircraft_name }}</td>
+  </tr>
+  {% endif %}
+  {% if flight.tail_number %}
+  <tr>
+    <th scope="row">Tail Number</th>
+    <td><a href="/tails/{{ flight.tail_number }}.html">{{ flight.tail_number }}</a></td>
+  </tr>
+  {% endif %}
+  {% if flight.boarding_pass_data %}
+  <tr>
+    <th scope="row">Boarding Pass</th>
+    <td><a href="https://paulbogard.net/boarding-pass-parser/?bptext={{ flight.boarding_pass_data | urlencode }}">Boarding Pass Data</a></td>
+  </tr>
+  {% endif %}
 </table>
 {% endblock content %}

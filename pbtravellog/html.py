@@ -475,12 +475,18 @@ class StaticHTMLBuilder():
             "arrival_local": arrival_local,
             "duration_h_m": duration_h_m,
             "name": _flight_name(row),
+            "aircraft_name": row["aircraft_name"],
             "tail_number": row["tail_number"],
             "aircraft_type_fid": row["aircraft_type_fid"],
+            "aircraft_type_manufacturer": row["aircraft_type_manufacturer"],
             "aircraft_type_name": row["aircraft_type_name"],
             "airline_fid": row["airline_fid"],
             "airline_name": row["airline_name"],
+            "codeshare_airline_fid": row["codeshare_airline_fid"],
+            "codeshare_airline_name": row["codeshare_airline_name"],
+            "codeshare_flight_number": row["codeshare_flight_number"],
             "operator_fid": row["operator_fid"],
+            "operator_name": row["operator_name"],
             "origin_airport_fid": row["origin_airport_fid"],
             "origin_airport_code": airport_codes[0],
             "origin_airport_name": row["origin_airport_name"],
@@ -489,6 +495,7 @@ class StaticHTMLBuilder():
             "destination_airport_name": row["destination_airport_name"],
             "trip_fid": row["trip_fid"],
             "trip_section": row["trip_section"],
+            "boarding_pass_data": row["boarding_pass_data"],
         }
         record = {
             k: (None if pd.isna(v) else v) for k, v in record.items()

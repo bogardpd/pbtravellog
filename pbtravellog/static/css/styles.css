@@ -115,6 +115,10 @@ img.icon {
     height: 24px;
     vertical-align: text-bottom;
 }
+img.icon-float {
+    float: right;
+    margin-left: 0.5em;
+}
 span.code, a.code {
     font-family: 'IBM Plex Mono', monospace;
 }
@@ -135,6 +139,8 @@ th, td {
     text-align: left;
 }
 table.summary {
+    margin-left: auto;
+    margin-right: auto;
     th, td {
         text-align: center;
     }
@@ -157,6 +163,9 @@ tr.total {
         text-align: center;
         font-weight: var(--weight-bold);
     }
+}
+td.aircraft-name {
+    font-style: italic;
 }
 th.airport-visits, td.airport-visits, th.count, td.count {
     text-align: center;
