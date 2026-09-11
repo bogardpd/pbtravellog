@@ -12,7 +12,7 @@
     {% for airline in airlines %}
     <tr>
       <td class="rank">{% if loop.first or airline.rank != loop.previtem.rank %}{{ airline.rank }}{% else %}⋮{% endif %}</td>
-      <td>{{ icons.airline(airline.fid) }}</td>
+      <td class="icon">{{ icons.airline(airline.fid) }}</td>
       <td><a href="/airlines/{{ airline.fid }}.html">{{ airline.name }}</a></td>
       <td class="iata-code"><span class="code">{{ airline.iata_code if airline.iata_code }}</span></td>
       <td class="count">{{ airline.count }}</td>

@@ -110,20 +110,25 @@ div.flight-card {
     }
 }
 
-img.icon {
-    width: 48px;
+img.class-quality-stars {
+    width: 100px;
     height: 24px;
     vertical-align: text-bottom;
 }
-img.icon-float {
-    float: right;
-    margin-left: 0.5em;
+img.logo-icon {
+    width: 48px;
+    height: 24px;
+    vertical-align: text-bottom;
 }
 span.code, a.code {
     font-family: 'IBM Plex Mono', monospace;
 }
 span.current-airport {
     font-weight: var(--weight-bold);
+}
+span.supplemental {
+    font-size: smaller;
+    color: var(--color-text-light);
 }
 table {
     border-collapse: collapse;
@@ -171,12 +176,21 @@ th.airport-visits, td.airport-visits, th.count, td.count {
     text-align: center;
     font-variant-numeric: tabular-nums;
 }
+th[scope="row"] {
+    min-width: 125px;
+}
 th.departure, td.departure {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
 th.iata-code, td.iata-code, th.icao-code, td.icao-code {
     text-align: center;
+}
+td.icon {
+    text-align: center;
+}
+td.icon-right {
+    text-align: right;
 }
 th.flight-route, td.flight-route {
     text-align: center;

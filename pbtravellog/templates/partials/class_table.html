@@ -1,0 +1,24 @@
+{% import "macros/icons.html" as icons %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Quality</th>
+      <th>Class</th>
+      <th class="count">Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for flight_class in classes %}
+    <tr>
+      <td>
+        {{ icons.flight_class_quality(flight_class.quality) }}
+      </td>
+      <td>
+        <a href="/classes/{{ flight_class.fid }}.html">{{ flight_class.name }}</a><br>
+        <span class="supplemental">{{ flight_class.description }}</span>
+      </td>
+      <td class="count">{{ flight_class.count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

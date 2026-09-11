@@ -20,7 +20,7 @@ import pandas as pd
 
 # Project imports
 from pbtravellog.flight_log import (
-    Flight, Airport, Airline, AircraftType
+    Flight, Airport, Airline, AircraftType, FlightClass
 )
 
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
@@ -38,6 +38,7 @@ class StaticHTMLBuilder():
         self.all_airlines = Airline.all()
         self.all_airports = Airport.all()
         self.all_aircraft_types = AircraftType.all()
+        self.all_classes = FlightClass.all()
         self.html_dir = Path(HTML_PATH)
         self.env = self._jinja_env()
         self.file_count = {"new": 0, "updated": 0, "unchanged": 0}
@@ -53,6 +54,7 @@ class StaticHTMLBuilder():
         self._build_aircraft()
         self._build_airlines()
         self._build_airports()
+        self._build_classes()
         self._build_tails()
 
         print(f"Wrote static site to \"{self.html_dir}\".")
@@ -180,6 +182,33 @@ class StaticHTMLBuilder():
             self._write(show_path, show_html)
         index_html = index_template.render(airports=airport_records)
         self._write(airports_dir / "index.html", index_html)
+
+    def _build_classes(self) -> None:
+        """Builds flight class pages."""
+        print("- Building classes…")
+        classes_dir = self.html_dir / "classes"
+        classes_dir.mkdir(exist_ok=True)
+        index_template = self.env.get_template("index_classes.html")
+        show_template = self.env.get_template("show_class.html")
+        class_records = self._collect_class_records(self.all_flights)
+        for flight_class in class_records:
+            flights = self._filter_flights_by_class(
+                self.all_flights, flight_class["fid"],
+            )
+            airlines = self._collect_airline_records(flights, operators=False)
+            operators = self._collect_airline_records(flights, operators=True)
+            aircraft_types = self._collect_aircraft_type_records(flights)
+            show_html = show_template.render(
+                flight_class=flight_class,
+                airlines=airlines,
+                operators=operators,
+                aircraft_types=aircraft_types,
+                flights=flights,
+            )
+            show_path = classes_dir / f"{flight_class["fid"]}.html"
+            self._write(show_path, show_html)
+        index_html = index_template.render(classes=class_records)
+        self._write(classes_dir / "index.html", index_html)
 
     def _build_flights(self) -> None:
         """Builds flight pages."""
@@ -351,11 +380,34 @@ class StaticHTMLBuilder():
                 k: (None if pd.isna(v) else v) for k, v in record.items()
             }
             airport_records.append(record)
-
         airport_records = sorted(
             airport_records, key=lambda x: (-x["visits"], x["name"]),
         )
         return airport_records
+
+    def _collect_class_records(self, flight_records) -> list[dict]:
+        """Builds flight class records from flight records."""
+        class_flight_count = defaultdict(int)
+        for flight in flight_records:
+            class_flight_count[flight["class_fid"]] += 1
+        class_flight_count.pop(None, None) # Remove none count
+        # Classes are always sorted by quality, so no need to rank.
+        class_records = []
+        for class_fid, count in class_flight_count.items():
+            class_row = self.all_classes.loc[class_fid]
+            record = {
+                "fid": class_fid,
+                "quality": class_row["quality"],
+                "name": class_row["name"],
+                "description": class_row["description"],
+                "count": count,
+            }
+            record = {
+                k: (None if pd.isna(v) else v) for k, v in record.items()
+            }
+            class_records.append(record)
+        class_records = sorted(class_records, key=lambda x: -x["quality"])
+        return class_records
 
     def _collect_tail_records(self, flight_records) -> list[dict]:
         """Builds tail records from flight records."""
@@ -412,6 +464,16 @@ class StaticHTMLBuilder():
                 r["origin_airport_fid"],
                 r["destination_airport_fid"],
             ]
+        ]
+        return records
+
+    def _filter_flights_by_class(
+            self, flight_records, class_fid: int,
+    ) -> list[dict]:
+        """Filters flight records by a flight class."""
+        records = [
+            r for r in flight_records
+            if r["class_fid"] == class_fid
         ]
         return records
 
@@ -493,6 +555,9 @@ class StaticHTMLBuilder():
             "destination_airport_fid": row["destination_airport_fid"],
             "destination_airport_code": airport_codes[1],
             "destination_airport_name": row["destination_airport_name"],
+            "class_fid": row["class_fid"],
+            "class_name": row["class_name"],
+            "class_quality": row["class_quality"],
             "trip_fid": row["trip_fid"],
             "trip_section": row["trip_section"],
             "boarding_pass_data": row["boarding_pass_data"],

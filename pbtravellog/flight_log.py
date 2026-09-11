@@ -428,6 +428,7 @@ class Flight(Record):
         )
         airlines_df = pd.DataFrame(Airline.all())
         aircraft_types_df = pd.DataFrame(AircraftType.all())
+        classes_df = pd.DataFrame(FlightClass.all())
 
         # Perform joins.
         flights_gdf = flights_gdf.join(
@@ -454,6 +455,10 @@ class Flight(Record):
             aircraft_types_df.add_prefix("aircraft_type_"),
             on="aircraft_type_fid",
         )
+        flights_gdf = flights_gdf.join(
+            classes_df.add_prefix("class_"),
+            on="class_fid"
+        )
         return flights_gdf
 
     @staticmethod
@@ -462,6 +467,12 @@ class Flight(Record):
         if dt_str is None:
             return None
         return isoparse(dt_str)
+
+class FlightClass(Record):
+    """Represents a flight class record."""
+    LAYER = "classes"
+    FIND_BY_CODES = []
+    DTYPES = {"quality": "Int64"}
 
 class Route(Record):
     """Represents a route record"""

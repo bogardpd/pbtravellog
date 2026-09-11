@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% import "macros/icons.html" as icons %}
+{% set breadcrumbs=[("Home", "/"), ("Classes", "/classes/"), (flight_class.name, None)] %}
+{% block title %}{{ flight_class.name }} Class{% endblock %}
+{% block content %}
+<table class="summary">
+  <thead>
+    <tr>
+      <th>Quality</th>
+      <th>Description</th>
+      <th>Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ icons.flight_class_quality(flight_class.quality) }}</td>
+      <td>{{ flight_class.description }}</td>
+      <td>{{ flights | length }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>{{ flight_class.name }} Class Airlines</h2>
+{% include "partials/airline_table.html" %}
+
+<h2>{{ flight_class.name }} Class Operators</h2>
+{% include "partials/operator_table.html" %}
+
+<h2>{{ flight_class.name }} Class Aircraft Types</h2>
+{% include "partials/aircraft_type_table.html" %}
+
+<h2>{{ flight_class.name }} Class Flights</h2>
+{% include "partials/flight_table.html" %}
+{% endblock content %}
