@@ -496,6 +496,7 @@ class StaticHTMLBuilder():
             "trip_fid": row["trip_fid"],
             "trip_section": row["trip_section"],
             "boarding_pass_data": row["boarding_pass_data"],
+            "comments": row["comments"],
         }
         record = {
             k: (None if pd.isna(v) else v) for k, v in record.items()

@@ -23,6 +23,12 @@
 </div>
 
 <table class="data-table">
+  {% if flight.comments %}
+  <tr>
+    <th scope="row">Comments</th>
+    <td>{{ flight.comments }}</td>
+  </tr>
+  {% endif %}
   <tr>
     <th scope="row">Airline</th>
     <td>{{ icons.airline(flight.airline_fid, float=True) }} <a href="/airlines/{{ flight.airline_fid }}.html">{{ flight.airline_name }}</a></td>
