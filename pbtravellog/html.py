@@ -669,7 +669,3 @@ def _rank_count(count_dict: dict) -> dict:
         prev_count = count
         prev_rank = rank
     return ranks
-
-def _slugify(input_str) -> str:
-    """Converts a string to a filename and URL safe string."""
-    return input_str.replace(" ", "_")
