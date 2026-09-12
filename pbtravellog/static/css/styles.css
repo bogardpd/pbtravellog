@@ -140,7 +140,7 @@ table {
 }
 table.flight-details {
     img {
-        margin-bottom: 0.25em;
+        margin-bottom: 0.5em;
     }
 }
 th, td {

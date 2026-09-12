@@ -1,2 +1,2 @@
-{% macro airline(airline_fid) %}<img class="logo-icon" src="/images/airlines/icons/{{ airline_fid }}.png" alt="Airline logo" onerror="this.onerror=null;this.src='/images/airlines/icons/unknown-airline.png';">{% endmacro %}
+{% macro airline(airline_fid) %}{% if image_path_airline_icon(airline_fid) %}<img class="logo-icon" src="{{ image_path_airline_icon(airline_fid) }}" alt="Airline logo">{% endif %}{% endmacro %}
 {% macro flight_class_quality(quality) %}<img src="/images/classes/{{ quality }}.svg" class="class-quality-stars" alt="{{ quality }}-star">{% endmacro %}

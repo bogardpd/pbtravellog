@@ -39,29 +39,29 @@
   <tr>
     <th scope="row">Airline</th>
     <td>
-      {{ icons.airline(flight.airline_fid) }}<br>
-      <a href="/airlines/{{ flight.airline_fid }}.html">{{ flight.airline_name }}</a>
+      {% if image_path_airline_icon(flight.airline_fid) %}{{ icons.airline(flight.airline_fid) }}<br>{% endif %}
+      {% if flight.airline_fid %}<a href="/airlines/{{ flight.airline_fid }}.html">{{ flight.airline_name }}</a>{% else %}None{% endif %}
     </td>
   </tr>
   <tr>
     <th scope="row">Operated By</th>
     <td>
-      {{ icons.airline(flight.operator_fid) }}<br>
-      <a href="/airlines/operators/{{ flight.operator_fid }}.html">{{ flight.operator_name }}</a>
+      {% if image_path_airline_icon(flight.operator_fid) %}{{ icons.airline(flight.operator_fid) }}<br>{% endif %}
+      {% if flight.operator_fid %}<a href="/airlines/operators/{{ flight.operator_fid }}.html">{{ flight.operator_name }}</a>{% else %}None{% endif %}
     </td>
   </tr>
   {% if flight.codeshare_airline_fid %}
   <tr>
     <th scope="row">Codeshare</th>
     <td>
-      {{ icons.airline(flight.codeshare_airline_fid) }}<br>
+      {% if image_path_airline_icon(flight.codeshare_airline_fid) %}{{ icons.airline(flight.codeshare_airline_fid) }}<br>{% endif %}
       {{ flight.codeshare_airline_name }}{% if flight.codeshare_flight_number %} {{ flight.codeshare_flight_number }}{% endif %}
     </td>
   </tr>
   {% endif %}
   <tr>
     <th scope="row">Aircraft Type</th>
-    <td><a href="/aircraft/{{ flight.aircraft_type_fid }}.html">{{ flight.aircraft_type_manufacturer }} {{ flight.aircraft_type_name }}</a></td>
+    <td>{% if flight.aircraft_type_fid %}<a href="/aircraft/{{ flight.aircraft_type_fid }}.html">{{ flight.aircraft_type_manufacturer }} {{ flight.aircraft_type_name }}</a>{% else %}Unknown{% endif %}</td>
   </tr>
   {% if flight.aircraft_name %}
   <tr>

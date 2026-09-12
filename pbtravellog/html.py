@@ -487,6 +487,14 @@ class StaticHTMLBuilder():
         ]
         return records
 
+    
+    def _image_path_airline_icon(self, airline_fid: int):
+        """Returns the path for an airline icon or none."""
+        full_path = self.html_dir / f"images/airlines/icons/{airline_fid}.png"
+        if not full_path.exists():
+            return None
+        return Path("/") / full_path.relative_to(self.html_dir)
+
     def _jinja_env(self) -> Environment:
         """Creates a Jinja environment."""
         env = Environment(
@@ -495,6 +503,7 @@ class StaticHTMLBuilder():
         )
         env.filters["format_dt"] = _format_dt
         env.globals["build_time"] = datetime.now(UTC)
+        env.globals["image_path_airline_icon"] = self._image_path_airline_icon
         return env
 
     def _load_joined_flight_records(self) -> list[dict]:
