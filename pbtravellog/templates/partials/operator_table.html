@@ -6,6 +6,7 @@
       <th></th>
       <th>Operator</th>
       <th>IATA</th>
+      <th>ICAO</th>
       <th>Flights</th>
     </tr>
   </thead>
@@ -15,12 +16,13 @@
       <td class="rank">{% if loop.first or operator.rank != loop.previtem.rank %}{{ operator.rank }}{% else %}⋮{% endif %}</td>
       <td>{{ icons.airline(operator.fid) }}</td>
       <td><a href="/airlines/operators/{{ operator.fid }}.html">{{ operator.name }}</a></td>
-      <td><span class="code">{{ operator.iata_code if operator.iata_code }}</span></td>
+      <td>{% if operator.iata_code %}<span class="code">{{ operator.iata_code }}</span>{% endif %}</td>
+      <td>{% if operator.iata_code %}<span class="code">{{ operator.icao_code }}</span>{% endif %}</td>
       <td>{{ operator.count }}</td>
     </tr>
     {% endfor %}
     <tr class="total">
-      <td colspan="5">{{ operators | length }} operator{% if (operators | length) != 1 %}s{% endif %}</td>
+      <td colspan="6">{{ operators | length }} operator{% if (operators | length) != 1 %}s{% endif %}</td>
     </tr>
   </tbody>
 </table>
