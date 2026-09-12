@@ -1,10 +1,10 @@
-<table class="data-table">
+<table>
   <thead>
     <tr>
       <th class="rank">#</th>
       <th>Airport</th>
-      <th class="iata-code">IATA</th>
-      <th class="airport-visits">Visits</th>
+      <th>IATA</th>
+      <th>Visits</th>
     </tr>
   </thead>
   <tbody>
@@ -12,8 +12,8 @@
     <tr>
       <td class="rank">{% if loop.first or airport.rank != loop.previtem.rank %}{{ airport.rank }}{% else %}⋮{% endif %}</td>
       <td><a href="/airports/{{ airport.fid }}.html">{{ airport.name }}</a></td>
-      <td class="iata-code"><span class="code">{{ airport.iata_code if airport.iata_code }}</span></td>
-      <td class="airport-visits">{{ airport.visits }}</td>
+      <td>{% if airport.iata_code %}<span class="code">{{ airport.iata_code }}</span>{% endif %}</td>
+      <td>{{ airport.visits }}</td>
     </tr>
     {% endfor %}
     <tr class="total">

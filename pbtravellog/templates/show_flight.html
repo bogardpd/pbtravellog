@@ -26,8 +26,7 @@
   <div class="flight-card-dt-local">{{ flight.arrival_local | format_dt(include_time=True, include_tz=True) }}</div>
 </div>
 
-<table class="data-table flight-data-table">
-  
+<table class="flight-details">
   {% if flight.class_fid %}
   <tr>
     <th scope="row">Seat Class</th>

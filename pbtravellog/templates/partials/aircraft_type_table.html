@@ -1,17 +1,17 @@
-<table class="data-table">
+<table>
   <thead>
     <th class="rank">#</th>
     <th>Type</th>
-    <th class="icao-code">ICAO</th>
-    <th class="count">Flights</th>
+    <th>ICAO</th>
+    <th>Flights</th>
   </thead>
   <tbody>
     {% for aircraft_type in aircraft_types %}
     <tr>
       <td class="rank">{% if loop.first or aircraft_type.rank != loop.previtem.rank %}{{ aircraft_type.rank }}{% else %}⋮{% endif %}</td>
       <td><a href="/aircraft/{{ aircraft_type.fid }}.html">{{ aircraft_type.manufacturer }} {{ aircraft_type.name }}</a></td>
-      <td class="icao-code">{% if aircraft_type.icao_code %}<span class="code">{{ aircraft_type.icao_code }}</span>{% endif %}</td>
-      <td class="count">{{ aircraft_type.count }}</td>
+      <td>{% if aircraft_type.icao_code %}<span class="code">{{ aircraft_type.icao_code }}</span>{% endif %}</td>
+      <td>{{ aircraft_type.count }}</td>
     </tr>
     {% endfor %}
     <tr class="total">

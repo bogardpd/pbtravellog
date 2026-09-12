@@ -24,6 +24,7 @@
     --color-border: #cccccc;
     --color-background-light: #eeeeee;
     --color-text-light: #999999;
+    
     --weight-bold: 700;
     --weight-text: 450;
     --weight-light: 300;
@@ -134,23 +135,19 @@ table {
     border-collapse: collapse;
     border-top: var(--border-normal);
     border-bottom: var(--border-normal);
-}
-table.data-table {
     margin-left: auto;
     margin-right: auto;
+}
+table.flight-details {
+    img {
+        margin-bottom: 0.25em;
+    }
 }
 th, td {
     padding: 0.5em;
-    text-align: left;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
-table.summary {
-    margin-left: auto;
-    margin-right: auto;
-    th, td {
-        text-align: center;
-    }
-}
-
 thead {
     background-color: var(--color-background-light);
     border-bottom: var(--border-heavy);
@@ -165,40 +162,11 @@ tr.total {
     border-top: var(--border-heavy);
     background-color: var(--color-background-light);
     td {
-        text-align: center;
         font-weight: var(--weight-bold);
     }
 }
 td.aircraft-name {
     font-style: italic;
-}
-th.airport-visits, td.airport-visits, th.count, td.count {
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-}
-th.departure, td.departure {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-}
-th.iata-code, td.iata-code, th.icao-code, td.icao-code {
-    text-align: center;
-}
-td.icon {
-    text-align: center;
-}
-table.flight-data-table {
-    th, td {
-        text-align: center;
-        img {
-            margin-bottom: 0.25em;
-        }
-    }
-}
-th.flight-route, td.flight-route {
-    text-align: center;
-}
-th.rank, td.rank {
-    text-align: center;
 }
 td.rank {
     color: var(--color-text-light);
