@@ -36,6 +36,7 @@ The `airlines` table contains records of airlines that `flights` have used as th
 | `numeric_code` | TEXT | *Optional.* The three-digit numeric code for the airline (e.g. `001`) |
 | `is_only_operator` | BOOLEAN | True if an airline only operates flights for other airlines, false if it operates flights as its own marketing carrier. (See [Airline Types](#airline-types).) |
 | `is_defunct` | BOOLEAN | True if an airline is no longer in use, false otherwise. When looking up airlines, defunct airlines will be ignored. This is helpful in situations where current airlines use the same codes as an old airline (for example, the current PSA Airlines and the defunct Comair both use the IATA code `OH`.) |
+| `comments` | TEXT | *Optional.* Comments about the airline. |
 
 #### Airline Types
 
