@@ -478,7 +478,7 @@ class Route(Record):
     """Represents a route record"""
     LAYER = "routes"
     FIND_BY_CODES = []
-    DTYPES = {}
+    DTYPES = {"distance_mi": "Int64"}
 
 class Trip(Record):
     """Represents a trip record."""

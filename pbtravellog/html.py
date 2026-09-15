@@ -20,7 +20,7 @@ import pandas as pd
 
 # Project imports
 from pbtravellog.flight_log import (
-    Flight, Airport, Airline, AircraftType, FlightClass
+    Flight, Airport, Airline, AircraftType, FlightClass, Route
 )
 
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
@@ -39,6 +39,7 @@ class StaticHTMLBuilder():
         self.all_airports = Airport.all()
         self.all_aircraft_types = AircraftType.all()
         self.all_classes = FlightClass.all()
+        self.all_routes = Route.all()
         self.html_dir = Path(HTML_PATH)
         self.env = self._jinja_env()
         self.file_count = {"new": 0, "updated": 0, "unchanged": 0}
@@ -55,6 +56,7 @@ class StaticHTMLBuilder():
         self._build_airlines()
         self._build_airports()
         self._build_classes()
+        self._build_routes()
         self._build_tails()
 
         print(f"Wrote static site to \"{self.html_dir}\".")
@@ -229,6 +231,18 @@ class StaticHTMLBuilder():
         print("- Building home…")
         home_html = self.env.get_template("home.html").render()
         self._write(self.html_dir / "index.html", home_html)
+
+    def _build_routes(self) -> None:
+        """Builds route pates."""
+        print("- Building routes…")
+        routes_dir = self.html_dir / "routes"
+        routes_dir.mkdir(exist_ok=True)
+        index_template = self.env.get_template("index_routes.html")
+        route_records = self._collect_route_records(self.all_flights)
+        index_html = index_template.render(
+            routes=route_records,
+        )
+        self._write(routes_dir / "index.html", index_html)
 
     def _build_structure(self) -> None:
         """Ensures HTML folder exists and copies static files."""
@@ -409,6 +423,53 @@ class StaticHTMLBuilder():
         class_records = sorted(class_records, key=lambda x: -x["quality"])
         return class_records
 
+    def _collect_route_records(self, flight_records) -> list[dict]:
+        """Builds route records from flight records.
+
+        Although routes already store their flight_count, the value is
+        only good for all flights. This method calculates routes for
+        whatever flights are passed into it.
+        """
+        route_flight_count = defaultdict(int)
+        route_codes = {}
+        for flight in flight_records:
+            airport_fids = (
+                flight["origin_airport_fid"],
+                flight["destination_airport_fid"],
+            )
+            route_flight_count[airport_fids] += 1
+            route_codes[airport_fids] = (
+                flight["origin_airport_code"],
+                flight["destination_airport_code"],
+            )
+        ranks = _rank_count(route_flight_count)
+        route_lookup = self.all_routes.copy() \
+            .set_index(["origin_airport_fid", "destination_airport_fid"])
+        # print(route_lookup)
+        route_records = []
+        for route_fids, count in route_flight_count.items():
+            route_row = route_lookup.loc[route_fids]
+            if pd.isna(route_row["distance_mi"]):
+                distance = None
+            else:
+                distance = int(route_row["distance_mi"])
+            record = {
+                "origin_airport_fid": route_fids[0],
+                "destination_airport_fid": route_fids[1],
+                "origin_airport_code": route_codes[route_fids][0],
+                "destination_airport_code": route_codes[route_fids][1],
+                "distance_mi": distance,
+                "count": count,
+                "rank": ranks[route_fids],
+            }
+            route_records.append(record)
+        route_records = sorted(route_records, key=lambda x: (
+            -x["count"],
+            x["origin_airport_code"],
+            x["destination_airport_code"]
+        ))
+        return route_records
+
     def _collect_tail_records(self, flight_records) -> list[dict]:
         """Builds tail records from flight records."""
         tail_flight_count = defaultdict(int)
@@ -487,7 +548,7 @@ class StaticHTMLBuilder():
         ]
         return records
 
-    
+
     def _image_path_airline_icon(self, airline_fid: int):
         """Returns the path for an airline icon or none."""
         full_path = self.html_dir / f"images/airlines/icons/{airline_fid}.png"

@@ -1,0 +1,27 @@
+<table>
+  <thead>
+    <tr>
+      <th class="rank">#</th>
+      <th>Route</th>
+      <th>Distance</th>
+      <th>Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for route in routes %}
+    <tr>
+      <td class="rank">{% if loop.first or route.rank != loop.previtem.rank %}{{ route.rank }}{% else %}⋮{% endif %}</td>
+      <td>
+        <span class="code">{{ route.origin_airport_code }}</span>
+        &rarr;
+        <span class="code">{{ route.destination_airport_code }}</span>
+      </td>
+      <td>{% if route.distance_mi or route.distance_mi == 0 %}{{ route.distance_mi }} mi{% endif %}</td>
+      <td>{{ route.count }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total">
+      <td colspan="4">{{ routes | length }} route{% if (routes | length) != 1 %}s{% endif %}</td>
+    </tr>
+  </tbody>
+</table>
