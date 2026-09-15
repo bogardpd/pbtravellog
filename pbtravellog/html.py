@@ -238,7 +238,27 @@ class StaticHTMLBuilder():
         routes_dir = self.html_dir / "routes"
         routes_dir.mkdir(exist_ok=True)
         index_template = self.env.get_template("index_routes.html")
+        show_template = self.env.get_template("show_route.html")
         route_records = self._collect_route_records(self.all_flights)
+        for route in route_records:
+            route_ids = (
+                route["origin_airport_fid"], route["destination_airport_fid"],
+            )
+            flights = self._filter_flights_by_route(
+                self.all_flights, *route_ids,
+            )
+            airlines = self._collect_airline_records(flights, operators=False)
+            operators = self._collect_airline_records(flights, operators=True)
+            aircraft_types = self._collect_aircraft_type_records(flights)
+            show_html = show_template.render(
+                route=route,
+                airlines=airlines,
+                operators=operators,
+                aircraft_types=aircraft_types,
+                flights=flights,
+            )
+            show_path = routes_dir / f"{route_ids[0]}-{route_ids[1]}.html"
+            self._write(show_path, show_html)
         index_html = index_template.render(
             routes=route_records,
         )
@@ -535,6 +555,17 @@ class StaticHTMLBuilder():
         records = [
             r for r in flight_records
             if r["class_fid"] == class_fid
+        ]
+        return records
+
+    def _filter_flights_by_route(
+        self, flight_records, orig_fid: int, dest_fid: int
+    ) -> list[dict]:
+        """Filters flight records by a route."""
+        records = [
+            r for r in flight_records
+            if r["origin_airport_fid"] == orig_fid
+            and r["destination_airport_fid"] == dest_fid
         ]
         return records
 

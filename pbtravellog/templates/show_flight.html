@@ -75,6 +75,15 @@
     <td><a href="/tails/{{ flight.tail_number }}.html">{{ flight.tail_number }}</a></td>
   </tr>
   {% endif %}
+  <tr>
+    <th scope="row">Route</th>
+    <td>
+      <a href="/routes/{{ flight.origin_airport_fid }}-{{ flight.destination_airport_fid }}.html">
+        <span class="code">{{ flight.origin_airport_code }}</span>
+        &rarr;
+        <span class="code">{{ flight.destination_airport_code }}</span>
+    </td>
+  </tr>
   {% if flight.boarding_pass_data %}
   <tr>
     <th scope="row">Boarding Pass</th>

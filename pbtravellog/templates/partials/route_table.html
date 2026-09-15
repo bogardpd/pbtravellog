@@ -12,9 +12,11 @@
     <tr>
       <td class="rank">{% if loop.first or route.rank != loop.previtem.rank %}{{ route.rank }}{% else %}⋮{% endif %}</td>
       <td>
-        <span class="code">{{ route.origin_airport_code }}</span>
-        &rarr;
-        <span class="code">{{ route.destination_airport_code }}</span>
+        <a href="/routes/{{ route.origin_airport_fid }}-{{ route.destination_airport_fid }}.html">
+          <span class="code">{{ route.origin_airport_code }}</span>
+          &rarr;
+          <span class="code">{{ route.destination_airport_code }}</span>
+        </a>
       </td>
       <td>{% if route.distance_mi or route.distance_mi == 0 %}{{ route.distance_mi }} mi{% endif %}</td>
       <td>{{ route.count }}</td>
