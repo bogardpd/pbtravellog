@@ -1,6 +1,6 @@
-# pbtravellog
+# PBTravelLog
 
-PBFlightLog is a Python command-line interface (CLI) tool for managing personal travel logs stored in GeoPackage files.
+PBTravelLog is a Python command-line interface (CLI) tool for managing personal travel logs stored in GeoPackage files.
 
 ## Setup
 
