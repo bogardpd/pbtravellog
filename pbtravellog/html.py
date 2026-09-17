@@ -692,7 +692,7 @@ def build(force_refresh=False):
     b = StaticHTMLBuilder(force_refresh=force_refresh)
     b.build()
 
-def run(port):
+def run_static(port):
     """Launches a server and browser."""
     print("Launching PBTravelLog HTML…")
     if not os.path.exists(HTML_PATH):
@@ -716,6 +716,10 @@ def run(port):
         except KeyboardInterrupt:
             print("\nShutting down server.")
             sys.exit(0)
+
+def run():
+    """Launches the travel log web interface."""
+    print("This will launch a web interface.")
 
 def _airport_codes(row) -> tuple[str]:
     """Returns a default origin and destination code."""

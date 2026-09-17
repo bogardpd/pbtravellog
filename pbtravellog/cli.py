@@ -64,7 +64,9 @@ def main():
         elif args.entity == "tail":
             fl.show_tail(args.tail_number)
     elif args.command == "run":
-        html.run(args.port)
+        html.run()
+    elif args.command == "run-static":
+        html.run_static(args.port)
 
 
 def _add_parsers_build(subparsers) -> None:
@@ -209,14 +211,18 @@ def _add_parsers_report(subparsers) -> None:
 
 def _add_parsers_run(subparsers) -> None:
     """Adds parsers for run command."""
-    run_parser = subparsers.add_parser(
-        "run",
-        help="Launch HTML travel log"
+    run_static_parser = subparsers.add_parser(
+        "run-static",
+        help="Launch Static HTML travel log"
     )
-    run_parser.add_argument("--port",
+    run_static_parser.add_argument("--port",
         help="Webserver port (default: %(default)s)",
         type=int,
         default=8000,
+    )
+    subparsers.add_parser(
+        "run",
+        help="Launch travel log web interface"
     )
 
 def _add_parsers_show(subparsers) -> None:

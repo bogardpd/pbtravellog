@@ -69,7 +69,7 @@ You should use the `build` command before using `run`, unless travel data hasn't
 pbtravellog build
 ```
 
-### `run`
+### `run-static`
 
 Launches a server and web browser to show the HTML travel log.
 
@@ -82,11 +82,19 @@ The HTML pages will show travel data current as of the last time `build` was use
 #### Examples
 
 ```bash
-pbtravellog run
+pbtravellog run-static
 ```
 
 ```bash
-pbtravellog run --port 12345
+pbtravellog run-static --port 12345
+```
+
+### `run`
+
+Launches the travel log browser interface.
+
+```bash
+pbtravellog run
 ```
 
 ## Travel Log Data Commands
