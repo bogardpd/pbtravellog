@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% import "macros/icons.html" as icons %}
+{% import "_macros/icons.html" as icons %}
 {% set breadcrumbs=[("Home", "/"), ("Classes", "/classes/"), (flight_class.name, None)] %}
 {% block title %}{{ flight_class.name }} Class{% endblock %}
 {% block content %}
@@ -21,14 +21,14 @@
 </table>
 
 <h2>{{ flight_class.name }} Class Airlines</h2>
-{% include "partials/airline_table.html" %}
+{% include "_partials/airline_table.html" %}
 
 <h2>{{ flight_class.name }} Class Operators</h2>
-{% include "partials/operator_table.html" %}
+{% include "_partials/operator_table.html" %}
 
 <h2>{{ flight_class.name }} Class Aircraft Types</h2>
-{% include "partials/aircraft_type_table.html" %}
+{% include "_partials/aircraft_type_table.html" %}
 
 <h2>{{ flight_class.name }} Class Flights</h2>
-{% include "partials/flight_table.html" %}
+{% include "_partials/flight_table.html" %}
 {% endblock content %}

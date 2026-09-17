@@ -22,14 +22,14 @@
 </table>
 
 <h2>{{ route.origin_airport_code }} &rarr; {{ route.destination_airport_code }} Airlines</h2>
-{% include "partials/airline_table.html" %}
+{% include "_partials/airline_table.html" %}
 
 <h2>{{ route.origin_airport_code }} &rarr; {{ route.destination_airport_code }} Operators</h2>
-{% include "partials/operator_table.html" %}
+{% include "_partials/operator_table.html" %}
 
 <h2>{{ route.origin_airport_code }} &rarr; {{ route.destination_airport_code }} Aircraft Types</h2>
-{% include "partials/aircraft_type_table.html" %}
+{% include "_partials/aircraft_type_table.html" %}
 
 <h2>{{ route.origin_airport_code }} &rarr; {{ route.destination_airport_code }} Flights</h2>
-{% include "partials/flight_table.html" %}
+{% include "_partials/flight_table.html" %}
 {% endblock content %}
