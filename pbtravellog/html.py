@@ -76,7 +76,6 @@ class StaticHTMLBuilder():
 
         self._build_structure()
         self._build_home()
-        self._build_flights()
         self._build_aircraft()
         self._build_airlines()
         self._build_airports()
@@ -236,20 +235,6 @@ class StaticHTMLBuilder():
             self._write(show_path, show_html)
         index_html = index_template.render(classes=class_records)
         self._write(classes_dir / "index.html", index_html)
-
-    def _build_flights(self) -> None:
-        """Builds flight pages."""
-        print("- Building flights…")
-        flights_dir = self.html_dir / "flights"
-        flights_dir.mkdir(exist_ok=True)
-        index_template = self.env.get_template("index_flights.html")
-        show_template = self.env.get_template("show_flight.html")
-        for flight in self.all_flights:
-            show_html = show_template.render(flight=flight)
-            show_path = flights_dir / f"{flight["fid"]}.html"
-            self._write(show_path, show_html)
-        index_html = index_template.render(flights=self.all_flights)
-        self._write(flights_dir / "index.html", index_html)
 
     def _build_home(self) -> None:
         """Builds home page."""
