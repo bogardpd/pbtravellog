@@ -49,7 +49,7 @@ def create_browser_app():
 
     @app.route("/flights/<int:flight_fid>/")
     def show_flight(flight_fid):
-        flight = next((f for f in all_flights if f["fid"] == flight_fid))
+        flight = all_flights[flight_fid]
         return render_template("flights/show.html", flight=flight)
 
     return app
@@ -790,14 +790,14 @@ def _image_path_airline_icon(airline_fid: int):
         return None
     return url_for("static", filename=icon.as_posix())
 
-def _load_joined_flight_records() -> list[dict]:
+def _load_joined_flight_records() -> dict[dict]:
     """Loads records from Flight.joined()."""
     gdf = Flight.joined()
-    output = [
-        _recordize_flight_row(idx, row)
+    output = {
+        idx: _recordize_flight_row(row)
         for idx, row in gdf.iterrows()
-    ]
-    output = sorted(output, key=lambda x: x["departure_utc"])
+    }
+    output = dict(sorted(output.items(), key=lambda x: x[1]["departure_utc"]))
     return output
 
 def _local_dt(dt_utc, tz):
@@ -819,7 +819,7 @@ def _rank_count(count_dict: dict) -> dict:
         prev_rank = rank
     return ranks
 
-def _recordize_flight_row(flight_fid, row) -> dict:
+def _recordize_flight_row(row) -> dict:
     """Turns a flight row into a record."""
     airport_codes = _airport_codes(row)
     departure_utc = row["departure_utc"].to_pydatetime()
@@ -842,7 +842,6 @@ def _recordize_flight_row(flight_fid, row) -> dict:
         minutes = remainder // 60
         duration_h_m = (int(hours), int(minutes))
     record = {
-        "fid": flight_fid,
         "departure_utc": departure_utc,
         "departure_local": departure_local,
         "arrival_utc": arrival_utc,
