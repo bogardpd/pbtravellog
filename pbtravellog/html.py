@@ -15,7 +15,7 @@ import webbrowser
 from zoneinfo import ZoneInfo
 
 # Third-party imports
-from flask import Flask, render_template
+from flask import Flask, current_app, render_template, url_for
 from jinja2 import Environment, PackageLoader
 import pandas as pd
 
@@ -33,11 +33,19 @@ if HTML_PATH is None:
 def create_browser_app():
     """Creates a Flask app for the travel log."""
     app = Flask(__name__)
+
     app.jinja_env.filters["format_dt"] = _format_dt
+    app.jinja_env.globals["image_path_airline_icon"] = _image_path_airline_icon
+
+    all_flights = _load_joined_flight_records()
 
     @app.route("/")
     def home():
         return render_template("home.html")
+
+    @app.route("/flights/")
+    def index_flights():
+        return render_template("flights/index.html", flights=all_flights)
 
     return app
 
@@ -769,6 +777,24 @@ def _format_dt(dt, include_time=True, include_tz=False) -> str:
         parts.append("%Z")
     return dt.strftime(" ".join(parts))
 
+def _image_path_airline_icon(airline_fid: int):
+    """Returns the path for an airline icon or none."""
+    icon = Path(f"images/airlines/icons/{airline_fid}.png")
+    full_path = Path(current_app.static_folder) / icon
+    if not full_path.exists():
+        return None
+    return url_for("static", filename=icon.as_posix())
+
+def _load_joined_flight_records() -> list[dict]:
+    """Loads records from Flight.joined()."""
+    gdf = Flight.joined()
+    output = [
+        _recordize_flight_row(idx, row)
+        for idx, row in gdf.iterrows()
+    ]
+    output = sorted(output, key=lambda x: x["departure_utc"])
+    return output
+
 def _local_dt(dt_utc, tz):
     """Converts a UTC datetime to local time."""
     if pd.isna(dt_utc) or pd.isna(tz):
@@ -787,3 +813,64 @@ def _rank_count(count_dict: dict) -> dict:
         prev_count = count
         prev_rank = rank
     return ranks
+
+def _recordize_flight_row(flight_fid, row) -> dict:
+    """Turns a flight row into a record."""
+    airport_codes = _airport_codes(row)
+    departure_utc = row["departure_utc"].to_pydatetime()
+    departure_local = _local_dt(
+        departure_utc,
+        row["origin_airport_time_zone"]
+    )
+    if pd.isna(row["arrival_utc"]):
+        arrival_utc = None
+        arrival_local = None
+        duration_h_m = None
+    else:
+        arrival_utc = row["arrival_utc"].to_pydatetime()
+        arrival_local = _local_dt(
+            arrival_utc,
+            row["destination_airport_time_zone"]
+        )
+        dur_s = (arrival_utc-departure_utc).total_seconds()
+        hours, remainder = divmod(dur_s, 3600)
+        minutes = remainder // 60
+        duration_h_m = (int(hours), int(minutes))
+    record = {
+        "fid": flight_fid,
+        "departure_utc": departure_utc,
+        "departure_local": departure_local,
+        "arrival_utc": arrival_utc,
+        "arrival_local": arrival_local,
+        "duration_h_m": duration_h_m,
+        "name": _flight_name(row),
+        "aircraft_name": row["aircraft_name"],
+        "tail_number": row["tail_number"],
+        "aircraft_type_fid": row["aircraft_type_fid"],
+        "aircraft_type_manufacturer": row["aircraft_type_manufacturer"],
+        "aircraft_type_name": row["aircraft_type_name"],
+        "airline_fid": row["airline_fid"],
+        "airline_name": row["airline_name"],
+        "codeshare_airline_fid": row["codeshare_airline_fid"],
+        "codeshare_airline_name": row["codeshare_airline_name"],
+        "codeshare_flight_number": row["codeshare_flight_number"],
+        "operator_fid": row["operator_fid"],
+        "operator_name": row["operator_name"],
+        "origin_airport_fid": row["origin_airport_fid"],
+        "origin_airport_code": airport_codes[0],
+        "origin_airport_name": row["origin_airport_name"],
+        "destination_airport_fid": row["destination_airport_fid"],
+        "destination_airport_code": airport_codes[1],
+        "destination_airport_name": row["destination_airport_name"],
+        "class_fid": row["class_fid"],
+        "class_name": row["class_name"],
+        "class_quality": row["class_quality"],
+        "trip_fid": row["trip_fid"],
+        "trip_section": row["trip_section"],
+        "boarding_pass_data": row["boarding_pass_data"],
+        "comments": row["comments"],
+    }
+    record = {
+        k: (None if pd.isna(v) else v) for k, v in record.items()
+    }
+    return record

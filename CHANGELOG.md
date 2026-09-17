@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `run` now uses a [Flask](https://flask.palletsprojects.com/en/stable/) backend instead of a static site.
+- The static site now uses the command `run-static`.
+
 ## [0.3.0]
 
 ### Added
