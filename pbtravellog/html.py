@@ -47,6 +47,11 @@ def create_browser_app():
     def index_flights():
         return render_template("flights/index.html", flights=all_flights)
 
+    @app.route("/flights/<int:flight_fid>/")
+    def show_flight(flight_fid):
+        flight = next((f for f in all_flights if f["fid"] == flight_fid))
+        return render_template("flights/show.html", flight=flight)
+
     return app
 
 class StaticHTMLBuilder():
