@@ -64,7 +64,7 @@ def main():
         elif args.entity == "tail":
             fl.show_tail(args.tail_number)
     elif args.command == "run":
-        html.run()
+        html.run(args.port)
     elif args.command == "run-static":
         html.run_static(args.port)
 
@@ -220,9 +220,14 @@ def _add_parsers_run(subparsers) -> None:
         type=int,
         default=8000,
     )
-    subparsers.add_parser(
+    run_parser = subparsers.add_parser(
         "run",
         help="Launch travel log web interface"
+    )
+    run_parser.add_argument("--port",
+        help="Webserver port (default: %(default)s)",
+        type=int,
+        default=5000,
     )
 
 def _add_parsers_show(subparsers) -> None:

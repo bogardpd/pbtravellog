@@ -15,6 +15,7 @@ import webbrowser
 from zoneinfo import ZoneInfo
 
 # Third-party imports
+from flask import Flask, render_template
 from jinja2 import Environment, PackageLoader
 import pandas as pd
 
@@ -28,6 +29,17 @@ if HTML_PATH is None:
     raise KeyError(
         "Environment variable PBTRAVELLOG_HTML_PATH is missing."
     )
+
+def create_browser_app():
+    """Creates a Flask app for the travel log."""
+    app = Flask(__name__)
+    app.jinja_env.filters["format_dt"] = _format_dt
+
+    @app.route("/")
+    def home():
+        return render_template("home.html")
+
+    return app
 
 class StaticHTMLBuilder():
     """Manages generation of static HTML travel data."""
@@ -579,7 +591,6 @@ class StaticHTMLBuilder():
         ]
         return records
 
-
     def _image_path_airline_icon(self, airline_fid: int):
         """Returns the path for an airline icon or none."""
         full_path = self.html_dir / f"images/airlines/icons/{airline_fid}.png"
@@ -717,9 +728,11 @@ def run_static(port):
             print("\nShutting down server.")
             sys.exit(0)
 
-def run():
+def run(port):
     """Launches the travel log web interface."""
-    print("This will launch a web interface.")
+    app = create_browser_app()
+    webbrowser.open(f"http://localhost:{port}")
+    app.run(host="127.0.0.1", port=port)
 
 def _airport_codes(row) -> tuple[str]:
     """Returns a default origin and destination code."""
