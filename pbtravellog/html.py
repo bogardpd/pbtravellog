@@ -75,7 +75,6 @@ class StaticHTMLBuilder():
         print("Building PBTravelLog HTML…")
 
         self._build_structure()
-        self._build_home()
         self._build_aircraft()
         self._build_airlines()
         self._build_airports()
@@ -235,12 +234,6 @@ class StaticHTMLBuilder():
             self._write(show_path, show_html)
         index_html = index_template.render(classes=class_records)
         self._write(classes_dir / "index.html", index_html)
-
-    def _build_home(self) -> None:
-        """Builds home page."""
-        print("- Building home…")
-        home_html = self.env.get_template("home.html").render()
-        self._write(self.html_dir / "index.html", home_html)
 
     def _build_routes(self) -> None:
         """Builds route pates."""
