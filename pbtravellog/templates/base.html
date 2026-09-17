@@ -9,10 +9,10 @@
 <body>
   <div class="body-container">
     <nav id="sidebar">
-      <div class="sidebar-site-title"><a href="/">PBTravelLog</a></div>
+      <div class="sidebar-site-title"><a href="{{ url_for('home') }}">PBTravelLog</a></div>
       <ul class="sidebar-root">
         <li>
-          <a href="/flights/">Flights</a>
+          <a href="{{ url_for('index_flights') }}">Flights</a>
           <ul>
             <li><a href="/aircraft/">Aircraft Types</a></li>
             <li><a href="/airlines/">Airlines</a></li>
