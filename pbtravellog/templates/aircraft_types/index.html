@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", "/"), ("Aircraft Types", None)] %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Aircraft Types", None)] %}
 {% block title %}Aircraft Types{% endblock %}
 {% block content %}
 {% include "_partials/aircraft_type_table.html" %}

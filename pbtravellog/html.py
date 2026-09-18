@@ -48,9 +48,21 @@ def create_browser_app():
         return render_template("flights/index.html", flights=all_flights)
 
     @app.route("/flights/<int:flight_fid>/")
-    def show_flight(flight_fid):
+    def show_flight(flight_fid: int):
         flight = all_flights[flight_fid]
         return render_template("flights/show.html", flight=flight)
+
+    @app.route("/aircraft_types/")
+    def index_aircraft_types():
+        aircraft_type_records = _collect_aircraft_type_records(all_flights)
+        return render_template(
+            "aircraft_types/index.html",
+            aircraft_types = aircraft_type_records,
+        )
+
+    @app.route("/aircraft_types/<int:aircraft_type_fid>/")
+    def show_aircraft_type(aircraft_type_fid: int):
+        return render_template("aircraft_types/show.html")
 
     return app
 
@@ -740,6 +752,35 @@ def _airport_codes(row) -> tuple[str]:
     ]
     dest = [v for v in dest if pd.notna(v)][0]
     return (orig, dest)
+
+def _collect_aircraft_type_records(flight_records) -> dict[dict]:
+    """Builds aircraft type records from flight records."""
+    aircraft_type_flight_count = defaultdict(int)
+    for flight in flight_records.items():
+        aircraft_type_flight_count[flight[1]["aircraft_type_fid"]] += 1
+    aircraft_type_flight_count.pop(None, None) # Remove None count
+    ranks = _rank_count(aircraft_type_flight_count)
+    aircraft_type_records = {}
+    all_aircraft_types = AircraftType.all()
+    for aircraft_type_fid, count in aircraft_type_flight_count.items():
+        aircraft_type_row = all_aircraft_types.loc[aircraft_type_fid]
+        record = {
+            "manufacturer": aircraft_type_row["manufacturer"],
+            "name": aircraft_type_row["name"],
+            "iata_code": aircraft_type_row["iata_code"],
+            "icao_code": aircraft_type_row["icao_code"],
+            "count": count,
+            "rank": ranks[aircraft_type_fid],
+        }
+        record = {
+            k: (None if pd.isna(v) else v) for k, v in record.items()
+        }
+        aircraft_type_records[aircraft_type_fid] = record
+    aircraft_type_records = dict(sorted(
+        aircraft_type_records.items(),
+        key=lambda x: (-x[1]["count"], x[1]["manufacturer"], x[1]["name"])
+    ))
+    return aircraft_type_records
 
 def _flight_name(row) -> str:
     """Formats a flight name."""
