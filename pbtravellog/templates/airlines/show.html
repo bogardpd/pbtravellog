@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", "/"), ("Airlines", "/airlines/"), (airline.name, None)] %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Airlines", url_for("index_airlines")), (airline.name, None)] %}
 {% block title %}{{ airline.name }}{% endblock %}
 {% block content %}
 <table class="summary">

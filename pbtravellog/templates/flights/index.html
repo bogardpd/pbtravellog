@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% import "_macros/icons.html" as icons %}
-{% set breadcrumbs=[("Home", "/"), ("Flights", None)] %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Flights", None)] %}
 {% block title %}Flights{% endblock %}
 {% block content %}
 {% include "_partials/flight_table.html" %}
