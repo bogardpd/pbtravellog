@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", "/"), ("Classes", None)] %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Classes", None)] %}
 {% block title %}Classes{% endblock %}
 {% block content %}
 {% include "_partials/class_table.html" %}

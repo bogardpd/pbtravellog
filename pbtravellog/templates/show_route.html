@@ -30,6 +30,9 @@
 <h2>{{ route.origin_airport_code }} &rarr; {{ route.destination_airport_code }} Aircraft Types</h2>
 {% include "_partials/aircraft_type_table.html" %}
 
+<h2>{{ route.origin_airport_code }} &rarr; {{ route.destination_airport_code }} Classes</h2>
+{% include "_partials/class_table.html" %}
+
 <h2>{{ route.origin_airport_code }} &rarr; {{ route.destination_airport_code }} Flights</h2>
 {% include "_partials/flight_table.html" %}
 {% endblock content %}

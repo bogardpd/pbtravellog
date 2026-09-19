@@ -31,8 +31,8 @@
   <tr>
     <th scope="row">Seat Class</th>
     <td>
-      {{ icons.flight_class_quality(flight.class_quality) }}<br>
-      <a href="/classes/{{ flight.class_fid }}.html">{{ flight.class_name }}</a>
+      {{ icons.seat_class_quality(flight.class_quality) }}<br>
+      <a href="{{ url_for('show_class', class_fid=flight.class_fid) }}">{{ flight.class_name }}</a>
     </td>
   </tr>
   {% endif %}

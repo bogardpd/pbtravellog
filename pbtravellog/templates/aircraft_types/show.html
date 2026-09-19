@@ -25,6 +25,9 @@
 <h2>{{ aircraft_type.manufacturer }} {{ aircraft_type.name }} Operators</h2>
 {% include "_partials/operator_table.html" %}
 
+<h2>{{ aircraft_type.manufacturer }} {{ aircraft_type.name }} Classes</h2>
+{% include "_partials/class_table.html" %}
+
 <h2>{{ aircraft_type.manufacturer }} {{ aircraft_type.name }} Flights</h2>
 {% include "_partials/flight_table.html" %}
 {% endblock content %}

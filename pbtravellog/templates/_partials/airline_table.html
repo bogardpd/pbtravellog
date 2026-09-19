@@ -14,7 +14,7 @@
     {% for fid, airline in airlines.items() %}
     <tr>
       <td class="rank">{% if loop.first or airline.rank != loop.previtem[1].rank %}{{ airline.rank }}{% else %}⋮{% endif %}</td>
-      <td>{{ icons.airline(airline.fid) }}</td>
+      <td>{{ icons.airline(fid) }}</td>
       <td><a href="{{ url_for('show_airline', airline_fid=fid) }}">{{ airline.name }}</a></td>
       <td>{% if airline.iata_code %}<span class="code">{{ airline.iata_code }}</span>{% endif %}</td>
       <td>{% if airline.icao_code %}<span class="code">{{ airline.icao_code }}</span>{% endif %}</td>

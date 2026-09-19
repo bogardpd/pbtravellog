@@ -32,6 +32,9 @@
 <h2>{{ airport.iata_code if airport.iata_code else airport.name }} Aircraft Types</h2>
 {% include "_partials/aircraft_type_table.html" %}
 
+<h2>{{ airport.iata_code if airport.iata_code else airport.name }} Classes</h2>
+{% include "_partials/class_table.html" %}
+
 <h2>{{ airport.iata_code if airport.iata_code else airport.name }} Flights</h2>
 {% include "_partials/flight_table.html" %}
 {% endblock content %}

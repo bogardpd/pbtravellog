@@ -21,7 +21,7 @@ import pandas as pd
 
 # Project imports
 from pbtravellog.flight_log import (
-    Flight, Airport, Airline, AircraftType, FlightClass, Route
+    Flight, Airport, Airline, AircraftType, SeatClass, Route
 )
 
 HTML_PATH = os.getenv("PBTRAVELLOG_HTML_PATH")
@@ -69,11 +69,13 @@ def create_browser_app():
         )
         airlines = _collect_airline_records(flights, operators=False)
         operators = _collect_airline_records(flights, operators=True)
+        classes = _collect_class_records(flights)
         return render_template(
             "aircraft_types/show.html",
             aircraft_type=aircraft_type,
             airlines=airlines,
             operators=operators,
+            classes=classes,
             flights=flights,
         )
 
@@ -102,11 +104,13 @@ def create_browser_app():
         )
         operators = _collect_airline_records(flights, operators=True)
         aircraft_types = _collect_aircraft_type_records(flights)
+        classes = _collect_class_records(flights)
         return render_template(
             "airlines/show.html",
             airline=airline,
             operators=operators,
             aircraft_types=aircraft_types,
+            classes=classes,
             flights=flights,
         )
 
@@ -121,21 +125,20 @@ def create_browser_app():
         )
         airlines = _collect_airline_records(flights, operators=False)
         aircraft_types = _collect_aircraft_type_records(flights)
+        classes = _collect_class_records(flights)
         return render_template(
             "airlines/show_operator.html",
             operator=operator,
             airlines=airlines,
             aircraft_types=aircraft_types,
+            classes=classes,
             flights=flights,
         )
 
     @app.route("/airports/")
     def index_airports():
         airport_records = _collect_airport_records(all_flights)
-        return render_template(
-            "airports/index.html",
-            airports=airport_records,
-        )
+        return render_template("airports/index.html", airports=airport_records)
 
     @app.route("/airports/<int:airport_fid>/")
     def show_airport(airport_fid: int):
@@ -145,9 +148,33 @@ def create_browser_app():
         airlines = _collect_airline_records(flights, operators=False)
         operators = _collect_airline_records(flights, operators=True)
         aircraft_types = _collect_aircraft_type_records(flights)
+        classes = _collect_class_records(flights)
         return render_template(
             "airports/show.html",
             airport=airport,
+            airlines=airlines,
+            operators=operators,
+            aircraft_types=aircraft_types,
+            classes=classes,
+            flights=flights,
+        )
+
+    @app.route("/classes/")
+    def index_classes():
+        class_records = _collect_class_records(all_flights)
+        return render_template("classes/index.html", classes=class_records)
+
+    @app.route("/classes/<int:class_fid>/")
+    def show_class(class_fid: int):
+        class_records = _collect_class_records(all_flights)
+        seat_class = class_records[class_fid]
+        flights = _filter_flights_by_class(all_flights, class_fid)
+        airlines = _collect_airline_records(flights, operators=False)
+        operators = _collect_airline_records(flights, operators=True)
+        aircraft_types = _collect_aircraft_type_records(flights)
+        return render_template(
+            "classes/show.html",
+            seat_class=seat_class,
             airlines=airlines,
             operators=operators,
             aircraft_types=aircraft_types,
@@ -165,7 +192,7 @@ class StaticHTMLBuilder():
         self.all_airlines = Airline.all()
         self.all_airports = Airport.all()
         self.all_aircraft_types = AircraftType.all()
-        self.all_classes = FlightClass.all()
+        self.all_classes = SeatClass.all()
         self.all_routes = Route.all()
         self.html_dir = Path(HTML_PATH)
         self.env = self._jinja_env()
@@ -197,21 +224,21 @@ class StaticHTMLBuilder():
         index_template = self.env.get_template("index_classes.html")
         show_template = self.env.get_template("show_class.html")
         class_records = self._collect_class_records(self.all_flights)
-        for flight_class in class_records:
+        for seat_class in class_records:
             flights = self._filter_flights_by_class(
-                self.all_flights, flight_class["fid"],
+                self.all_flights, seat_class["fid"],
             )
             airlines = self._collect_airline_records(flights, operators=False)
             operators = self._collect_airline_records(flights, operators=True)
             aircraft_types = self._collect_aircraft_type_records(flights)
             show_html = show_template.render(
-                flight_class=flight_class,
+                seat_class=seat_class,
                 airlines=airlines,
                 operators=operators,
                 aircraft_types=aircraft_types,
                 flights=flights,
             )
-            show_path = classes_dir / f"{flight_class["fid"]}.html"
+            show_path = classes_dir / f"{seat_class["fid"]}.html"
             self._write(show_path, show_html)
         index_html = index_template.render(classes=class_records)
         self._write(classes_dir / "index.html", index_html)
@@ -766,7 +793,6 @@ def _collect_airline_records(
     for airline_fid, count in airline_flight_count.items():
         airline_row = all_airlines.loc[airline_fid]
         record = {
-            "fid": airline_fid,
             "name": airline_row["name"],
             "iata_code": airline_row["iata_code"],
             "icao_code": airline_row["icao_code"],
@@ -782,7 +808,7 @@ def _collect_airline_records(
     ))
     return airline_records
 
-def _collect_airport_records(flight_records) -> list[dict]:
+def _collect_airport_records(flight_records) -> dict[dict]:
     """Builds airport records from flight records."""
     airport_visit_count = defaultdict(int)
     prev_trip_sec = [None, None]
@@ -800,7 +826,6 @@ def _collect_airport_records(flight_records) -> list[dict]:
     for airport_fid, visits in airport_visit_count.items():
         airport_row = all_airports.loc[airport_fid]
         record = {
-            "fid": airport_fid,
             "name": airport_row["name"],
             "iata_code": airport_row["iata_code"],
             "icao_code": airport_row["icao_code"],
@@ -816,6 +841,32 @@ def _collect_airport_records(flight_records) -> list[dict]:
         airport_records.items(), key=lambda x: (-x[1]["visits"], x[1]["name"]),
     ))
     return airport_records
+
+def _collect_class_records(flight_records) -> dict[dict]:
+    """Builds flight class records from flight records."""
+    class_flight_count = defaultdict(int)
+    for _, flight in flight_records.items():
+        class_flight_count[flight["class_fid"]] += 1
+    class_flight_count.pop(None, None) # Remove none count
+    # Classes are always sorted by quality, so no need to rank.
+    class_records = {}
+    all_classes = SeatClass.all()
+    for class_fid, count in class_flight_count.items():
+        class_row = all_classes.loc[class_fid]
+        record = {
+            "quality": class_row["quality"],
+            "name": class_row["name"],
+            "description": class_row["description"],
+            "count": count,
+        }
+        record = {
+            k: (None if pd.isna(v) else v) for k, v in record.items()
+        }
+        class_records[class_fid] = record
+    class_records = dict(sorted(
+        class_records.items(), key=lambda x: -x[1]["quality"],
+    ))
+    return class_records
 
 def _filter_flights_by_aircraft_type(
     flight_records, aircraft_type_fid: int,
@@ -846,6 +897,14 @@ def _filter_flights_by_airport(flight_records, airport_fid: int) -> dict[dict]:
             v["origin_airport_fid"],
             v["destination_airport_fid"],
         ]
+    }
+    return records
+
+def _filter_flights_by_class(flight_records, class_fid: int) -> dict[dict]:
+    """Filters flight records by a flight class."""
+    records = {
+        k: v for k, v in flight_records.items()
+        if v["class_fid"] == class_fid
     }
     return records
 
