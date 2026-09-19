@@ -7,7 +7,7 @@ The flight log data uses a [GeoPackage file](https://www.geopackage.org/) contai
 > [!NOTE]
 > Columns use the data types specified in the GeoPackage Encoding Standards [Table 1. GeoPackage Data Types](https://www.geopackage.org/spec/#table_column_data_types), and geometry types specified in [Annex G: Geometry Types (Normative)](https://www.geopackage.org/spec/#geometry_types). Optional fields must be null when unused.
 
-![Entity relationship diagram visualizing the below tables](../images/erd_flight_log.png)
+![Entity relationship diagram visualizing the below tables](../images/ERD_Flights.png)
 
 ### aircraft_types (No Geometry)
 
@@ -88,7 +88,7 @@ Individual flights may or may not have geometry (e.g., older flights without kno
 | `departure_utc` | DATETIME | UTC departure time for the flight. Prefer gate out time over wheels off (up) time. Prefer actual time over estimated time over scheduled time. |
 | `arrival_utc` | DATETIME | *Optional.* UTC arrival time for the flight. Prefer gate in time over wheels on (down) time. Prefer actual time over estimated time over scheduled time. |
 | `purpose` | TEXT | `Business`, `Personal`, or `Mixed` |
-| `trip_fid` | INT (64 bit) | *Optional.* Foreign key referencing the trip on the [`trips`](#trips-no-geometry) table. |
+| `trip_fid` | INT (64 bit) | *Optional.* Foreign key referencing the trip on the [`trips`](travel_log.md#trips-no-geometry) table. |
 | `trip_section` | INT (64 bit) | *Optional.* Flights which follow each other after a layover should be assigned the same trip section of the same trip. Used to avoid [double-counting visits to airports during layovers](https://paulbogard.net/flight-historian/counting-visits-to-airports-the-significance-of-trip-sections/). |
 | `airline_fid` | INT (64 bit) | *Optional.* Foreign key referencing the marketing airline on the [`airlines`](#airlines-no-geometry) table. (See [Airline Types](#airline-types).) |
 | `flight_number` | TEXT | The marketing airline's flight number for the flight. (See [Airline Types](#airline-types).) |

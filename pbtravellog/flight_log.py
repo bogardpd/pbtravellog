@@ -1,12 +1,11 @@
 """Scripts for interacting with the flight log."""
 
 # Standard imports
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 import json
 from math import ceil
 import os
 from pathlib import Path
-import re
 import sqlite3
 import sys
 from typing import Self
@@ -22,6 +21,7 @@ from tabulate import tabulate
 # Project imports
 import pbtravellog.aeroapi as aero
 from pbtravellog.boarding_pass import BoardingPass, PKPass
+from pbtravellog.record import Record
 
 METERS_PER_MILE = 1609.344
 METERS_PER_HUNDRED_FEET = 30.48
@@ -35,75 +35,9 @@ if FLIGHT_LOG is None:
         "Environment variable PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is missing."
     )
 
-class Record():
-    """Represents a record from a flight log table."""
-    LAYER = None
-    FIND_BY_CODES = []
-    DTYPES = {}
-
-    @classmethod
-    def all(cls) -> gpd.GeoDataFrame:
-        """Returns a GeoDataFrame of all records."""
-        records = gpd.read_file(
-            FLIGHT_LOG,
-            layer=cls.LAYER,
-            engine="pyogrio",
-            fid_as_index=True,
-        ).astype(cls.DTYPES)
-        return records
-
-    @classmethod
-    def pluck(cls, column) -> list[Self]:
-        """Returns a list of all values of a column."""
-        records = cls.all()
-        return records[column].to_list()
-
-    @classmethod
-    def find_by_code(cls, code: str, check_fid=False) -> Self | None:
-        """Finds a record by searching through code fields."""
-        if getattr(cls, "FIND_BY_CODES", None) is None:
-            return None
-        if len(cls.FIND_BY_CODES) == 0:
-            return None
-        records = gpd.read_file(
-            FLIGHT_LOG,
-            layer = cls.LAYER,
-            engine="pyogrio",
-            fid_as_index=True,
-        )
-
-        # Check for fid on numeric codes. Note that this will allow
-        # defunct records since fids are unique.
-        if check_fid and re.search(r'^[0-9]+$', code):
-            if int(code) in records.index:
-                record_dict = records.loc[int(code)].to_dict()
-                record_dict["fid"] = int(code)
-                record = cls()
-                for key, value in record_dict.items():
-                    setattr(record, key, value)
-                return record
-
-        # Filter out defunct records. This is helpful in situations
-        # where current records use the same codes as an old record
-        # (for example, the current PSA airlines and the defunct Comair
-        # both use the IATA code "OH".)
-        if "is_defunct" in records.columns:
-            records = records[~records["is_defunct"]]
-        for code_type in cls.FIND_BY_CODES:
-            # Search for matching codes.
-            matching_code = records[records[code_type] == code]
-            if len(matching_code) == 1:
-                record_dict = matching_code.iloc[0].to_dict()
-                record_dict["fid"] = int(matching_code.index[0])
-                record = cls()
-                for key, value in record_dict.items():
-                    setattr(record, key, value)
-                return record
-        print(f"⚠️ Could not find {cls.__name__} matching \"{code}\".")
-        return None
-
 class AircraftType(Record):
     """Represents an aircraft type record."""
+    DATA_FILE = FLIGHT_LOG
     LAYER = "aircraft_types"
     FIND_BY_CODES = ["icao_code"]
     DTYPES = {
@@ -123,6 +57,7 @@ class AircraftType(Record):
 
 class Airline(Record):
     """Represents an airline record."""
+    DATA_FILE = FLIGHT_LOG
     LAYER = "airlines"
     FIND_BY_CODES = ["icao_code", "iata_code"]
     DTYPES = {
@@ -143,6 +78,7 @@ class Airline(Record):
 
 class Airport(Record):
     """Represents an airline record."""
+    DATA_FILE = FLIGHT_LOG
     LAYER = "airports"
     FIND_BY_CODES = ["icao_code", "iata_code", "faa_lid"]
     DTYPES = {
@@ -169,6 +105,7 @@ class Airport(Record):
 
 class Flight(Record):
     """Represents a flight record."""
+    DATA_FILE = FLIGHT_LOG
     LAYER = "flights"
     FIND_BY_CODES = []
     DTYPES = {
@@ -353,7 +290,6 @@ class Flight(Record):
         )
         print(f"Appended flight to {FLIGHT_LOG}.")
 
-
     def _arr_utc(self) -> datetime | None:
         """Gets the actual arrival time of a flight."""
         if self.actual_in is None:
@@ -470,89 +406,17 @@ class Flight(Record):
 
 class SeatClass(Record):
     """Represents a flight class record."""
+    DATA_FILE = FLIGHT_LOG
     LAYER = "classes"
     FIND_BY_CODES = []
     DTYPES = {"quality": "Int64"}
 
 class Route(Record):
     """Represents a route record"""
+    DATA_FILE = FLIGHT_LOG
     LAYER = "routes"
     FIND_BY_CODES = []
     DTYPES = {"distance_mi": "Int64"}
-
-class Trip(Record):
-    """Represents a trip record."""
-    LAYER = "trips"
-    FIND_BY_CODES = []
-    DTYPES = {"fh_id": "Int64"}
-
-    def __init__(self):
-        # Fields used in flight log database:
-        self.fid: int | None = None
-        self.fh_id: int | None = None
-        self.name: str | None = None
-        self.start_date: date | None = None
-        self.end_date: date | None = None
-        self.comments: str | None = None
-
-    def estimate_trip_section(self, departure_dt: datetime) -> int | None:
-        """Suggests a trip section number based on departure time."""
-        flights = gpd.read_file(
-            FLIGHT_LOG,
-            layer=Flight.LAYER,
-            engine="pyogrio",
-            fid_as_index=True,
-        ).astype(Flight.DTYPES)
-        flights = flights[flights["trip_fid"] == self.fid]
-        if len(flights) == 0:
-            # No flights in trip.
-            return 1
-        if flights["trip_section"].isnull().any():
-            # Some flights have no trip section.
-            return None
-        flights = flights[["departure_utc", "trip_fid", "trip_section"]]
-        flights = flights.sort_values(by="departure_utc")
-        latest_flight = flights.iloc[-1]
-        if departure_dt <= latest_flight["departure_utc"]:
-            # New flight occurs before latest flight.
-            return None
-        if departure_dt < latest_flight["departure_utc"] + timedelta(days=1):
-            # New flight is within 24 hours of latest flight.
-            return int(latest_flight["trip_section"])
-        # New flight is more than 24 hours after latest flight.
-        return int(latest_flight["trip_section"]) + 1
-
-    @classmethod
-    def select_by_date(cls, departure_date: date) -> Self | None:
-        """
-        Selects a trip based on departure date.
-
-        The date provided should be the flight departure date from a
-        boarding pass.
-        """
-        records = gpd.read_file(
-            FLIGHT_LOG,
-            layer=cls.LAYER,
-            engine="pyogrio",
-            fid_as_index=True,
-        ).dropna(subset=["start_date", "end_date"]).astype(cls.DTYPES)
-
-        matching = records[
-            (records["start_date"].dt.date <= departure_date)
-            & (records["end_date"].dt.date >= departure_date)
-        ].sort_values(by=["start_date", "end_date"], ascending=False)
-        if matching.size == 0:
-            return None
-        record_dict = matching.iloc[0].to_dict()
-        record_dict["fid"] = int(matching.index[0])
-        record = cls()
-        for k, v in record_dict.items():
-            setattr(
-                record,
-                k,
-                v.date() if hasattr(v, "date") else v
-            )
-        return record
 
 
 def airport_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
@@ -971,6 +835,30 @@ def _crossing_point(p1, p2):
     x_frac = (lon - p1[0]) / (p2[0] - p1[0])
     return tuple([c1 + (x_frac * (c2 - c1)) for c1, c2 in zip(p1, p2)])
 
+def _estimate_trip_section(
+        trip_fid: int, departure_dt: datetime
+) -> int | None:
+    """Suggests a trip section number based on departure time."""
+    flights = Flight.all()
+    flights = flights[flights["trip_fid"] == trip_fid]
+    if len(flights) == 0:
+        # No flights in trip.
+        return 1
+    if flights["trip_section"].isnull().any():
+        # Some flights have no trip section.
+        return None
+    flights = flights[["departure_utc", "trip_fid", "trip_section"]]
+    flights = flights.sort_values(by="departure_utc")
+    latest_flight = flights.iloc[-1]
+    if departure_dt <= latest_flight["departure_utc"]:
+        # New flight occurs before latest flight.
+        return None
+    if departure_dt < latest_flight["departure_utc"] + timedelta(days=1):
+        # New flight is within 24 hours of latest flight.
+        return int(latest_flight["trip_section"])
+    # New flight is more than 24 hours after latest flight.
+    return int(latest_flight["trip_section"]) + 1
+
 def _flight_from_aeroapi_results(aero_results) -> Flight:
     """Has user select flight from AeroAPI results and gets geometry."""
     if len(aero_results) == 0:
@@ -1003,6 +891,7 @@ def _great_circle_airport_lookup(row, airports):
 
 def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
     """Builds Flights from a BoardingPass, and saves them."""
+    from pbtravellog.travel_log import Trip
     if not bp.valid or len(bp.legs) == 0:
         print("⚠️ The boarding pass data is not valid.")
         sys.exit(1)
@@ -1025,8 +914,8 @@ def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
         if trip is not None:
             flight.trip_fid = trip.fid
             if flight.departure_utc is not None:
-                flight.trip_section = trip.estimate_trip_section(
-                    flight.departure_utc
+                flight.trip_section = _estimate_trip_section(
+                    trip.fid, flight.departure_utc,
                 )
         bp_flights.append(flight)
 
@@ -1056,12 +945,3 @@ def _import_fa_flight_results(
             setattr(flight, key, value)
 
     flight.save(geojson=geojson)
-
-def _this_airport_visits(row, fid: int) -> int:
-    """Returns number of visits in row of airport with provided fid."""
-    count = 0
-    if row["count_origin_visits"] and row["origin_airport_fid"] == fid:
-        count += 1
-    if row["destination_airport_fid"] == fid:
-        count += 1
-    return count

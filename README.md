@@ -24,9 +24,7 @@ After installation, the `pbtravellog` command is available on the command line.
 
 ### GeoPackage Files
 
-The travel log is stored in a collection of GeoPackage files. Currently, the travel log only interacts with flight data, as described in the following schema:
-
-- [Flight Log schema](docs/schema/flight_log.md)
+The travel log is stored in a collection of GeoPackage files, as described in the [Schema](docs/schema/schema.md).
 
 ### Environment Variables
 
