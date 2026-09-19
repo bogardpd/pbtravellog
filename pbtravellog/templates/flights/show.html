@@ -78,7 +78,7 @@
   <tr>
     <th scope="row">Route</th>
     <td>
-      <a href="/routes/{{ flight.origin_airport_fid }}-{{ flight.destination_airport_fid }}.html">
+      <a href="{{ url_for('show_route', origin_airport_fid=flight.origin_airport_fid, destination_airport_fid=flight.destination_airport_fid) }}">
         <span class="code">{{ flight.origin_airport_code }}</span>
         &rarr;
         <span class="code">{{ flight.destination_airport_code }}</span>
