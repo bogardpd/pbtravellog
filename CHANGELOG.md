@@ -5,7 +5,11 @@
 ### Changed
 
 - `run` now uses a [Flask](https://flask.palletsprojects.com/en/stable/) backend instead of a static site.
-- The static site now uses the command `run-static`.
+
+### Removed
+
+- Removed `build` command. Building is no longer necessary because Flask builds pages when they’re requested.
+- Removed `PBTRAVELLOG_HTML_PATH` environment variable, as we no longer need a directory for static HTML files.
 
 ## [0.3.0]
 
