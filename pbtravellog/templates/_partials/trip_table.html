@@ -1,0 +1,23 @@
+<table>
+  <thead>
+    <tr>
+      <th class="rank">#</th>
+      <th>Trip</th>
+      <th>Start</th>
+      <th>End</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for fid, trip in trips.items() %}
+    <tr>
+      <td class="rank">{{ loop.index }}</td>
+      <td><a href="{{ url_for('show_trip', trip_fid=fid) }}">{{ trip.name }}</a></td>
+      <td>{{ trip.start_date | format_dt(include_time=False) }}</td>
+      <td>{{ trip.end_date | format_dt(include_time=False) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total">
+      <td colspan="4">{{ trips | length }} trip{% if (trips | length) != 1 %}s{% endif %}</td>
+    </tr>
+  </tbody>
+</table>

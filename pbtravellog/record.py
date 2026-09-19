@@ -6,6 +6,7 @@ import re
 
 # Third-party imports
 import geopandas as gpd
+import pandas as pd
 
 class Record():
     """Represents a generic record from any travel log table.
@@ -27,6 +28,13 @@ class Record():
             fid_as_index=True,
         ).astype(cls.DTYPES)
         return records
+
+    @classmethod
+    def to_dict(cls) -> dict:
+        """Returns a dictionary of all records."""
+        records = cls.all().copy()
+        records = records.astype(object).where(pd.notna(records), None)
+        return records.to_dict(orient="index")
 
     @classmethod
     def pluck(cls, column) -> list[Self]:

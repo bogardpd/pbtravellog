@@ -22,6 +22,7 @@ from tabulate import tabulate
 import pbtravellog.aeroapi as aero
 from pbtravellog.boarding_pass import BoardingPass, PKPass
 from pbtravellog.record import Record
+from pbtravellog.travel_log import Trip
 
 METERS_PER_MILE = 1609.344
 METERS_PER_HUNDRED_FEET = 30.48
@@ -365,6 +366,7 @@ class Flight(Record):
         airlines_df = pd.DataFrame(Airline.all())
         aircraft_types_df = pd.DataFrame(AircraftType.all())
         classes_df = pd.DataFrame(SeatClass.all())
+        trips_df = pd.DataFrame(Trip.all())
 
         # Perform joins.
         flights_gdf = flights_gdf.join(
@@ -394,6 +396,10 @@ class Flight(Record):
         flights_gdf = flights_gdf.join(
             classes_df.add_prefix("class_"),
             on="class_fid"
+        )
+        flights_gdf = flights_gdf.join(
+            trips_df.add_prefix("trip_"),
+            on="trip_fid",
         )
         return flights_gdf
 
@@ -891,7 +897,6 @@ def _great_circle_airport_lookup(row, airports):
 
 def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
     """Builds Flights from a BoardingPass, and saves them."""
-    from pbtravellog.travel_log import Trip
     if not bp.valid or len(bp.legs) == 0:
         print("⚠️ The boarding pass data is not valid.")
         sys.exit(1)

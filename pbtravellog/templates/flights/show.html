@@ -8,7 +8,7 @@
 <p>{{ flight.comments }}</p>
 {% endif %}
 
-<div class="flight-card">
+<div class="card flight-card">
   <!-- Code -->
   <div class="flight-card-airport">
     <span class="flight-card-head">{{ flight.origin_airport_code }}</span><br>
@@ -84,6 +84,15 @@
         <span class="code">{{ flight.destination_airport_code }}</span>
     </td>
   </tr>
+  {% if flight.trip_fid %}
+  <tr>
+    <th scope="row">Trip</th>
+    <td>
+      <a href="{{ url_for('show_trip', trip_fid=flight.trip_fid) }}">{{ flight.trip_name }}</a><br>
+      {{ flight.trip_start_date | format_dt(include_time=False) }} – {{ flight.trip_end_date | format_dt(include_time=False) }}
+    </td>
+  </tr>
+  {% endif %}
   {% if flight.boarding_pass_data %}
   <tr>
     <th scope="row">Boarding Pass</th>

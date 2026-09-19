@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Trips", url_for("index_trips")), (trip.name, None)] %}
+{% block title %}{{ trip.name }}{% endblock %}
+{% block content %}
+
+{% if trip.comments %}
+<p>{{ trip.comments }}</p>
+{% endif %}
+
+<div class="card trip-card">
+  {{ trip.start_date | format_dt(include_time=False) }} – {{ trip.end_date | format_dt(include_time=False) }}
+</div>
+<h2>Flights</h2>
+{% include "_partials/flight_table.html" %}
+
+{% endblock content %}

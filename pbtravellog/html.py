@@ -15,6 +15,7 @@ import pandas as pd
 from pbtravellog.flight_log import (
     Flight, Airport, Airline, AircraftType, SeatClass, Route
 )
+from pbtravellog.travel_log import Trip
 
 def create_browser_app():
     """Creates a Flask app for the travel log."""
@@ -24,6 +25,7 @@ def create_browser_app():
     app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
 
     all_flights = _load_joined_flight_records()
+    all_trips = Trip.to_dict()
 
     @app.route("/")
     def home():
@@ -222,6 +224,16 @@ def create_browser_app():
             classes=classes,
             flights=flights,
         )
+
+    @app.route("/trips/")
+    def index_trips():
+        return render_template("trips/index.html", trips=all_trips)
+
+    @app.route("/trips/<int:trip_fid>/")
+    def show_trip(trip_fid: int):
+        trip = all_trips[trip_fid]
+        flights = _filter_flights_by_trip(all_flights, trip_fid)
+        return render_template("trips/show.html", trip=trip, flights=flights)
 
     return app
 
@@ -499,6 +511,14 @@ def _filter_flights_by_tail_number(
     }
     return records
 
+def _filter_flights_by_trip(flight_records, trip_fid: int) -> dict[dict]:
+    """Filters flight records by a trip."""
+    records = {
+        k: v for k, v in flight_records.items()
+        if v["trip_fid"] == trip_fid
+    }
+    return records
+
 def _flight_name(row) -> str:
     """Formats a flight name."""
     if pd.notna(row.airline_name):
@@ -631,6 +651,9 @@ def _recordize_flight_row(row) -> dict:
         "class_name": row["class_name"],
         "class_quality": row["class_quality"],
         "trip_fid": row["trip_fid"],
+        "trip_name": row["trip_name"],
+        "trip_start_date": row["trip_start_date"],
+        "trip_end_date": row["trip_end_date"],
         "trip_section": row["trip_section"],
         "boarding_pass_data": row["boarding_pass_data"],
         "comments": row["comments"],

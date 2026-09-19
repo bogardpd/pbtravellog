@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Trips", None)] %}
+{% block title %}Trips{% endblock %}
+{% block content %}
+{% include "_partials/trip_table.html" %}
+{% endblock content %}
