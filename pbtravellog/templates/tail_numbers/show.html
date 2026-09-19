@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Tail Numbers", url_for("index_tail_numbers")), (tail_number, None)] %}
-{% block title %}{{ tail_number }}{% endblock %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Tail Numbers", url_for("index_tail_numbers")), (tail_number_record.formatted, None)] %}
+{% block title %}{{ tail_number_record.formatted }}{% endblock %}
 {% block content %}
 <table class="summary">
   <thead>
@@ -15,18 +15,18 @@
   </tbody>
 </table>
 
-<h2>{{ tail_number }} Airlines</h2>
+<h2>{{ tail_number_record.formatted }} Airlines</h2>
 {% include "_partials/airline_table.html" %}
 
-<h2>{{ tail_number }} Operators</h2>
+<h2>{{ tail_number_record.formatted }} Operators</h2>
 {% include "_partials/operator_table.html" %}
 
-<h2>{{ tail_number }} Aircraft Types</h2>
+<h2>{{ tail_number_record.formatted }} Aircraft Types</h2>
 {% include "_partials/aircraft_type_table.html" %}
 
-<h2>{{ tail_number }} Classes</h2>
+<h2>{{ tail_number_record.formatted }} Classes</h2>
 {% include "_partials/class_table.html" %}
 
-<h2>{{ tail_number }} Flights</h2>
+<h2>{{ tail_number_record.formatted }} Flights</h2>
 {% include "_partials/flight_table.html" %}
 {% endblock content %}

@@ -2,8 +2,8 @@
 
 # Standard imports
 from collections import defaultdict
-import os
 from pathlib import Path
+import re
 import webbrowser
 from zoneinfo import ZoneInfo
 
@@ -206,6 +206,8 @@ def create_browser_app():
 
     @app.route("/tail_numbers/<string:tail_number>/")
     def show_tail_number(tail_number: str):
+        tail_number_records = _collect_tail_number_records(all_flights)
+        tail_number_record = tail_number_records[tail_number]
         flights = _filter_flights_by_tail_number(all_flights, tail_number)
         airlines = _collect_airline_records(flights, operators=False)
         operators = _collect_airline_records(flights, operators=True)
@@ -213,7 +215,7 @@ def create_browser_app():
         classes = _collect_class_records(flights)
         return render_template(
             "tail_numbers/show.html",
-            tail_number=tail_number,
+            tail_number_record=tail_number_record,
             airlines=airlines,
             operators=operators,
             aircraft_types=aircraft_types,
@@ -424,15 +426,16 @@ def _collect_tail_number_records(flight_records) -> dict[dict]:
     tail_number_records = {}
     for tail_number, count in tail_flight_count.items():
         record = {
+            "formatted": _format_tail_number(tail_number),
             "aircraft_type_name": equipment[tail_number],
             "count": count,
             "rank": ranks[tail_number],
         }
         tail_number_records[tail_number] = record
-    tail_number_records = sorted(
+    tail_number_records = dict(sorted(
         tail_number_records.items(),
         key=lambda x: (-x[1]["count"], x[0]),
-    )
+    ))
     return tail_number_records
 
 def _filter_flights_by_aircraft_type(
@@ -515,6 +518,30 @@ def _format_dt(dt, include_time=True, include_tz=False) -> str:
         parts.append("%Z")
     return dt.strftime(" ".join(parts))
 
+def _format_tail_number(tail: str | None) -> str | None:
+    """Formats a tail number in its country format."""
+    if tail is None or pd.isna(tail):
+        return None
+    if re.match(r"N", tail): # United States
+        return tail
+    if re.match(r"C", tail): # Canada
+        return f"{tail[0]}-{tail[1:]}"
+    if re.match(r"D", tail): # Germany
+        return f"{tail[0]}-{tail[1:]}"
+    if re.match(r"G", tail): # United Kingdom
+        return f"{tail[0]}-{tail[1:]}"
+    if re.match(r"J[AR]", tail): # Japan
+        return tail
+    if re.match(r"OH", tail): # Finland
+        return f"{tail[0:2]}-{tail[2:]}"
+    if re.match(r"TF", tail): # Iceland
+        return f"{tail[0:2]}-{tail[2:]}"
+    if re.match(r"VH", tail): # Australia
+        return f"{tail[0:2]}-{tail[2:]}"
+    if re.match(r"Z[KLM]", tail): # New Zealand
+        return f"{tail[0:2]}-{tail[2:]}"
+    return tail
+
 def _img_path_airline_icon(airline_fid: int):
     """Returns the path for an airline icon or none."""
     icon = Path(f"images/airlines/icons/{airline_fid}.png")
@@ -583,6 +610,7 @@ def _recordize_flight_row(row) -> dict:
         "name": _flight_name(row),
         "aircraft_name": row["aircraft_name"],
         "tail_number": row["tail_number"],
+        "tail_number_formatted": _format_tail_number(row["tail_number"]),
         "aircraft_type_fid": row["aircraft_type_fid"],
         "aircraft_type_manufacturer": row["aircraft_type_manufacturer"],
         "aircraft_type_name": row["aircraft_type_name"],
