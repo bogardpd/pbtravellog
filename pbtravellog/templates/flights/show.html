@@ -39,14 +39,14 @@
   <tr>
     <th scope="row">Airline</th>
     <td>
-      {% if image_path_airline_icon(flight.airline_fid) %}{{ icons.airline(flight.airline_fid) }}<br>{% endif %}
+      {% if img_path_airline_icon(flight.airline_fid) %}{{ icons.airline(flight.airline_fid) }}<br>{% endif %}
       {% if flight.airline_fid %}<a href="{{ url_for('show_airline', airline_fid=flight.airline_fid) }}">{{ flight.airline_name }}</a>{% else %}None{% endif %}
     </td>
   </tr>
   <tr>
     <th scope="row">Operated By</th>
     <td>
-      {% if image_path_airline_icon(flight.operator_fid) %}{{ icons.airline(flight.operator_fid) }}<br>{% endif %}
+      {% if img_path_airline_icon(flight.operator_fid) %}{{ icons.airline(flight.operator_fid) }}<br>{% endif %}
       {% if flight.operator_fid %}<a href="{{ url_for('show_operator', operator_fid=flight.operator_fid) }}">{{ flight.operator_name }}</a>{% else %}None{% endif %}
     </td>
   </tr>
@@ -54,7 +54,7 @@
   <tr>
     <th scope="row">Codeshare</th>
     <td>
-      {% if image_path_airline_icon(flight.codeshare_airline_fid) %}{{ icons.airline(flight.codeshare_airline_fid) }}<br>{% endif %}
+      {% if img_path_airline_icon(flight.codeshare_airline_fid) %}{{ icons.airline(flight.codeshare_airline_fid) }}<br>{% endif %}
       {{ flight.codeshare_airline_name }}{% if flight.codeshare_flight_number %} {{ flight.codeshare_flight_number }}{% endif %}
     </td>
   </tr>

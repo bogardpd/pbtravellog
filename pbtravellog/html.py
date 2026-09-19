@@ -35,7 +35,7 @@ def create_browser_app():
     app = Flask(__name__)
 
     app.jinja_env.filters["format_dt"] = _format_dt
-    app.jinja_env.globals["image_path_airline_icon"] = _image_path_airline_icon
+    app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
 
     all_flights = _load_joined_flight_records()
 
@@ -558,7 +558,7 @@ class StaticHTMLBuilder():
         ]
         return records
 
-    def _image_path_airline_icon(self, airline_fid: int):
+    def _img_path_airline_icon(self, airline_fid: int):
         """Returns the path for an airline icon or none."""
         full_path = self.html_dir / f"images/airlines/icons/{airline_fid}.png"
         if not full_path.exists():
@@ -573,7 +573,7 @@ class StaticHTMLBuilder():
         )
         env.filters["format_dt"] = _format_dt
         env.globals["build_time"] = datetime.now(UTC)
-        env.globals["image_path_airline_icon"] = self._image_path_airline_icon
+        env.globals["img_path_airline_icon"] = self._img_path_airline_icon
         return env
 
     def _load_joined_flight_records(self) -> list[dict]:
@@ -953,7 +953,7 @@ def _format_dt(dt, include_time=True, include_tz=False) -> str:
         parts.append("%Z")
     return dt.strftime(" ".join(parts))
 
-def _image_path_airline_icon(airline_fid: int):
+def _img_path_airline_icon(airline_fid: int):
     """Returns the path for an airline icon or none."""
     icon = Path(f"images/airlines/icons/{airline_fid}.png")
     full_path = Path(current_app.static_folder) / icon
