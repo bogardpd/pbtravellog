@@ -57,12 +57,25 @@ def create_browser_app():
         aircraft_type_records = _collect_aircraft_type_records(all_flights)
         return render_template(
             "aircraft_types/index.html",
-            aircraft_types = aircraft_type_records,
+            aircraft_types=aircraft_type_records,
         )
 
     @app.route("/aircraft_types/<int:aircraft_type_fid>/")
     def show_aircraft_type(aircraft_type_fid: int):
-        return render_template("aircraft_types/show.html")
+        aircraft_type_records = _collect_aircraft_type_records(all_flights)
+        aircraft_type = aircraft_type_records[aircraft_type_fid]
+        flights = _filter_flights_by_aircraft_type(
+            all_flights, aircraft_type_fid,
+        )
+        airlines = _collect_airline_records(flights, operators=False)
+        operators = _collect_airline_records(flights, operators=True)
+        return render_template(
+            "aircraft_types/show.html",
+            aircraft_type=aircraft_type,
+            airlines=airlines,
+            operators=operators,
+            flights=flights,
+        )
 
     return app
 
@@ -87,7 +100,6 @@ class StaticHTMLBuilder():
         print("Building PBTravelLog HTML…")
 
         self._build_structure()
-        self._build_aircraft()
         self._build_airlines()
         self._build_airports()
         self._build_classes()
@@ -101,39 +113,6 @@ class StaticHTMLBuilder():
             f"{self.file_count["updated"]} updated, "
             f"{self.file_count["unchanged"]} unchanged)"
         )
-
-    def _build_aircraft(self) -> None:
-        """Builds aircraft pages."""
-        print("- Building aircraft…")
-        aircraft_dir = self.html_dir / "aircraft"
-        aircraft_dir.mkdir(exist_ok=True)
-        index_template = self.env.get_template("index_aircraft_types.html")
-        show_template = self.env.get_template("show_aircraft_type.html")
-        aircraft_type_records = self._collect_aircraft_type_records(
-            self.all_flights,
-        )
-        for aircraft_type in aircraft_type_records:
-            flights = self._filter_flights_by_aircraft_type(
-                self.all_flights, aircraft_type["fid"],
-            )
-            airlines = self._collect_airline_records(
-                flights, operators=False,
-            )
-            operators = self._collect_airline_records(
-                flights, operators=True,
-            )
-            show_type_html = show_template.render(
-                aircraft_type=aircraft_type,
-                airlines=airlines,
-                operators=operators,
-                flights=flights,
-            )
-            show_path = aircraft_dir / f"{aircraft_type["fid"]}.html"
-            self._write(show_path, show_type_html)
-        index_html = index_template.render(
-            aircraft_types=aircraft_type_records,
-        )
-        self._write(aircraft_dir / "index.html", index_html)
 
     def _build_airlines(self) -> None:
         """Builds airline pages."""
@@ -756,8 +735,8 @@ def _airport_codes(row) -> tuple[str]:
 def _collect_aircraft_type_records(flight_records) -> dict[dict]:
     """Builds aircraft type records from flight records."""
     aircraft_type_flight_count = defaultdict(int)
-    for flight in flight_records.items():
-        aircraft_type_flight_count[flight[1]["aircraft_type_fid"]] += 1
+    for _, flight in flight_records.items():
+        aircraft_type_flight_count[flight["aircraft_type_fid"]] += 1
     aircraft_type_flight_count.pop(None, None) # Remove None count
     ranks = _rank_count(aircraft_type_flight_count)
     aircraft_type_records = {}
@@ -781,6 +760,47 @@ def _collect_aircraft_type_records(flight_records) -> dict[dict]:
         key=lambda x: (-x[1]["count"], x[1]["manufacturer"], x[1]["name"])
     ))
     return aircraft_type_records
+
+def _collect_airline_records(
+    flight_records, operators=False,
+) -> dict[dict]:
+    """Builds airline records from flight records."""
+    column = "operator_fid" if operators else "airline_fid"
+    airline_flight_count = defaultdict(int)
+    for _, flight in flight_records.items():
+        airline_flight_count[flight[column]] += 1
+    airline_flight_count.pop(None, None) # Remove None count
+    all_airlines = Airline.all()
+    ranks = _rank_count(airline_flight_count)
+    airline_records = {}
+    for airline_fid, count in airline_flight_count.items():
+        airline_row = all_airlines.loc[airline_fid]
+        record = {
+            "fid": airline_fid,
+            "name": airline_row["name"],
+            "iata_code": airline_row["iata_code"],
+            "icao_code": airline_row["icao_code"],
+            "count": count,
+            "rank": ranks[airline_fid],
+        }
+        record = {
+            k: (None if pd.isna(v) else v) for k, v in record.items()
+        }
+        airline_records[airline_fid] = record
+    airline_records = dict(sorted(
+        airline_records.items(), key=lambda x: (-x[1]["count"], x[1]["name"])
+    ))
+    return airline_records
+
+def _filter_flights_by_aircraft_type(
+    flight_records, aircraft_type_fid: int,
+) -> dict[dict]:
+    """Filters flight records by an aircraft type."""
+    records = {
+        k: v for k, v in flight_records.items()
+        if v["aircraft_type_fid"] == aircraft_type_fid
+    }
+    return records
 
 def _flight_name(row) -> str:
     """Formats a flight name."""

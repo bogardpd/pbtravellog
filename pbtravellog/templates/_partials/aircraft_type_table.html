@@ -9,7 +9,7 @@
   <tbody>
     {% for fid, aircraft_type in aircraft_types.items() %}
     <tr>
-      <td class="rank">{% if loop.first or aircraft_type.rank != loop.previtem.rank %}{{ aircraft_type.rank }}{% else %}⋮{% endif %}</td>
+      <td class="rank">{% if loop.first or aircraft_type.rank != loop.previtem[1].rank %}{{ aircraft_type.rank }}{% else %}⋮{% endif %}</td>
       <td><a href="{{ url_for('show_aircraft_type', aircraft_type_fid=fid) }}">{{ aircraft_type.manufacturer }} {{ aircraft_type.name }}</a></td>
       <td>{% if aircraft_type.iata_code %}<span class="code">{{ aircraft_type.iata_code }}</span>{% endif %}</td>
       <td>{% if aircraft_type.icao_code %}<span class="code">{{ aircraft_type.icao_code }}</span>{% endif %}</td>
