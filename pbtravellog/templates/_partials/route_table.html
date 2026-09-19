@@ -8,11 +8,11 @@
     </tr>
   </thead>
   <tbody>
-    {% for route in routes %}
+    {% for fids, route in routes.items() %}
     <tr>
-      <td class="rank">{% if loop.first or route.rank != loop.previtem.rank %}{{ route.rank }}{% else %}⋮{% endif %}</td>
+      <td class="rank">{% if loop.first or route.rank != loop.previtem[1].rank %}{{ route.rank }}{% else %}⋮{% endif %}</td>
       <td>
-        <a href="/routes/{{ route.origin_airport_fid }}-{{ route.destination_airport_fid }}.html">
+        <a href="{{ url_for('show_route', origin_airport_fid=fids[0], destination_airport_fid=fids[1]) }}">
           <span class="code">{{ route.origin_airport_code }}</span>
           &rarr;
           <span class="code">{{ route.destination_airport_code }}</span>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", "/"), ("Routes", "/routes/"), (route.origin_airport_code ~ " → " ~ route.destination_airport_code, None)] %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Routes", url_for("index_routes")), (route.origin_airport_code ~ " → " ~ route.destination_airport_code, None)] %}
 {% block title %}{{ route.origin_airport_code }} &rarr; {{ route.destination_airport_code }}{% endblock %}
 {% block content %}
 <table class="summary">
@@ -13,8 +13,8 @@
   </thead>
   <tbody>
     <tr>
-      <td>{% if route.origin_airport_fid %}<a href="/airports/{{ route.origin_airport_fid }}.html" class="code">{{ route.origin_airport_code }}</a>{% endif %}</td>
-      <td>{% if route.destination_airport_fid %}<a href="/airports/{{ route.destination_airport_fid }}.html" class="code">{{ route.destination_airport_code }}</a>{% endif %}</td>
+      <td>{% if fids[0] is not none %}<a href="{{ url_for('show_airport', airport_fid=fids[0]) }}" class="code">{{ route.origin_airport_code }}</a>{% endif %}</td>
+      <td>{% if fids[1] is not none %}<a href="{{ url_for('show_airport', airport_fid=fids[1]) }}" class="code">{{ route.destination_airport_code }}</a>{% endif %}</td>
       <td>{% if route.distance_mi %}{{ route.distance_mi }} mi{% endif %}</td>
       <td>{{ flights | length }}</td>
     </tr>

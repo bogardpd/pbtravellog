@@ -151,6 +151,7 @@ def create_browser_app():
         classes = _collect_class_records(flights)
         return render_template(
             "airports/show.html",
+            airport_fid=airport_fid,
             airport=airport,
             airlines=airlines,
             operators=operators,
@@ -181,6 +182,34 @@ def create_browser_app():
             flights=flights,
         )
 
+    @app.route("/routes/")
+    def index_routes():
+        route_records = _collect_route_records(all_flights)
+        return render_template("routes/index.html", routes=route_records)
+
+    @app.route(
+        "/routes/<int:origin_airport_fid>/<int:destination_airport_fid>/"
+    )
+    def show_route(origin_airport_fid, destination_airport_fid):
+        route_records = _collect_route_records(all_flights)
+        fids = (origin_airport_fid, destination_airport_fid)
+        route = route_records[fids]
+        flights = _filter_flights_by_route(all_flights, *fids)
+        airlines = _collect_airline_records(flights, operators=False)
+        operators = _collect_airline_records(flights, operators=True)
+        aircraft_types = _collect_aircraft_type_records(flights)
+        classes = _collect_class_records(flights)
+        return render_template(
+            "routes/show.html",
+            fids=fids,
+            route=route,
+            airlines=airlines,
+            operators=operators,
+            aircraft_types=aircraft_types,
+            classes=classes,
+            flights=flights,
+        )
+
     return app
 
 class StaticHTMLBuilder():
@@ -204,8 +233,6 @@ class StaticHTMLBuilder():
         print("Building PBTravelLog HTML…")
 
         self._build_structure()
-        self._build_classes()
-        self._build_routes()
         self._build_tails()
 
         print(f"Wrote static site to \"{self.html_dir}\".")
@@ -215,65 +242,6 @@ class StaticHTMLBuilder():
             f"{self.file_count["updated"]} updated, "
             f"{self.file_count["unchanged"]} unchanged)"
         )
-
-    def _build_classes(self) -> None:
-        """Builds flight class pages."""
-        print("- Building classes…")
-        classes_dir = self.html_dir / "classes"
-        classes_dir.mkdir(exist_ok=True)
-        index_template = self.env.get_template("index_classes.html")
-        show_template = self.env.get_template("show_class.html")
-        class_records = self._collect_class_records(self.all_flights)
-        for seat_class in class_records:
-            flights = self._filter_flights_by_class(
-                self.all_flights, seat_class["fid"],
-            )
-            airlines = self._collect_airline_records(flights, operators=False)
-            operators = self._collect_airline_records(flights, operators=True)
-            aircraft_types = self._collect_aircraft_type_records(flights)
-            show_html = show_template.render(
-                seat_class=seat_class,
-                airlines=airlines,
-                operators=operators,
-                aircraft_types=aircraft_types,
-                flights=flights,
-            )
-            show_path = classes_dir / f"{seat_class["fid"]}.html"
-            self._write(show_path, show_html)
-        index_html = index_template.render(classes=class_records)
-        self._write(classes_dir / "index.html", index_html)
-
-    def _build_routes(self) -> None:
-        """Builds route pates."""
-        print("- Building routes…")
-        routes_dir = self.html_dir / "routes"
-        routes_dir.mkdir(exist_ok=True)
-        index_template = self.env.get_template("index_routes.html")
-        show_template = self.env.get_template("show_route.html")
-        route_records = self._collect_route_records(self.all_flights)
-        for route in route_records:
-            route_ids = (
-                route["origin_airport_fid"], route["destination_airport_fid"],
-            )
-            flights = self._filter_flights_by_route(
-                self.all_flights, *route_ids,
-            )
-            airlines = self._collect_airline_records(flights, operators=False)
-            operators = self._collect_airline_records(flights, operators=True)
-            aircraft_types = self._collect_aircraft_type_records(flights)
-            show_html = show_template.render(
-                route=route,
-                airlines=airlines,
-                operators=operators,
-                aircraft_types=aircraft_types,
-                flights=flights,
-            )
-            show_path = routes_dir / f"{route_ids[0]}-{route_ids[1]}.html"
-            self._write(show_path, show_html)
-        index_html = index_template.render(
-            routes=route_records,
-        )
-        self._write(routes_dir / "index.html", index_html)
 
     def _build_structure(self) -> None:
         """Ensures HTML folder exists and copies static files."""
@@ -868,6 +836,53 @@ def _collect_class_records(flight_records) -> dict[dict]:
     ))
     return class_records
 
+def _collect_route_records(flight_records) -> dict[dict]:
+    """Builds route records from flight records.
+
+    Although routes already store their flight_count, the value is
+    only good for all flights. This method calculates routes for
+    whatever flights are passed into it.
+    """
+    route_flight_count = defaultdict(int)
+    route_codes = {}
+    for _, flight in flight_records.items():
+        airport_fids = (
+            flight["origin_airport_fid"],
+            flight["destination_airport_fid"],
+        )
+        route_flight_count[airport_fids] += 1
+        route_codes[airport_fids] = (
+            flight["origin_airport_code"],
+            flight["destination_airport_code"],
+        )
+    ranks = _rank_count(route_flight_count)
+    route_lookup = Route.all().copy() \
+        .set_index(["origin_airport_fid", "destination_airport_fid"])
+    route_records = {}
+    for route_fids, count in route_flight_count.items():
+        route_row = route_lookup.loc[route_fids]
+        if pd.isna(route_row["distance_mi"]):
+            distance = None
+        else:
+            distance = int(route_row["distance_mi"])
+        record = {
+            "origin_airport_code": route_codes[route_fids][0],
+            "destination_airport_code": route_codes[route_fids][1],
+            "distance_mi": distance,
+            "count": count,
+            "rank": ranks[route_fids],
+        }
+        route_records[route_fids] = record
+    route_records = dict(sorted(
+        route_records.items(),
+        key=lambda x: (
+            -x[1]["count"],
+            x[1]["origin_airport_code"],
+            x[1]["destination_airport_code"]
+        )
+    ))
+    return route_records
+
 def _filter_flights_by_aircraft_type(
     flight_records, aircraft_type_fid: int,
 ) -> dict[dict]:
@@ -905,6 +920,17 @@ def _filter_flights_by_class(flight_records, class_fid: int) -> dict[dict]:
     records = {
         k: v for k, v in flight_records.items()
         if v["class_fid"] == class_fid
+    }
+    return records
+
+def _filter_flights_by_route(
+    flight_records, orig_fid: int, dest_fid: int
+) -> dict[dict]:
+    """Filters flight records by a route."""
+    records = {
+        k: v for k, v in flight_records.items()
+        if v["origin_airport_fid"] == orig_fid
+        and v["destination_airport_fid"] == dest_fid
     }
     return records
 
