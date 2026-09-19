@@ -12,13 +12,13 @@
   <!-- Code -->
   <div class="flight-card-airport">
     <span class="flight-card-head">{{ flight.origin_airport_code }}</span><br>
-    <a href="/airports/{{ flight.origin_airport_fid }}.html">{{ flight.origin_airport_name }}</a></div>
+    <a href="{{ url_for('show_airport', airport_fid=flight.origin_airport_fid) }}">{{ flight.origin_airport_name }}</a></div>
   <div class="flight-card-airport">
     <span class="flight-card-head">&rarr;</span>
   </div>
   <div class="flight-card-airport">
     <span class="flight-card-head">{{ flight.destination_airport_code }}</span><br>
-    <a href="/airports/{{ flight.destination_airport_fid }}.html">{{ flight.destination_airport_name }}</a>
+    <a href="{{ url_for('show_airport', airport_fid=flight.destination_airport_fid) }}">{{ flight.destination_airport_name }}</a>
   </div>
   <!-- Local Time -->
   <div class="flight-card-dt-local">{{ flight.departure_local | format_dt(include_time=True, include_tz=True) }}</div>

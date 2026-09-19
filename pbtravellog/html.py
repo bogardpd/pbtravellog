@@ -129,6 +129,31 @@ def create_browser_app():
             flights=flights,
         )
 
+    @app.route("/airports/")
+    def index_airports():
+        airport_records = _collect_airport_records(all_flights)
+        return render_template(
+            "airports/index.html",
+            airports=airport_records,
+        )
+
+    @app.route("/airports/<int:airport_fid>/")
+    def show_airport(airport_fid: int):
+        airport_records = _collect_airport_records(all_flights)
+        airport = airport_records[airport_fid]
+        flights = _filter_flights_by_airport(all_flights, airport_fid)
+        airlines = _collect_airline_records(flights, operators=False)
+        operators = _collect_airline_records(flights, operators=True)
+        aircraft_types = _collect_aircraft_type_records(flights)
+        return render_template(
+            "airports/show.html",
+            airport=airport,
+            airlines=airlines,
+            operators=operators,
+            aircraft_types=aircraft_types,
+            flights=flights,
+        )
+
     return app
 
 class StaticHTMLBuilder():
@@ -152,7 +177,6 @@ class StaticHTMLBuilder():
         print("Building PBTravelLog HTML…")
 
         self._build_structure()
-        self._build_airports()
         self._build_classes()
         self._build_routes()
         self._build_tails()
@@ -164,33 +188,6 @@ class StaticHTMLBuilder():
             f"{self.file_count["updated"]} updated, "
             f"{self.file_count["unchanged"]} unchanged)"
         )
-
-    def _build_airports(self) -> None:
-        """Builds airport pages."""
-        print("- Building airports…")
-        airports_dir = self.html_dir / "airports"
-        airports_dir.mkdir(exist_ok=True)
-        index_template = self.env.get_template("index_airports.html")
-        show_template = self.env.get_template("show_airport.html")
-        airport_records = self._collect_airport_records(self.all_flights)
-        for airport in airport_records:
-            flights = self._filter_flights_by_airport(
-                self.all_flights, airport["fid"]
-            )
-            airlines = self._collect_airline_records(flights, operators=False)
-            operators = self._collect_airline_records(flights, operators=True)
-            aircraft_types = self._collect_aircraft_type_records(flights)
-            show_html = show_template.render(
-                airport=airport,
-                airlines=airlines,
-                operators=operators,
-                aircraft_types=aircraft_types,
-                flights=flights,
-            )
-            show_path = airports_dir / f"{airport["fid"]}.html"
-            self._write(show_path, show_html)
-        index_html = index_template.render(airports=airport_records)
-        self._write(airports_dir / "index.html", index_html)
 
     def _build_classes(self) -> None:
         """Builds flight class pages."""
@@ -785,6 +782,41 @@ def _collect_airline_records(
     ))
     return airline_records
 
+def _collect_airport_records(flight_records) -> list[dict]:
+    """Builds airport records from flight records."""
+    airport_visit_count = defaultdict(int)
+    prev_trip_sec = [None, None]
+    for _, flight in flight_records.items():
+        curr_trip_sec = [flight["trip_fid"], flight["trip_section"]]
+        if curr_trip_sec != prev_trip_sec:
+            # This is not following a layover, so count the origin.
+            airport_visit_count[flight["origin_airport_fid"]] += 1
+        airport_visit_count[flight["destination_airport_fid"]] += 1
+        prev_trip_sec = curr_trip_sec
+    airport_visit_count.pop(None, None) # Remove None count
+    ranks = _rank_count(airport_visit_count)
+    airport_records = {}
+    all_airports = Airport.all()
+    for airport_fid, visits in airport_visit_count.items():
+        airport_row = all_airports.loc[airport_fid]
+        record = {
+            "fid": airport_fid,
+            "name": airport_row["name"],
+            "iata_code": airport_row["iata_code"],
+            "icao_code": airport_row["icao_code"],
+            "faa_lid": airport_row["faa_lid"],
+            "visits": visits,
+            "rank": ranks[airport_fid],
+        }
+        record = {
+            k: (None if pd.isna(v) else v) for k, v in record.items()
+        }
+        airport_records[airport_fid] = record
+    airport_records = dict(sorted(
+        airport_records.items(), key=lambda x: (-x[1]["visits"], x[1]["name"]),
+    ))
+    return airport_records
+
 def _filter_flights_by_aircraft_type(
     flight_records, aircraft_type_fid: int,
 ) -> dict[dict]:
@@ -803,6 +835,17 @@ def _filter_flights_by_airline(
     records = {
         k: v for k, v in flight_records.items()
         if v[column] == airline_fid
+    }
+    return records
+
+def _filter_flights_by_airport(flight_records, airport_fid: int) -> dict[dict]:
+    """Filters flight records by an airport."""
+    records = {
+        k: v for k, v in flight_records.items()
+        if airport_fid in [
+            v["origin_airport_fid"],
+            v["destination_airport_fid"],
+        ]
     }
     return records
 
