@@ -210,6 +210,31 @@ def create_browser_app():
             flights=flights,
         )
 
+    @app.route("/tail_numbers/")
+    def index_tail_numbers():
+        tail_number_records = _collect_tail_number_records(all_flights)
+        return render_template(
+            "/tail_numbers/index.html",
+            tail_numbers=tail_number_records,
+        )
+
+    @app.route("/tail_numbers/<string:tail_number>/")
+    def show_tail_number(tail_number: str):
+        flights = _filter_flights_by_tail_number(all_flights, tail_number)
+        airlines = _collect_airline_records(flights, operators=False)
+        operators = _collect_airline_records(flights, operators=True)
+        aircraft_types = _collect_aircraft_type_records(flights)
+        classes = _collect_class_records(flights)
+        return render_template(
+            "tail_numbers/show.html",
+            tail_number=tail_number,
+            airlines=airlines,
+            operators=operators,
+            aircraft_types=aircraft_types,
+            classes=classes,
+            flights=flights,
+        )
+
     return app
 
 class StaticHTMLBuilder():
@@ -233,7 +258,6 @@ class StaticHTMLBuilder():
         print("Building PBTravelLog HTML…")
 
         self._build_structure()
-        self._build_tails()
 
         print(f"Wrote static site to \"{self.html_dir}\".")
         print(
@@ -267,39 +291,6 @@ class StaticHTMLBuilder():
                 shutil.copy2(src, dest)
                 self.file_count["new"] += 1
                 print(f"  - Created \"{src}\".")
-
-    def _build_tails(self) -> None:
-        """Builds tail number pages."""
-        print("- Building tail numbers…")
-        tails_dir = self.html_dir / "tails"
-        tails_dir.mkdir(exist_ok=True)
-        index_template = self.env.get_template("index_tails.html")
-        show_template = self.env.get_template("show_tail.html")
-        tail_records = self._collect_tail_records(self.all_flights)
-        for tail in tail_records:
-            flights = self._filter_flights_by_tail(
-                self.all_flights, tail["tail_number"],
-            )
-            airlines = self._collect_airline_records(
-                flights, operators=False,
-            )
-            operators = self._collect_airline_records(
-                flights, operators=True,
-            )
-            aircraft_types = self._collect_aircraft_type_records(
-                flights,
-            )
-            show_html = show_template.render(
-                tail=tail,
-                airlines=airlines,
-                operators=operators,
-                aircraft_types=aircraft_types,
-                flights=flights,
-            )
-            show_path = tails_dir / f"{tail["tail_number"]}.html"
-            self._write(show_path, show_html)
-        index_html = index_template.render(tails=tail_records)
-        self._write(tails_dir / "index.html", index_html)
 
     def _collect_aircraft_type_records(self, flight_records) -> list[dict]:
         """Builds aircraft type records from flight records."""
@@ -883,6 +874,29 @@ def _collect_route_records(flight_records) -> dict[dict]:
     ))
     return route_records
 
+def _collect_tail_number_records(flight_records) -> dict[dict]:
+    """Builds tail number records from flight records."""
+    tail_flight_count = defaultdict(int)
+    equipment = {}
+    for _, flight in flight_records.items():
+        tail_flight_count[flight["tail_number"]] += 1
+        equipment[flight["tail_number"]] = flight["aircraft_type_name"]
+    tail_flight_count.pop(None, None) # Remove None count
+    ranks = _rank_count(tail_flight_count)
+    tail_number_records = {}
+    for tail_number, count in tail_flight_count.items():
+        record = {
+            "aircraft_type_name": equipment[tail_number],
+            "count": count,
+            "rank": ranks[tail_number],
+        }
+        tail_number_records[tail_number] = record
+    tail_number_records = sorted(
+        tail_number_records.items(),
+        key=lambda x: (-x[1]["count"], x[0]),
+    )
+    return tail_number_records
+
 def _filter_flights_by_aircraft_type(
     flight_records, aircraft_type_fid: int,
 ) -> dict[dict]:
@@ -931,6 +945,16 @@ def _filter_flights_by_route(
         k: v for k, v in flight_records.items()
         if v["origin_airport_fid"] == orig_fid
         and v["destination_airport_fid"] == dest_fid
+    }
+    return records
+
+def _filter_flights_by_tail_number(
+    flight_records, tail_number: str,
+) -> dict[dict]:
+    """Filters flight records by a tail number."""
+    records = {
+        k: v for k, v in flight_records.items()
+        if v["tail_number"] == tail_number
     }
     return records
 

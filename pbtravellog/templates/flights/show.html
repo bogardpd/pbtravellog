@@ -72,7 +72,7 @@
   {% if flight.tail_number %}
   <tr>
     <th scope="row">Tail Number</th>
-    <td><a href="/tails/{{ flight.tail_number }}.html">{{ flight.tail_number }}</a></td>
+    <td><a href="{{ url_for('show_tail_number', tail_number=flight.tail_number) }}">{{ flight.tail_number }}</a></td>
   </tr>
   {% endif %}
   <tr>

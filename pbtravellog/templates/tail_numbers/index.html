@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", "/"), ("Tail Numbers", None)] %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Tail Numbers", None)] %}
 {% block title %}Tail Numbers{% endblock %}
 {% block content %}
 {% include "_partials/tail_table.html" %}
