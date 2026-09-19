@@ -1,0 +1,23 @@
+<table>
+  <thead>
+    <tr>
+      <th class="rank">#</th>
+      <th>Tail</th>
+      <th>Equipment</th>
+      <th>Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for tail_number, tail_record in tail_numbers %}
+    <tr>
+      <td class="rank">{% if loop.first or tail_record.rank != loop.previtem[1].rank %}{{ tail_record.rank }}{% else %}⋮{% endif %}</td>
+      <td><a href="{{ url_for('show_tail_number', tail_number=tail_number) }}">{{ tail_number }}</a></td>
+      <td>{{ tail_record.aircraft_type_name }}</td>
+      <td>{{ tail_record.count }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total">
+      <td colspan="4">{{ tail_numbers | length }} tail number{% if (tail_numbers | length) != 1 %}s{% endif %}</td>
+    </tr>
+  </tbody>
+</table>

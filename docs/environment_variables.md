@@ -18,12 +18,6 @@ When the flight log is done parsing a PKPass, it stores it in a folder which mus
 
 ```PBTRAVELLOG_PKPASS_ARCHIVE_PATH=/path/to/archive/folder```
 
-## HTML Path
-
-This package has the ability to generate static HTML files for travel log data and place them into a folder. The path to this folder must be set as an environment variable:
-
-```PBTRAVELLOG_HTML_PATH=/path/to/html/folder```
-
 ## API Keys
 
 This package interacts with [AeroAPI](https://www.flightaware.com/commercial/aeroapi/) to get flight data. You will need to get an AeroAPI API key and set it as an environment variable:

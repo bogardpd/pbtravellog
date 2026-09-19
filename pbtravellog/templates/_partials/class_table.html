@@ -1,0 +1,24 @@
+{% import "_macros/icons.html" as icons %}
+<table>
+  <thead>
+    <tr>
+      <th>Quality</th>
+      <th>Class</th>
+      <th>Flights</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for fid, seat_class in classes.items() %}
+    <tr>
+      <td>
+        {{ icons.seat_class_quality(seat_class.quality) }}
+      </td>
+      <td>
+        <a href="{{ url_for('show_class', class_fid=fid) }}">{{ seat_class.name }}</a><br>
+        <span class="supplemental">{{ seat_class.description }}</span>
+      </td>
+      <td>{{ seat_class.count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

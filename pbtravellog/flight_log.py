@@ -428,7 +428,7 @@ class Flight(Record):
         )
         airlines_df = pd.DataFrame(Airline.all())
         aircraft_types_df = pd.DataFrame(AircraftType.all())
-        classes_df = pd.DataFrame(FlightClass.all())
+        classes_df = pd.DataFrame(SeatClass.all())
 
         # Perform joins.
         flights_gdf = flights_gdf.join(
@@ -468,7 +468,7 @@ class Flight(Record):
             return None
         return isoparse(dt_str)
 
-class FlightClass(Record):
+class SeatClass(Record):
     """Represents a flight class record."""
     LAYER = "classes"
     FIND_BY_CODES = []

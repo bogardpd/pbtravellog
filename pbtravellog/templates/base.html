@@ -1,25 +1,25 @@
-{% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+{% from "_macros/breadcrumbs.html" import render_breadcrumbs %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <title>{% block title %}PBTravelLog{% endblock %}</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
   <div class="body-container">
     <nav id="sidebar">
-      <div class="sidebar-site-title"><a href="/">PBTravelLog</a></div>
+      <div class="sidebar-site-title"><a href="{{ url_for('home') }}">PBTravelLog</a></div>
       <ul class="sidebar-root">
         <li>
-          <a href="/flights/">Flights</a>
+          <a href="{{ url_for('index_flights') }}">Flights</a>
           <ul>
-            <li><a href="/aircraft/">Aircraft Types</a></li>
-            <li><a href="/airlines/">Airlines</a></li>
-            <li><a href="/airports/">Airports</a></li>
-            <li><a href="/classes/">Classes</a></li>
-            <li><a href="/routes/">Routes</a></li>
-            <li><a href="/tails/">Tail Numbers</a></li>
+            <li><a href="{{ url_for('index_aircraft_types') }}">Aircraft Types</a></li>
+            <li><a href="{{ url_for('index_airlines') }}">Airlines</a></li>
+            <li><a href="{{ url_for('index_airports') }}">Airports</a></li>
+            <li><a href="{{ url_for('index_classes') }}">Classes</a></li>
+            <li><a href="{{ url_for('index_routes') }}">Routes</a></li>
+            <li><a href="{{ url_for('index_tail_numbers') }}">Tail Numbers</a></li>
           </ul>
         </li>
       </ul>

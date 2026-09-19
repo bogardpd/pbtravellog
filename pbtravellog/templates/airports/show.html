@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", "/"), ("Airports", "/airports/"), (airport.iata_code if airport.iata_code else airport.name, None)] %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Airports", url_for("index_airports")), (airport.iata_code if airport.iata_code else airport.name, None)] %}
 {% block title %}{{ airport.name }}{% endblock %}
 {% block content %}
 <table class="summary">
@@ -24,14 +24,17 @@
 </table>
 
 <h2>{{ airport.iata_code if airport.iata_code else airport.name }} Airlines</h2>
-{% include "partials/airline_table.html" %}
+{% include "_partials/airline_table.html" %}
 
 <h2>{{ airport.iata_code if airport.iata_code else airport.name }} Operators</h2>
-{% include "partials/operator_table.html" %}
+{% include "_partials/operator_table.html" %}
 
 <h2>{{ airport.iata_code if airport.iata_code else airport.name }} Aircraft Types</h2>
-{% include "partials/aircraft_type_table.html" %}
+{% include "_partials/aircraft_type_table.html" %}
+
+<h2>{{ airport.iata_code if airport.iata_code else airport.name }} Classes</h2>
+{% include "_partials/class_table.html" %}
 
 <h2>{{ airport.iata_code if airport.iata_code else airport.name }} Flights</h2>
-{% include "partials/flight_table.html" %}
+{% include "_partials/flight_table.html" %}
 {% endblock content %}

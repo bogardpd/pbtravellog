@@ -1,0 +1,2 @@
+{% macro airline(airline_fid) %}{% if img_path_airline_icon(airline_fid) %}<img class="logo-icon" src="{{ img_path_airline_icon(airline_fid) }}" alt="Airline logo">{% endif %}{% endmacro %}
+{% macro seat_class_quality(quality) %}<img src="{{ url_for('static', filename='images/classes/' ~ quality ~ '.svg') }}" class="class-quality-stars" alt="{{ quality }}-star">{% endmacro %}

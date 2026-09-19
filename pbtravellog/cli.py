@@ -19,7 +19,6 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command")
     subparsers.required = True
-    _add_parsers_build(subparsers)
     _add_parsers_extract_photo_metadata(subparsers)
     _add_parsers_import(subparsers)
     _add_parsers_index(subparsers)
@@ -30,9 +29,7 @@ def main():
 
     # Parse arguments
     args = parser.parse_args()
-    if args.command == "build":
-        html.build(force_refresh=args.force_refresh)
-    elif args.command == "extract-photo-metadata":
+    if args.command == "extract-photo-metadata":
         epm.extract_photo_metadata(args.source, args.output)
     elif args.command == "import":
         if args.entity == "flight":
@@ -66,17 +63,6 @@ def main():
     elif args.command == "run":
         html.run(args.port)
 
-
-def _add_parsers_build(subparsers) -> None:
-    """Adds parsers for build command."""
-    build_parser = subparsers.add_parser(
-        "build",
-        help="Build static HTML log"
-    )
-    build_parser.add_argument("--force-refresh",
-        action="store_true",
-        help="Update all files, including unchanged files"
-    )
 
 def _add_parsers_extract_photo_metadata(subparsers) -> None:
     """Adds parsers for extract-photo-metadata command."""
@@ -211,12 +197,12 @@ def _add_parsers_run(subparsers) -> None:
     """Adds parsers for run command."""
     run_parser = subparsers.add_parser(
         "run",
-        help="Launch HTML travel log"
+        help="Launch travel log web interface"
     )
     run_parser.add_argument("--port",
         help="Webserver port (default: %(default)s)",
         type=int,
-        default=8000,
+        default=5000,
     )
 
 def _add_parsers_show(subparsers) -> None:

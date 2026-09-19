@@ -50,34 +50,17 @@ To see help for a specific command:
 pbtravellog <command> --help
 ```
 
-## HTML Commands
+## Travel Log Browser
 
-PBTravelLog can generate a local static HTML website to display travel log data. There are two primary commands, `build` and `run`. `build` compiles travel data into HTML format, and `run` shows this HTML in a browser.
-
-> [!IMPORTANT]
-> If travel log data is changed after `build` is used, the `run` command won't show that updated data. Be sure to run `build` again after travel logs are updated.
-
-### `build`
-
-Builds a collection of HTML pages from current travel log data.
-
-You should use the `build` command before using `run`, unless travel data hasn't changed since the last time you used `build`.
-
-#### Example
-
-```bash
-pbtravellog build
-```
+PBTravelLog can locally run a website to show travel log data. By default, this website will be run at http://localhost:5000.
 
 ### `run`
 
-Launches a server and web browser to show the HTML travel log.
-
-The HTML pages will show travel data current as of the last time `build` was used. If the travel data changes, use `build` again before using `run`.
+Launches the travel log browser interface.
 
 #### Options
 
-- `--port NNNN`: The port to run the webserver on. Defaults to 8000 if not set.
+- `--port NNNN`: The port to run the webserver on. Defaults to 5000 if not set.
 
 #### Examples
 
