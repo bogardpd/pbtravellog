@@ -8,7 +8,7 @@
 {% endif %}
 
 <div class="card trip-card">
-  {{ trip.start_date | format_dt(include_time=False) }} – {{ trip.end_date | format_dt(include_time=False) }}
+  {{ [trip.start_date, trip.end_date] | format_date_range }}
 </div>
 <h2>Flights</h2>
 {% include "_partials/flight_table.html" %}

@@ -89,7 +89,7 @@
     <th scope="row">Trip</th>
     <td>
       <a href="{{ url_for('show_trip', trip_fid=flight.trip_fid) }}">{{ flight.trip_name }}</a><br>
-      {{ flight.trip_start_date | format_dt(include_time=False) }} – {{ flight.trip_end_date | format_dt(include_time=False) }}
+      {{ [flight.trip_start_date, flight.trip_end_date] | format_date_range }}
     </td>
   </tr>
   {% endif %}

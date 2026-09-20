@@ -2,6 +2,7 @@
 
 # Standard imports
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 import re
 import webbrowser
@@ -21,6 +22,7 @@ def create_browser_app():
     """Creates a Flask app for the travel log."""
     app = Flask(__name__)
 
+    app.jinja_env.filters["format_date_range"] = _format_date_range
     app.jinja_env.filters["format_dt"] = _format_dt
     app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
 
@@ -526,6 +528,23 @@ def _flight_name(row) -> str:
             return f"{row.airline_name} {row.flight_number}"
         return row.airline_name
     return "Unnamed Flight"
+
+def _format_date_range(dates: list[date]) -> str:
+    """Formats a date range."""
+    if dates[0].year != dates[1].year:
+        return "–".join([
+            dates[0].strftime("%d %b %Y"), dates[1].strftime("%d %b %Y"),
+        ])
+    if dates[0].month != dates[1].month:
+        return "–".join([
+            dates[0].strftime("%d %b"), dates[1].strftime("%d %b %Y"),
+        ])
+    if dates[0].day != dates[1].day:
+        return "–".join([
+            dates[0].strftime("%d"), dates[1].strftime("%d %b %Y"),
+        ])
+    return dates[1].strftime("%d %b %Y")
+
 
 def _format_dt(dt, include_time=True, include_tz=False) -> str:
     """Formats a datetime."""
