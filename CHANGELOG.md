@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.4.0]
+
 ### Added
 
 - Added Trips views to travel log browser.
