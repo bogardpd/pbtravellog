@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added Trips views to travel log browser.
+
 ### Changed
 
 - `run` now uses a [Flask](https://flask.palletsprojects.com/en/stable/) backend instead of a static site.
