@@ -4,9 +4,7 @@
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
-import re
 import webbrowser
-from zoneinfo import ZoneInfo
 
 # Third-party imports
 from flask import Flask, current_app, render_template, url_for
@@ -26,7 +24,7 @@ def create_browser_app():
     app.jinja_env.filters["format_dt"] = _format_dt
     app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
 
-    all_flights = _load_joined_flight_records()
+    all_flights = Flight.joined()
     all_trips = Trip.to_dict()
 
     @app.route("/")
@@ -246,22 +244,6 @@ def run(port):
     webbrowser.open(f"http://localhost:{port}")
     app.run(host="127.0.0.1", port=port)
 
-def _airport_codes(row) -> tuple[str]:
-    """Returns a default origin and destination code."""
-    orig = [
-        row["origin_airport_iata_code"],
-        row["origin_airport_icao_code"],
-        row["origin_airport_faa_lid"],
-    ]
-    orig = [v for v in orig if pd.notna(v)][0]
-    dest = [
-        row["destination_airport_iata_code"],
-        row["destination_airport_icao_code"],
-        row["destination_airport_faa_lid"],
-    ]
-    dest = [v for v in dest if pd.notna(v)][0]
-    return (orig, dest)
-
 def _collect_aircraft_type_records(flight_records) -> dict[dict]:
     """Builds aircraft type records from flight records."""
     aircraft_type_flight_count = defaultdict(int)
@@ -440,7 +422,7 @@ def _collect_tail_number_records(flight_records) -> dict[dict]:
     tail_number_records = {}
     for tail_number, count in tail_flight_count.items():
         record = {
-            "formatted": _format_tail_number(tail_number),
+            "formatted": Flight.format_tail_number(tail_number),
             "aircraft_type_name": equipment[tail_number],
             "count": count,
             "rank": ranks[tail_number],
@@ -521,14 +503,6 @@ def _filter_flights_by_trip(flight_records, trip_fid: int) -> dict[dict]:
     }
     return records
 
-def _flight_name(row) -> str:
-    """Formats a flight name."""
-    if pd.notna(row.airline_name):
-        if pd.notna(row.flight_number):
-            return f"{row.airline_name} {row.flight_number}"
-        return row.airline_name
-    return "Unnamed Flight"
-
 def _format_date_range(dates: list[date]) -> str:
     """Formats a date range."""
     if dates[0].year != dates[1].year:
@@ -545,7 +519,6 @@ def _format_date_range(dates: list[date]) -> str:
         ])
     return dates[1].strftime("%d %b %Y")
 
-
 def _format_dt(dt, include_time=True, include_tz=False) -> str:
     """Formats a datetime."""
     if dt is None:
@@ -557,30 +530,6 @@ def _format_dt(dt, include_time=True, include_tz=False) -> str:
         parts.append("%Z")
     return dt.strftime(" ".join(parts))
 
-def _format_tail_number(tail: str | None) -> str | None:
-    """Formats a tail number in its country format."""
-    if tail is None or pd.isna(tail):
-        return None
-    if re.match(r"N", tail): # United States
-        return tail
-    if re.match(r"C", tail): # Canada
-        return f"{tail[0]}-{tail[1:]}"
-    if re.match(r"D", tail): # Germany
-        return f"{tail[0]}-{tail[1:]}"
-    if re.match(r"G", tail): # United Kingdom
-        return f"{tail[0]}-{tail[1:]}"
-    if re.match(r"J[AR]", tail): # Japan
-        return tail
-    if re.match(r"OH", tail): # Finland
-        return f"{tail[0:2]}-{tail[2:]}"
-    if re.match(r"TF", tail): # Iceland
-        return f"{tail[0:2]}-{tail[2:]}"
-    if re.match(r"VH", tail): # Australia
-        return f"{tail[0:2]}-{tail[2:]}"
-    if re.match(r"Z[KLM]", tail): # New Zealand
-        return f"{tail[0:2]}-{tail[2:]}"
-    return tail
-
 def _img_path_airline_icon(airline_fid: int):
     """Returns the path for an airline icon or none."""
     icon = Path(f"images/airlines/icons/{airline_fid}.png")
@@ -588,22 +537,6 @@ def _img_path_airline_icon(airline_fid: int):
     if not full_path.exists():
         return None
     return url_for("static", filename=icon.as_posix())
-
-def _load_joined_flight_records() -> dict[dict]:
-    """Loads records from Flight.joined()."""
-    gdf = Flight.joined()
-    output = {
-        idx: _recordize_flight_row(row)
-        for idx, row in gdf.iterrows()
-    }
-    output = dict(sorted(output.items(), key=lambda x: x[1]["departure_utc"]))
-    return output
-
-def _local_dt(dt_utc, tz):
-    """Converts a UTC datetime to local time."""
-    if pd.isna(dt_utc) or pd.isna(tz):
-        return None
-    return dt_utc.astimezone(ZoneInfo(tz))
 
 def _rank_count(count_dict: dict) -> dict:
     """Ranks a dictionary of item counts."""
@@ -617,67 +550,3 @@ def _rank_count(count_dict: dict) -> dict:
         prev_count = count
         prev_rank = rank
     return ranks
-
-def _recordize_flight_row(row) -> dict:
-    """Turns a flight row into a record."""
-    airport_codes = _airport_codes(row)
-    departure_utc = row["departure_utc"].to_pydatetime()
-    departure_local = _local_dt(
-        departure_utc,
-        row["origin_airport_time_zone"]
-    )
-    if pd.isna(row["arrival_utc"]):
-        arrival_utc = None
-        arrival_local = None
-        duration_h_m = None
-    else:
-        arrival_utc = row["arrival_utc"].to_pydatetime()
-        arrival_local = _local_dt(
-            arrival_utc,
-            row["destination_airport_time_zone"]
-        )
-        dur_s = (arrival_utc-departure_utc).total_seconds()
-        hours, remainder = divmod(dur_s, 3600)
-        minutes = remainder // 60
-        duration_h_m = (int(hours), int(minutes))
-    record = {
-        "departure_utc": departure_utc,
-        "departure_local": departure_local,
-        "arrival_utc": arrival_utc,
-        "arrival_local": arrival_local,
-        "duration_h_m": duration_h_m,
-        "name": _flight_name(row),
-        "aircraft_name": row["aircraft_name"],
-        "tail_number": row["tail_number"],
-        "tail_number_formatted": _format_tail_number(row["tail_number"]),
-        "aircraft_type_fid": row["aircraft_type_fid"],
-        "aircraft_type_manufacturer": row["aircraft_type_manufacturer"],
-        "aircraft_type_name": row["aircraft_type_name"],
-        "airline_fid": row["airline_fid"],
-        "airline_name": row["airline_name"],
-        "codeshare_airline_fid": row["codeshare_airline_fid"],
-        "codeshare_airline_name": row["codeshare_airline_name"],
-        "codeshare_flight_number": row["codeshare_flight_number"],
-        "operator_fid": row["operator_fid"],
-        "operator_name": row["operator_name"],
-        "origin_airport_fid": row["origin_airport_fid"],
-        "origin_airport_code": airport_codes[0],
-        "origin_airport_name": row["origin_airport_name"],
-        "destination_airport_fid": row["destination_airport_fid"],
-        "destination_airport_code": airport_codes[1],
-        "destination_airport_name": row["destination_airport_name"],
-        "class_fid": row["class_fid"],
-        "class_name": row["class_name"],
-        "class_quality": row["class_quality"],
-        "trip_fid": row["trip_fid"],
-        "trip_name": row["trip_name"],
-        "trip_start_date": row["trip_start_date"],
-        "trip_end_date": row["trip_end_date"],
-        "trip_section": row["trip_section"],
-        "boarding_pass_data": row["boarding_pass_data"],
-        "comments": row["comments"],
-    }
-    record = {
-        k: (None if pd.isna(v) else v) for k, v in record.items()
-    }
-    return record

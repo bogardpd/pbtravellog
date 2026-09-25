@@ -6,9 +6,11 @@ import json
 from math import ceil
 import os
 from pathlib import Path
+import re
 import sqlite3
 import sys
 from typing import Self
+from zoneinfo import ZoneInfo
 
 # Third-party imports
 from dateutil.parser import isoparse
@@ -305,6 +307,31 @@ class Flight(Record):
         return self.actual_out or None
 
     @classmethod
+    def format_tail_number(cls, tail: str | None) -> str | None:
+        """Formats a tail number in its country format."""
+        if tail is None:
+            return None
+        if re.match(r"N", tail): # United States
+            return tail
+        if re.match(r"C", tail): # Canada
+            return f"{tail[0]}-{tail[1:]}"
+        if re.match(r"D", tail): # Germany
+            return f"{tail[0]}-{tail[1:]}"
+        if re.match(r"G", tail): # United Kingdom
+            return f"{tail[0]}-{tail[1:]}"
+        if re.match(r"J[AR]", tail): # Japan
+            return tail
+        if re.match(r"OH", tail): # Finland
+            return f"{tail[0:2]}-{tail[2:]}"
+        if re.match(r"TF", tail): # Iceland
+            return f"{tail[0:2]}-{tail[2:]}"
+        if re.match(r"VH", tail): # Australia
+            return f"{tail[0:2]}-{tail[2:]}"
+        if re.match(r"Z[KLM]", tail): # New Zealand
+            return f"{tail[0:2]}-{tail[2:]}"
+        return tail
+
+    @classmethod
     def from_aeroapi(cls, fa_json: dict) -> Self:
         """Loads flight values from an AeroAPI response."""
         flight = cls()
@@ -357,7 +384,7 @@ class Flight(Record):
     def joined(cls) -> gpd.GeoDataFrame:
         """Returns all flight records joined to other tables."""
         # Load tables.
-        flights_gdf = cls.all()
+        flights_gdf = cls.all().copy()
         airports_df = pd.DataFrame(Airport.all())
         airports_df = airports_df.rename(
             # "airport_" is added in join, so just name this "geom"
@@ -372,36 +399,36 @@ class Flight(Record):
         flights_gdf = flights_gdf.join(
             airports_df.add_prefix("origin_airport_"),
             on="origin_airport_fid",
-        )
-        flights_gdf = flights_gdf.join(
+        ).join(
             airports_df.add_prefix("destination_airport_"),
             on="destination_airport_fid",
-        )
-        flights_gdf = flights_gdf.join(
+        ).join(
             airlines_df.add_prefix("airline_"),
             on="airline_fid",
-        )
-        flights_gdf = flights_gdf.join(
+        ).join(
             airlines_df.add_prefix("operator_"),
             on="operator_fid",
-        )
-        flights_gdf = flights_gdf.join(
+        ).join(
             airlines_df.add_prefix("codeshare_airline_"),
             on="codeshare_airline_fid",
-        )
-        flights_gdf = flights_gdf.join(
+        ).join(
             aircraft_types_df.add_prefix("aircraft_type_"),
             on="aircraft_type_fid",
-        )
-        flights_gdf = flights_gdf.join(
+        ).join(
             classes_df.add_prefix("class_"),
             on="class_fid"
-        )
-        flights_gdf = flights_gdf.join(
+        ).join(
             trips_df.add_prefix("trip_"),
             on="trip_fid",
         )
-        return flights_gdf
+        # Convert to dict.
+        flights_gdf = flights_gdf.astype(object)
+        flights_gdf = flights_gdf.where(pd.notna(flights_gdf), None)
+        records = flights_gdf.to_dict(orient="index")
+        # Add derived fields.
+        records = {k: _add_derived_fields(v) for k, v in records.items()}
+        dict(sorted(records.items(), key=lambda x: x[1]["departure_utc"]))
+        return records
 
     @staticmethod
     def parse_dt(dt_str) -> datetime | None:
@@ -820,6 +847,40 @@ def split_at_antimeridian(track_ls: LineString) -> MultiLineString:
     tracks = [track for track in tracks if len(track) > 1]
     return MultiLineString(tracks)
 
+def _add_derived_fields(flight: dict) -> dict[dict]:
+    """Calculates derived fields for a Flight record."""
+    flight["name"] = _flight_name(
+        flight["airline_name"], flight["flight_number"]
+    )
+    flight["departure_local"] = _local_dt(
+        flight["departure_utc"], flight["origin_airport_time_zone"]
+    )
+    if flight["arrival_utc"] is None:
+        flight["arrival_local"] = None
+        flight["duration_h_m"] = None
+    else:
+        flight["arrival_local"] = _local_dt(
+            flight["arrival_utc"], flight["destination_airport_time_zone"]
+        )
+        dur_s = (
+            flight["arrival_utc"] - flight["departure_utc"]
+        ).total_seconds()
+        hours, remainder = divmod(dur_s, 3600)
+        minutes = remainder // 60
+        flight["duration_h_m"] = (int(hours), int(minutes))
+    flight["tail_number_formatted"] = Flight.format_tail_number(
+        flight["tail_number"]
+    )
+    flight["origin_airport_code"] = \
+        flight["origin_airport_iata_code"] \
+        or flight["origin_airport_icao_code"] \
+        or flight["origin_airport_faa_lid"]
+    flight["destination_airport_code"] = \
+        flight["destination_airport_iata_code"] \
+        or flight["origin_airport_icao_code"] \
+        or flight["origin_airport_faa_lid"]
+    return flight
+
 def _crossing_point(p1, p2):
     """Return the point where a track crosses the antemeridian.
     Returns None if p1 is already on the antemeridian.
@@ -878,6 +939,14 @@ def _flight_from_aeroapi_results(aero_results) -> Flight:
     flight.exit_if_not_complete()
     flight.fetch_aeroapi_track_geometry()
     return flight
+
+def _flight_name(airline_name, flight_number) -> str:
+    """Formats a flight name."""
+    if airline_name is not None:
+        if flight_number is not None:
+            return f"{airline_name} {flight_number}"
+        return airline_name
+    return "Unnamed Flight"
 
 def _format_time(time_val):
     """Format time as ISO 8601 with Z."""
@@ -950,3 +1019,9 @@ def _import_fa_flight_results(
             setattr(flight, key, value)
 
     flight.save(geojson=geojson)
+
+def _local_dt(dt_utc, tz):
+    """Converts a UTC datetime to local time."""
+    if pd.isna(dt_utc) or pd.isna(tz):
+        return None
+    return dt_utc.astimezone(ZoneInfo(tz))
