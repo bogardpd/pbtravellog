@@ -374,6 +374,45 @@ class Flight(Record):
             return None
         return isoparse(dt_str)
 
+class FlightTable(dict):
+    """Represents a dict of Flights."""
+
+    def joined(self) -> Self:
+        """Joins other classes on fid fields."""
+        airports = Airport.to_dict()
+        airlines = Airline.to_dict()
+        aircraft_types = AircraftType.to_dict()
+        classes = SeatClass.to_dict()
+        trips = Trip.to_dict()
+        joins = [
+            (airports, "origin_airport_fid", "origin_airport"),
+            (airports, "destination_airport_fid", "destination_airport"),
+            (airlines, "airline_fid", "airline"),
+            (airlines, "operator_fid", "operator"),
+            (airlines, "codeshare_airline_fid", "codeshare_airline"),
+            (aircraft_types, "aircraft_type_fid", "aircraft_type"),
+            (classes, "class_fid", "class"),
+            (trips, "trip_fid", "trip"),
+        ]
+        for _, v in self.items():
+            for j in joins:
+                if v.get(j[1]) is None:
+                    v[j[2]] = {}
+                else:
+                    v[j[2]] = j[0][v[j[1]]]
+        return self
+
+    @classmethod
+    def every(cls) -> Self:
+        """Creates a table of every flight."""
+        flights = Flight.every().copy()
+        flights = flights.astype(object).where(pd.notna(flights), None)
+        flight_dict = flights.to_dict(orient="index")
+        flight_dict = {k: Flight(v) for k, v in flight_dict.items()}
+        return cls(flight_dict)
+
+
+
 class SeatClass(Record):
     """Represents a flight class record."""
     DATA_FILE = FLIGHT_LOG
