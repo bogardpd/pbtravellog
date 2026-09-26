@@ -83,6 +83,11 @@ class Airport(Record):
             or self.get("faa_lid")
         return f"[{self.get("fid")}] {code}: {self.get("name")}"
 
+    def code(self) -> str:
+        """Returns the best code for the airport."""
+        return self.get("iata_code") or self.get("icao_code") \
+            or self.get("faa_lid")
+
 class AirportTable(RecordTable):
     """Represents a dict of Airport instances."""
     RECORD_CLASS = Airport
