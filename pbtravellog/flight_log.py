@@ -24,7 +24,7 @@ from tabulate import tabulate
 import pbtravellog.aeroapi as aero
 from pbtravellog.boarding_pass import BoardingPass, PKPass
 from pbtravellog.record import Record, RecordTable
-from pbtravellog.travel_log import Trip
+from pbtravellog.travel_log import Trip, TripTable
 
 METERS_PER_MILE = 1609.344
 METERS_PER_HUNDRED_FEET = 30.48
@@ -400,11 +400,11 @@ class FlightTable(RecordTable):
 
     def joined(self) -> Self:
         """Joins other classes on fid fields."""
-        airports = Airport.to_dict()
-        airlines = Airline.to_dict()
-        aircraft_types = AircraftType.to_dict()
-        classes = SeatClass.to_dict()
-        trips = Trip.to_dict()
+        airports = AirportTable.every()
+        airlines = AirlineTable.every()
+        aircraft_types = AircraftTypeTable.every()
+        classes = SeatClassTable.every()
+        trips = TripTable.every()
         joins = [
             (airports, "origin_airport_fid", "origin_airport"),
             (airports, "destination_airport_fid", "destination_airport"),
