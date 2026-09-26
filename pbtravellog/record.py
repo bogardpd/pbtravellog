@@ -19,7 +19,7 @@ class Record(dict):
     DTYPES = {}
 
     @classmethod
-    def all(cls) -> gpd.GeoDataFrame:
+    def every(cls) -> gpd.GeoDataFrame:
         """Returns a GeoDataFrame of all records."""
         records = gpd.read_file(
             cls.DATA_FILE,
@@ -32,7 +32,7 @@ class Record(dict):
     @classmethod
     def to_dict(cls) -> dict:
         """Returns a dictionary of all records."""
-        records = cls.all().copy()
+        records = cls.every().copy()
         records = records.astype(object).where(pd.notna(records), None)
         return records.to_dict(orient="index")
 

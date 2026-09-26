@@ -170,7 +170,7 @@ class Flight(Record):
 
         # Check for matching tail numbers.
         if self.get("tail_number") is not None:
-            tails_gdf = Flight.all()
+            tails_gdf = Flight.every()
             tails_gdf = (
                 tails_gdf[tails_gdf["tail_number"] == self["tail_number"]]
             )
@@ -321,16 +321,16 @@ class Flight(Record):
     def joined(cls) -> gpd.GeoDataFrame:
         """Returns all flight records joined to other tables."""
         # Load tables.
-        flights_gdf = cls.all().copy()
-        airports_df = pd.DataFrame(Airport.all())
+        flights_gdf = cls.every().copy()
+        airports_df = pd.DataFrame(Airport.every())
         airports_df = airports_df.rename(
             # "airport_" is added in join, so just name this "geom"
             columns={"geometry": "geom"}
         )
-        airlines_df = pd.DataFrame(Airline.all())
-        aircraft_types_df = pd.DataFrame(AircraftType.all())
-        classes_df = pd.DataFrame(SeatClass.all())
-        trips_df = pd.DataFrame(Trip.all())
+        airlines_df = pd.DataFrame(Airline.every())
+        aircraft_types_df = pd.DataFrame(AircraftType.every())
+        classes_df = pd.DataFrame(SeatClass.every())
+        trips_df = pd.DataFrame(Trip.every())
 
         # Perform joins.
         flights_gdf = flights_gdf.join(
@@ -435,8 +435,8 @@ def flights_table(
     extra_columns: dict | None = None,
 ) -> str:
     """Formats a flight table for printing."""
-    airports_gdf = Airport.all()
-    airlines_gdf = Airline.all()
+    airports_gdf = Airport.every()
+    airlines_gdf = Airline.every()
     flights_gdf = flights_gdf.join(
         airports_gdf.add_suffix("_orig"),
         on="origin_airport_fid"
@@ -624,7 +624,7 @@ def index_airports(
     output_file : Path | None = None,
 ) -> None:
     """Provides an index of all airports."""
-    flights_gdf = Flight.all()
+    flights_gdf = Flight.every()
     if year is not None:
         flights_gdf = flights_gdf[flights_gdf["departure_utc"].dt.year == year]
     if len(flights_gdf) == 0:
@@ -635,7 +635,7 @@ def index_airports(
             )
         sys.exit(1)
     visits = airport_visits(flights_gdf)
-    airports_gdf = Airport.all()
+    airports_gdf = Airport.every()
     output = airports_gdf.join(visits, how="right")
     output = output.rename(columns={"count": "visits"})
     output = output.sort_values(by=["visits", "name"], ascending=[False, True])
@@ -665,13 +665,13 @@ def index_airports(
 
 def index_tails() -> None:
     """Provides an index of all tail numbers."""
-    flights_gdf = Flight.all()
+    flights_gdf = Flight.every()
     flights_gdf = flights_gdf.dropna(subset="tail_number")
     tails_df = flights_gdf.groupby("tail_number").agg(
         count=("tail_number", "count"),
         aircraft_type_fid=("aircraft_type_fid", "last"),
     )
-    types_gdf = AircraftType.all()[["manufacturer", "name"]]
+    types_gdf = AircraftType.every()[["manufacturer", "name"]]
     tails_df = tails_df.join(types_gdf, on="aircraft_type_fid")
     tails_df["type"] = tails_df["manufacturer"].str.cat(
         tails_df["name"],
@@ -731,7 +731,7 @@ def show_airport(identifier: str) -> None:
         sys.exit(1)
     print(airport)
 
-    flights_gdf = Flight.all()
+    flights_gdf = Flight.every()
     flights_gdf = flights_gdf[
         (flights_gdf["origin_airport_fid"] == airport.get("fid"))
         | (flights_gdf["destination_airport_fid"] == airport.get("fid"))
@@ -741,7 +741,7 @@ def show_airport(identifier: str) -> None:
 def show_tail(tail_number: str) -> None:
     """Shows data about a specific tail number."""
     tail_number = tail_number.upper()
-    flights_gdf = Flight.all()
+    flights_gdf = Flight.every()
     flights_gdf = flights_gdf[flights_gdf["tail_number"] == tail_number]
     if len(flights_gdf) == 0:
         print(f"No flights found for tail number '{tail_number}'.")
@@ -843,7 +843,7 @@ def _estimate_trip_section(
         trip_fid: int, departure_dt: datetime
 ) -> int | None:
     """Suggests a trip section number based on departure time."""
-    flights = Flight.all()
+    flights = Flight.every()
     flights = flights[flights["trip_fid"] == trip_fid]
     if len(flights) == 0:
         # No flights in trip.
@@ -923,10 +923,10 @@ def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
         flight["boarding_pass_data"] = leg.bcbp_str
         trip = Trip.select_by_date(leg.flight_date)
         if trip is not None:
-            flight["trip_fid"] = trip.fid
+            flight["trip_fid"] = trip.get("fid")
             if flight.get("departure_utc") is not None:
                 flight["trip_section"] = _estimate_trip_section(
-                    trip.fid, flight["departure_utc"],
+                    trip.get("fid"), flight["departure_utc"],
                 )
         bp_flights.append(flight)
 

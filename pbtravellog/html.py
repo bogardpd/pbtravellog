@@ -252,7 +252,7 @@ def _collect_aircraft_type_records(flight_records) -> dict[dict]:
     aircraft_type_flight_count.pop(None, None) # Remove None count
     ranks = _rank_count(aircraft_type_flight_count)
     aircraft_type_records = {}
-    all_aircraft_types = AircraftType.all()
+    all_aircraft_types = AircraftType.every()
     for aircraft_type_fid, count in aircraft_type_flight_count.items():
         aircraft_type_row = all_aircraft_types.loc[aircraft_type_fid]
         record = {
@@ -282,7 +282,7 @@ def _collect_airline_records(
     for _, flight in flight_records.items():
         airline_flight_count[flight[column]] += 1
     airline_flight_count.pop(None, None) # Remove None count
-    all_airlines = Airline.all()
+    all_airlines = Airline.every()
     ranks = _rank_count(airline_flight_count)
     airline_records = {}
     for airline_fid, count in airline_flight_count.items():
@@ -317,7 +317,7 @@ def _collect_airport_records(flight_records) -> dict[dict]:
     airport_visit_count.pop(None, None) # Remove None count
     ranks = _rank_count(airport_visit_count)
     airport_records = {}
-    all_airports = Airport.all()
+    all_airports = Airport.every()
     for airport_fid, visits in airport_visit_count.items():
         airport_row = all_airports.loc[airport_fid]
         record = {
@@ -345,7 +345,7 @@ def _collect_class_records(flight_records) -> dict[dict]:
     class_flight_count.pop(None, None) # Remove none count
     # Classes are always sorted by quality, so no need to rank.
     class_records = {}
-    all_classes = SeatClass.all()
+    all_classes = SeatClass.every()
     for class_fid, count in class_flight_count.items():
         class_row = all_classes.loc[class_fid]
         record = {
@@ -383,7 +383,7 @@ def _collect_route_records(flight_records) -> dict[dict]:
             flight["destination_airport_code"],
         )
     ranks = _rank_count(route_flight_count)
-    route_lookup = Route.all().copy() \
+    route_lookup = Route.every().copy() \
         .set_index(["origin_airport_fid", "destination_airport_fid"])
     route_records = {}
     for route_fids, count in route_flight_count.items():

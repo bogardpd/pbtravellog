@@ -17,10 +17,10 @@ def report_milestones() -> None:
     """Reports flying milestones."""
 
     print("Flying Distance Milestones")
-    routes_df = pd.DataFrame(fl.Route.all())[
+    routes_df = pd.DataFrame(fl.Route.every())[
         ["origin_airport_fid", "destination_airport_fid", "distance_mi"]
     ].set_index(["origin_airport_fid", "destination_airport_fid"])
-    flights_df = pd.DataFrame(fl.Flight.all())
+    flights_df = pd.DataFrame(fl.Flight.every())
     flights_df = flights_df.sort_values("departure_utc")
 
     # If a flight doesn't have a distance, use the route distance.
