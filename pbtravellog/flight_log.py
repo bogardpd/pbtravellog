@@ -96,6 +96,15 @@ class Flight(Record):
         "geom_source": "string",
     }
 
+    def exit_if_not_complete(self) -> None:
+        """Exits if this flight is not complete."""
+        if self.get("progress") is None or self["progress"] < 100:
+            print(
+                f"⚠️ Flight is not complete ({self.get("progress")}% "
+                "complete). Flight was not added to log."
+            )
+            sys.exit(1)
+
     def fetch_aeroapi_track_geometry(self) -> None:
         """Gets flight track from AeroAPI"""
         if self.get("progress") is None or self["progress"] < 100:
@@ -127,15 +136,6 @@ class Flight(Record):
         except TypeError, ValueError:
             print(f"⚠️ No distance found for {self["fa_flight_id"]}.")
 
-    def exit_if_not_complete(self) -> None:
-        """Exits if this flight is not complete."""
-        if self.get("progress") is None or self["progress"] < 100:
-            print(
-                f"⚠️ Flight is not complete ({self.get("progress")}% "
-                "complete). Flight was not added to log."
-            )
-            sys.exit(1)
-
     def gdf(self) -> gpd.GeoDataFrame:
         """Returns a GeoDataFrame record for the flight."""
         record = {
@@ -163,6 +163,14 @@ class Flight(Record):
             "comments": None,
         }
         return gpd.GeoDataFrame([record], geometry="geometry", crs=CRS)
+
+    def name(self) -> str:
+        """Returns a name for the flight."""
+        if self.get("airline") is None or self["airline"].get("name") is None:
+            return "Unnamed flight"
+        if self["flight_number"] is None:
+            return self["airline"]["name"]
+        return f"{self["airline"]["name"]} {self["flight_number"]}"
 
     def save(self, geojson: Path | None = None) -> None:
         """Appends a flight to the geopackage file."""
