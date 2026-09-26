@@ -10,7 +10,7 @@ import pandas as pd
 
 class Record():
     """Represents a generic record from any travel log table.
-    
+
     Designed to be inherited by specific travel record types.
     """
     DATA_FILE = None
@@ -35,12 +35,6 @@ class Record():
         records = cls.all().copy()
         records = records.astype(object).where(pd.notna(records), None)
         return records.to_dict(orient="index")
-
-    @classmethod
-    def pluck(cls, column) -> list[Self]:
-        """Returns a list of all values of a column."""
-        records = cls.all()
-        return records[column].to_list()
 
     @classmethod
     def find_by_code(cls, code: str, check_fid=False) -> Self | None:
