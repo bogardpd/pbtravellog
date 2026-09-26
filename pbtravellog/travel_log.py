@@ -28,15 +28,6 @@ class Trip(Record):
     FIND_BY_CODES = []
     DTYPES = {"fh_id": "Int64"}
 
-    def __init__(self):
-        # Fields used in flight log database:
-        self.fid: int | None = None
-        self.fh_id: int | None = None
-        self.name: str | None = None
-        self.start_date: date | None = None
-        self.end_date: date | None = None
-        self.comments: str | None = None
-
     @classmethod
     def select_by_date(cls, departure_date: date) -> Self | None:
         """

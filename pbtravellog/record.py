@@ -8,7 +8,7 @@ import re
 import geopandas as gpd
 import pandas as pd
 
-class Record():
+class Record(dict):
     """Represents a generic record from any travel log table.
 
     Designed to be inherited by specific travel record types.

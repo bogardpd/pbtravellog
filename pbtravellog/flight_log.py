@@ -48,16 +48,6 @@ class AircraftType(Record):
         "icao_code": "string",
     }
 
-    def __init__(self):
-        # Fields used in flight log database:
-        self.fid: int | None = None
-        self.manufacturer: str | None = None
-        self.name: str | None = None
-        self.icao_code: str | None = None
-        self.iata_code: str | None = None
-        self.family: str | None = None
-        self.category: str | None = None
-
 class Airline(Record):
     """Represents an airline record."""
     DATA_FILE = FLIGHT_LOG
@@ -68,16 +58,6 @@ class Airline(Record):
         "icao_code": "string",
         "numeric_code": "string",
     }
-
-    def __init__(self):
-        # Fields used in flight log database:
-        self.fid: int | None = None
-        self.name: str | None = None
-        self.icao_code: str | None = None
-        self.iata_code: str | None = None
-        self.numeric_code: str | None = None
-        self.is_only_operator: bool | None = None
-        self.is_defunct: bool | None = None
 
 class Airport(Record):
     """Represents an airline record."""
@@ -90,21 +70,10 @@ class Airport(Record):
         "faa_lid": "string",
     }
 
-    def __init__(self):
-        # Fields used in flight log database:
-        self.fid: int | None = None
-        self.geometry: Point | None = None
-        self.name: str | None = None
-        self.country: str | None = None
-        self.icao_code: str | None = None
-        self.iata_code: str | None = None
-        self.faa_lid: str | None = None
-        self.time_zone: str | None = None
-        self.is_defunct: bool | None = None
-
     def __repr__(self):
-        code = self.iata_code or self.icao_code or self.faa_lid
-        return f"[{self.fid}] {code}: {self.name}"
+        code = self.get("iata_code") or self.get("icao_code") \
+            or self.get("faa_lid")
+        return f"[{self.get("fid")}] {code}: {self.get("name")}"
 
 class Flight(Record):
     """Represents a flight record."""
@@ -127,104 +96,70 @@ class Flight(Record):
         "geom_source": "string",
     }
 
-    def __init__(self):
-        # Fields used in flight log database:
-        self.geometry: MultiLineString | None = None
-        self.departure_utc: datetime | None = None
-        self.arrival_utc: datetime | None = None
-        self.trip_fid: int | None = None
-        self.trip_section: int | None = None
-        self.airline_fid: int | None = None
-        self.flight_number: str | None = None
-        self.origin_airport_fid: int | None = None
-        self.destination_airport_fid: int | None = None
-        self.aircraft_type_fid: int | None = None
-        self.operator_fid: int | None = None
-        self.tail_number: str | None = None
-        self.boarding_pass_data: str | None = None
-        self.fh_id: int | None = None
-        self.fa_flight_id: str | None = None
-        self.fa_json: list[dict] | None = None
-        self.geom_source: str | None = None
-        self.distance_mi: int | None = None
-
-        # Other fields from AeroAPI:
-        self.scheduled_out: datetime | None = None
-        self.estimated_out: datetime | None = None
-        self.actual_out: datetime | None = None
-        self.scheduled_in: datetime | None = None
-        self.estimated_in: datetime | None = None
-        self.actual_in: datetime | None = None
-        self.ident: str | None = None
-        self.origin_code: str | None = None
-        self.origin_tz: str | None = None
-        self.destination_code: str | None = None
-        self.destination_tz: str | None = None
-        self.progress: int | None = None
-
     def fetch_aeroapi_track_geometry(self) -> None:
         """Gets flight track from AeroAPI"""
-        if self.progress is None or self.progress < 100:
+        if self.get("progress") is None or self["progress"] < 100:
             print(
                 "⚠️ Cannot get track: flight is not complete "
-                f"({self.progress}% complete)."
+                f"({self.get("progress")}% complete)."
             )
             return
-        if self.fa_flight_id is None:
+        if self.get("fa_flight_id") is None:
             print("⚠️ Cannot get track: fa_flight_id is not set.")
             return
-        fa_json = aero.get_flights_ident_track(self.fa_flight_id)
+        fa_json = aero.get_flights_ident_track(self["fa_flight_id"])
         if fa_json is None:
-            print(f"⚠️ No track found for {self.fa_flight_id}.")
+            print(f"⚠️ No track found for {self["fa_flight_id"]}.")
             return
         positions = fa_json.get("positions")
         if len(positions) == 0:
-            print(f"⚠️ No positions found for {self.fa_flight_id}.")
+            print(f"⚠️ No positions found for {self["fa_flight_id"]}.")
             return
         track_ls = LineString([Point(
             p.get("longitude"),
             p.get("latitude"),
             p.get("altitude") * METERS_PER_HUNDRED_FEET,
         ) for p in positions])
-        self.geometry = split_at_antimeridian(track_ls)
-        self.geom_source = "FlightAware"
+        self["geometry"] = split_at_antimeridian(track_ls)
+        self["geom_source"] = "FlightAware"
         try:
-            self.distance_mi = int(fa_json.get("actual_distance"))
+            self["distance_mi"] = int(fa_json.get("actual_distance"))
         except TypeError, ValueError:
-            print(f"⚠️ No distance found for {self.fa_flight_id}.")
+            print(f"⚠️ No distance found for {self["fa_flight_id"]}.")
 
     def exit_if_not_complete(self) -> None:
         """Exits if this flight is not complete."""
-        if self.progress is None or self.progress < 100:
+        if self.get("progress") is None or self["progress"] < 100:
             print(
-                f"⚠️ Flight is not complete ({self.progress}% complete). "
-                "Flight was not added to log."
+                f"⚠️ Flight is not complete ({self.get("progress")}% "
+                "complete). Flight was not added to log."
             )
             sys.exit(1)
 
     def gdf(self) -> gpd.GeoDataFrame:
         """Returns a GeoDataFrame record for the flight."""
         record = {
-            "geometry": self.geometry,
-            "departure_utc": _format_time(self.departure_utc),
-            "arrival_utc": _format_time(self.arrival_utc),
-            "trip_fid": self.trip_fid,
-            "trip_section": self.trip_section,
-            "airline_fid": self.airline_fid,
-            "flight_number": self.flight_number,
-            "origin_airport_fid": self.origin_airport_fid,
-            "destination_airport_fid": self.destination_airport_fid,
-            "aircraft_type_fid": self.aircraft_type_fid,
-            "operator_fid": self.operator_fid,
-            "tail_number": self.tail_number,
-            "boarding_pass_data": self.boarding_pass_data,
-            "fh_id": self.fh_id,
-            "fa_flight_id": self.fa_flight_id,
+            "geometry": self.get("geometry"),
+            "departure_utc": _format_time(self.get("departure_utc")),
+            "arrival_utc": _format_time(self.get("arrival_utc")),
+            "trip_fid": self.get("trip_fid"),
+            "trip_section": self.get("trip_section"),
+            "airline_fid": self.get("airline_fid"),
+            "flight_number": self.get("flight_number"),
+            "origin_airport_fid": self.get("origin_airport_fid"),
+            "destination_airport_fid": self.get("destination_airport_fid"),
+            "aircraft_type_fid": self.get("aircraft_type_fid"),
+            "operator_fid": self.get("operator_fid"),
+            "tail_number": self.get("tail_number"),
+            "boarding_pass_data": self.get("boarding_pass_data"),
+            "fh_id": self.get("fh_id"),
+            "fa_flight_id": self.get("fa_flight_id"),
             "fa_json": (
-                None if self.fa_json is None else json.dumps(self.fa_json)
+                None if self.get("fa_json") is None
+                else json.dumps(self["fa_json"])
             ),
-            "geom_source": self.geom_source,
-            "distance_mi": self.distance_mi,
+            "geom_source": self.get("geom_source"),
+            "distance_mi": self.get("distance_mi"),
             "comments": None,
         }
         return gpd.GeoDataFrame([record], geometry="geometry", crs=CRS)
@@ -234,13 +169,15 @@ class Flight(Record):
         record_gdf = self.gdf()
 
         # Check for matching tail numbers.
-        if self.tail_number is not None:
+        if self.get("tail_number") is not None:
             tails_gdf = Flight.all()
-            tails_gdf = tails_gdf[tails_gdf["tail_number"] == self.tail_number]
+            tails_gdf = (
+                tails_gdf[tails_gdf["tail_number"] == self["tail_number"]]
+            )
             if len(tails_gdf) > 0:
                 print(
                     f"You've now had {len(tails_gdf) + 1} flights on tail "
-                    + f"number '{self.tail_number}'!"
+                    + f"number '{self["tail_number"]}'!"
                 )
 
         if geojson is not None:
@@ -295,16 +232,16 @@ class Flight(Record):
 
     def _arr_utc(self) -> datetime | None:
         """Gets the actual arrival time of a flight."""
-        if self.actual_in is None:
+        if self.get("actual_in") is None:
             # Flights diverted to a different airport use estimated_in.
-            if self.progress == 100:
-                return self.estimated_in
+            if self.get("progress") == 100:
+                return self.get("estimated_in")
             return None
-        return self.actual_in
+        return self.get("actual_in")
 
     def _dep_utc(self) -> datetime | None:
         """Gets the actual departure time of a flight."""
-        return self.actual_out or None
+        return self.get("actual_out")
 
     @classmethod
     def format_tail_number(cls, tail: str | None) -> str | None:
@@ -336,48 +273,48 @@ class Flight(Record):
         """Loads flight values from an AeroAPI response."""
         flight = cls()
         try:
-            flight.progress = int(fa_json.get("progress_percent"))
+            flight["progress"] = int(fa_json.get("progress_percent"))
         except TypeError, ValueError:
             pass
         # Store fa_json as list containing dict because some flight
         # records (such as diverts) may require more than one AeroAPI
         # JSON result stored in the database.
-        flight.fa_json = [fa_json]
-        flight.ident = fa_json.get("ident")
-        flight.scheduled_out = cls.parse_dt(fa_json.get("scheduled_out"))
-        flight.estimated_out = cls.parse_dt(fa_json.get("estimated_out"))
-        flight.actual_out = cls.parse_dt(fa_json.get("actual_out"))
-        flight.scheduled_in = cls.parse_dt(fa_json.get("scheduled_in"))
-        flight.estimated_in = cls.parse_dt(fa_json.get("estimated_in"))
-        flight.actual_in = cls.parse_dt(fa_json.get("actual_in"))
-        flight.departure_utc = flight._dep_utc()
-        flight.arrival_utc = flight._arr_utc()
-        flight.flight_number = fa_json.get("flight_number")
+        flight["fa_json"] = [fa_json]
+        flight["ident"] = fa_json.get("ident")
+        flight["scheduled_out"] = cls.parse_dt(fa_json.get("scheduled_out"))
+        flight["estimated_out"] = cls.parse_dt(fa_json.get("estimated_out"))
+        flight["actual_out"] = cls.parse_dt(fa_json.get("actual_out"))
+        flight["scheduled_in"] = cls.parse_dt(fa_json.get("scheduled_in"))
+        flight["estimated_in"] = cls.parse_dt(fa_json.get("estimated_in"))
+        flight["actual_in"] = cls.parse_dt(fa_json.get("actual_in"))
+        flight["departure_utc"] = flight._dep_utc()
+        flight["arrival_utc"] = flight._arr_utc()
+        flight["flight_number"] = fa_json.get("flight_number")
 
         origin = fa_json.get("origin", {})
-        flight.origin_airport_fid = getattr(
+        flight["origin_airport_fid"] = getattr(
             Airport.find_by_code(origin.get("code")), "fid", None
         )
-        flight.origin_code = origin.get("code_iata") or origin.get("code")
-        flight.origin_tz = origin.get("timezone")
+        flight["origin_code"] = origin.get("code_iata") or origin.get("code")
+        flight["origin_tz"] = origin.get("timezone")
 
         destination = fa_json.get("destination", {})
-        flight.destination_airport_fid = getattr(
+        flight["destination_airport_fid"] = getattr(
             Airport.find_by_code(destination.get("code")), "fid", None
         )
-        flight.destination_code = destination.get("code_iata") \
+        flight["destination_code"] = destination.get("code_iata") \
             or destination.get("code")
-        flight.destination_tz = destination.get("timezone")
+        flight["destination_tz"] = destination.get("timezone")
 
-        flight.aircraft_type_fid = getattr(
+        flight["aircraft_type_fid"] = getattr(
             AircraftType.find_by_code(fa_json.get("aircraft_type")),
             "fid", None
         )
-        flight.operator_fid = getattr(
+        flight["operator_fid"] = getattr(
             Airline.find_by_code(fa_json.get("operator")), "fid", None
         )
-        flight.tail_number = fa_json.get("registration")
-        flight.fa_flight_id = fa_json.get("fa_flight_id")
+        flight["tail_number"] = fa_json.get("registration")
+        flight["fa_flight_id"] = fa_json.get("fa_flight_id")
         return flight
 
     @classmethod
@@ -616,14 +553,14 @@ def import_flight_number(
     airline = Airline.find_by_code(airline_code)
     # If airline is IATA, try to look up ICAO.
     if len(airline_code) == 2:
-        if airline is not None and airline.icao_code is not None:
-            airline_code = airline.icao_code
+        if airline is not None and airline.get("icao_code") is not None:
+            airline_code = airline.get("icao_code")
     flight_number = flight_number.lstrip("0") or "0"
     ident = f"{airline_code}{flight_number}"
     fa_flights = aero.get_flights_ident(ident, "designator")
     _import_fa_flight_results(
         fa_flights,
-        fields={"airline_fid": airline.fid},
+        fields={"airline_fid": airline.get("fid")},
         geojson=geojson,
     )
     refresh_routes()
@@ -796,10 +733,10 @@ def show_airport(identifier: str) -> None:
 
     flights_gdf = Flight.all()
     flights_gdf = flights_gdf[
-        (flights_gdf["origin_airport_fid"] == airport.fid)
-        | (flights_gdf["destination_airport_fid"] == airport.fid)
+        (flights_gdf["origin_airport_fid"] == airport.get("fid"))
+        | (flights_gdf["destination_airport_fid"] == airport.get("fid"))
     ]
-    print(flights_table(flights_gdf, visit_airport_fid=airport.fid))
+    print(flights_table(flights_gdf, visit_airport_fid=airport.get("fid")))
 
 def show_tail(tail_number: str) -> None:
     """Shows data about a specific tail number."""
@@ -975,21 +912,21 @@ def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
     for leg in bp.legs:
         print(f"Processing leg \"{leg}\"")
         airline = Airline.find_by_code(leg.airline_iata)
-        if airline is not None and airline.icao_code is not None:
-            airline_code = airline.icao_code
+        if airline is not None and airline.get("icao_code") is not None:
+            airline_code = airline.get("icao_code")
         else:
             airline_code = leg.airline_iata
         ident = f"{airline_code}{leg.flight_number}"
         aero_results = aero.get_flights_ident(ident, "designator")
         flight = _flight_from_aeroapi_results(aero_results)
-        flight.airline_fid = airline.fid
-        flight.boarding_pass_data = leg.bcbp_str
+        flight["airline_fid"] = airline.get("fid")
+        flight["boarding_pass_data"] = leg.bcbp_str
         trip = Trip.select_by_date(leg.flight_date)
         if trip is not None:
-            flight.trip_fid = trip.fid
-            if flight.departure_utc is not None:
-                flight.trip_section = _estimate_trip_section(
-                    trip.fid, flight.departure_utc,
+            flight["trip_fid"] = trip.fid
+            if flight.get("departure_utc") is not None:
+                flight["trip_section"] = _estimate_trip_section(
+                    trip.fid, flight["departure_utc"],
                 )
         bp_flights.append(flight)
 
