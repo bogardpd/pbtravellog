@@ -68,7 +68,7 @@ class AirlineTable(RecordTable):
     RECORD_CLASS = Airline
 
 class Airport(Record):
-    """Represents an airline record."""
+    """Represents an airport record."""
     DATA_FILE = FLIGHT_LOG
     LAYER = "airports"
     FIND_BY_CODES = ["icao_code", "iata_code", "faa_lid"]
