@@ -23,7 +23,7 @@ from tabulate import tabulate
 # Project imports
 import pbtravellog.aeroapi as aero
 from pbtravellog.boarding_pass import BoardingPass, PKPass
-from pbtravellog.record import Record
+from pbtravellog.record import Record, RecordTable
 from pbtravellog.travel_log import Trip
 
 METERS_PER_MILE = 1609.344
@@ -48,6 +48,10 @@ class AircraftType(Record):
         "icao_code": "string",
     }
 
+class AircraftTypeTable(RecordTable):
+    """Represents a dict of AircraftType instances."""
+    RECORD_CLASS = AircraftType
+
 class Airline(Record):
     """Represents an airline record."""
     DATA_FILE = FLIGHT_LOG
@@ -58,6 +62,10 @@ class Airline(Record):
         "icao_code": "string",
         "numeric_code": "string",
     }
+
+class AirlineTable(RecordTable):
+    """Represents a dict of Airline instances."""
+    RECORD_CLASS = Airline
 
 class Airport(Record):
     """Represents an airline record."""
@@ -74,6 +82,10 @@ class Airport(Record):
         code = self.get("iata_code") or self.get("icao_code") \
             or self.get("faa_lid")
         return f"[{self.get("fid")}] {code}: {self.get("name")}"
+
+class AirportTable(RecordTable):
+    """Represents a dict of Airport instances."""
+    RECORD_CLASS = Airport
 
 class Flight(Record):
     """Represents a flight record."""
@@ -382,8 +394,9 @@ class Flight(Record):
             return None
         return isoparse(dt_str)
 
-class FlightTable(dict):
-    """Represents a dict of Flights."""
+class FlightTable(RecordTable):
+    """Represents a dict of Flight instances."""
+    RECORD_CLASS = Flight
 
     def joined(self) -> Self:
         """Joins other classes on fid fields."""
@@ -410,23 +423,16 @@ class FlightTable(dict):
                     v[j[2]] = j[0][v[j[1]]]
         return self
 
-    @classmethod
-    def every(cls) -> Self:
-        """Creates a table of every flight."""
-        flights = Flight.every().copy()
-        flights = flights.astype(object).where(pd.notna(flights), None)
-        flight_dict = flights.to_dict(orient="index")
-        flight_dict = {k: Flight(v) for k, v in flight_dict.items()}
-        return cls(flight_dict)
-
-
-
 class SeatClass(Record):
     """Represents a flight class record."""
     DATA_FILE = FLIGHT_LOG
     LAYER = "classes"
     FIND_BY_CODES = []
     DTYPES = {"quality": "Int64"}
+
+class SeatClassTable(RecordTable):
+    """Represents a dict of SeatClass instances."""
+    RECORD_CLASS = SeatClass
 
 class Route(Record):
     """Represents a route record"""

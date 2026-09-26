@@ -9,9 +9,9 @@ import geopandas as gpd
 import pandas as pd
 
 class Record(dict):
-    """Represents a generic record from any travel log table.
+    """Represents a generic travel record.
 
-    Designed to be inherited by specific travel record types.
+    Designed to be inherited by specific travel object types.
     """
     DATA_FILE = None
     LAYER = None
@@ -79,3 +79,18 @@ class Record(dict):
                 return record
         print(f"⚠️ Could not find {cls.__name__} matching \"{code}\".")
         return None
+
+class RecordTable(dict):
+    """Represents a dict of instances of travel log records.
+
+    Designed to be inherited by specific travel table types.
+    """
+    RECORD_CLASS = Record
+    @classmethod
+    def every(cls) -> Self:
+        """Creates a table of every object."""
+        records = cls.RECORD_CLASS.every().copy()
+        records = records.astype(object).where(pd.notna(records), None)
+        record_dict = records.to_dict(orient="index")
+        record_dict = {k: cls.RECORD_CLASS(v) for k, v in record_dict.items()}
+        return cls(record_dict)
