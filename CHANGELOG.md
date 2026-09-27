@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Refactored travel log browser classes and methods.
+
 ## [0.4.0]
 
 ### Added
