@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Sorted Index Trips from newest to oldest.
 - Refactored travel log browser classes and methods.
 
 ## [0.4.0]

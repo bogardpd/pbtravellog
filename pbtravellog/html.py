@@ -10,7 +10,7 @@ from flask import Flask, current_app, render_template, url_for
 
 # Project imports
 from pbtravellog.flight_log import FlightTable
-from pbtravellog.travel_log import Trip
+from pbtravellog.travel_log import TripTable
 
 def create_browser_app():
     """Creates a Flask app for the travel log."""
@@ -21,7 +21,7 @@ def create_browser_app():
     app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
 
     all_flights = FlightTable.from_all().joined().sort("departure_utc")
-    all_trips = Trip.to_dict()
+    all_trips = TripTable.from_all()
 
     @app.route("/")
     def home():
@@ -174,7 +174,9 @@ def create_browser_app():
 
     @app.route("/trips/")
     def index_trips():
-        return render_template("trips/index.html", trips=all_trips)
+        trip_records = all_trips.sort("end_date", ascending=False) \
+            .sort("start_date", ascending=False)
+        return render_template("trips/index.html", trips=trip_records)
 
     @app.route("/trips/<int:trip_fid>/")
     def show_trip(trip_fid: int):
