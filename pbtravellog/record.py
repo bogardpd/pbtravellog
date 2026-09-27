@@ -86,6 +86,7 @@ class RecordTable(dict):
     Designed to be inherited by specific travel table types.
     """
     RECORD_CLASS = Record
+
     def sort(self, col, ascending=True):
         """Sorts the table by the provided column."""
         records = self.__class__(sorted(

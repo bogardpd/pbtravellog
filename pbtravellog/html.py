@@ -24,7 +24,7 @@ def create_browser_app():
     app.jinja_env.filters["format_dt"] = _format_dt
     app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
 
-    all_flights = FlightTable.from_all().joined()
+    all_flights = FlightTable.from_all().joined().sort("departure_utc")
     all_trips = Trip.to_dict()
 
     @app.route("/")
