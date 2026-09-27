@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added purpose field to Show Flight.
+
 ### Changed
 
 - Sorted Index Trips from newest to oldest.
