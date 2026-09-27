@@ -87,9 +87,14 @@ class RecordTable(dict):
     """
     RECORD_CLASS = Record
     @classmethod
-    def every(cls) -> Self:
+    def from_all(cls) -> Self:
         """Creates a table of every object."""
-        records = cls.RECORD_CLASS.every().copy()
+        records = gpd.read_file(
+            cls.RECORD_CLASS.DATA_FILE,
+            layer=cls.RECORD_CLASS.LAYER,
+            engine="pyogrio",
+            fid_as_index=True,
+        ).astype(cls.RECORD_CLASS.DTYPES)
         records = records.astype(object).where(pd.notna(records), None)
         record_dict = records.to_dict(orient="index")
         record_dict = {k: cls.RECORD_CLASS(v) for k, v in record_dict.items()}

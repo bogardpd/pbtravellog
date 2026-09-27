@@ -78,11 +78,6 @@ class Airport(Record):
         "faa_lid": "string",
     }
 
-    def __repr__(self):
-        code = self.get("iata_code") or self.get("icao_code") \
-            or self.get("faa_lid")
-        return f"[{self.get("fid")}] {code}: {self.get("name")}"
-
     def code(self) -> str:
         """Returns the best code for the airport."""
         return self.get("iata_code") or self.get("icao_code") \
@@ -405,11 +400,11 @@ class FlightTable(RecordTable):
 
     def joined(self) -> Self:
         """Joins other classes on fid fields."""
-        airports = AirportTable.every()
-        airlines = AirlineTable.every()
-        aircraft_types = AircraftTypeTable.every()
-        classes = SeatClassTable.every()
-        trips = TripTable.every()
+        airports = AirportTable.from_all()
+        airlines = AirlineTable.from_all()
+        aircraft_types = AircraftTypeTable.from_all()
+        classes = SeatClassTable.from_all()
+        trips = TripTable.from_all()
         joins = [
             (airports, "origin_airport_fid", "origin_airport"),
             (airports, "destination_airport_fid", "destination_airport"),
