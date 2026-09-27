@@ -4,8 +4,8 @@
 {% block title %}{{ flight.name() }}{% endblock %}
 {% block content %}
 
-{% if flight.comments %}
-<p>{{ flight.comments }}</p>
+{% if flight.get("comments") is not none %}
+<p>{{ flight["comments"] }}</p>
 {% endif %}
 
 <div class="card flight-card">

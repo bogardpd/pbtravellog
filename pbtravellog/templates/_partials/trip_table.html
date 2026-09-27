@@ -11,9 +11,9 @@
     {% for fid, trip in trips.items() %}
     <tr>
       <td class="rank">{{ loop.index }}</td>
-      <td><a href="{{ url_for('show_trip', trip_fid=fid) }}">{{ trip.name }}</a></td>
-      <td>{{ trip.start_date | format_dt(include_time=False) }}</td>
-      <td>{{ trip.end_date | format_dt(include_time=False) }}</td>
+      <td><a href="{{ url_for('show_trip', trip_fid=fid) }}">{{ trip.get("name") }}</a></td>
+      <td>{{ trip.get("start_date") | format_dt(include_time=False) }}</td>
+      <td>{{ trip.get("end_date") | format_dt(include_time=False) }}</td>
     </tr>
     {% endfor %}
     <tr class="total">
