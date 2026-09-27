@@ -108,6 +108,17 @@ class Flight(Record):
         "geom_source": "string",
     }
 
+    def duration_h_m(self) -> tuple[int] | None:
+        """Returns flight duration in hours and minutes."""
+        if self["arrival_utc"] is None:
+            return None
+        dur_s = (
+            self["arrival_utc"] - self["departure_utc"]
+        ).total_seconds()
+        hours, remainder = divmod(dur_s, 3600)
+        minutes = remainder // 60
+        return (int(hours), int(minutes))
+
     def exit_if_not_complete(self) -> None:
         """Exits if this flight is not complete."""
         if self.get("progress") is None or self["progress"] < 100:
@@ -178,7 +189,7 @@ class Flight(Record):
 
     def local_time(self, loc) -> datetime:
         """Returns local departure or arrival time.
-        
+
         Calculates the time in the local time zone for the departure or
         arrival airport.
 
@@ -186,10 +197,16 @@ class Flight(Record):
             loc (str): "departure" or "arrival".
         """
         fields = {"departure": "origin", "arrival": "destination"}
-        if loc not in fields.keys():
+        if loc not in fields:
             raise ValueError("Location must be 'departure' or 'arrival'.")
-        tz = self[f"{fields[loc]}_airport"]["time_zone"]
-        return self[f"{loc}_utc"].astimezone(ZoneInfo(tz))
+        dt = self.get(f"{loc}_utc")
+        airport = self.get(f"{fields[loc]}_airport")
+        if dt is None or airport is None:
+            return None
+        tz = airport.get("time_zone")
+        if tz is None:
+            return None
+        return dt.astimezone(ZoneInfo(tz))
 
     def name(self) -> str:
         """Returns a name for the flight."""
@@ -264,6 +281,10 @@ class Flight(Record):
             mode="a",
         )
         print(f"Appended flight to {FLIGHT_LOG}.")
+
+    def tail_number_formatted(self) -> str:
+        """Returns the flight's formatted tail number."""
+        return self.format_tail_number(self.get("tail_number"))
 
     def _arr_utc(self) -> datetime | None:
         """Gets the actual arrival time of a flight."""

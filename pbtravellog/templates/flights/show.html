@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros/icons.html" as icons %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Flights", url_for("index_flights")), (flight.name, None)] %}
-{% block title %}{{ flight.name }}{% endblock %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Flights", url_for("index_flights")), (flight.name(), None)] %}
+{% block title %}{{ flight.name() }}{% endblock %}
 {% block content %}
 
 {% if flight.comments %}
@@ -11,89 +11,99 @@
 <div class="card flight-card">
   <!-- Code -->
   <div class="flight-card-airport">
-    <span class="flight-card-head">{{ flight.origin_airport_code }}</span><br>
-    <a href="{{ url_for('show_airport', airport_fid=flight.origin_airport_fid) }}">{{ flight.origin_airport_name }}</a></div>
+    {% if flight.get("origin_airport_fid") is not none %}
+    <span class="flight-card-head">{{ flight["origin_airport"].code() }}</span><br>
+    <a href="{{ url_for('show_airport', airport_fid=flight['origin_airport_fid']) }}">{{ flight["origin_airport"].get("name") }}</a></div>
+    {% endif %}
   <div class="flight-card-airport">
     <span class="flight-card-head">&rarr;</span>
   </div>
   <div class="flight-card-airport">
-    <span class="flight-card-head">{{ flight.destination_airport_code }}</span><br>
-    <a href="{{ url_for('show_airport', airport_fid=flight.destination_airport_fid) }}">{{ flight.destination_airport_name }}</a>
+    {% if flight.get("destination_airport") is not none %}
+    <span class="flight-card-head">{{ flight["destination_airport"].code() }}</span><br>
+    <a href="{{ url_for('show_airport', airport_fid=flight['destination_airport_fid']) }}">{{ flight["destination_airport"].get("name") }}</a>
+    {% endif %}
   </div>
   <!-- Local Time -->
-  <div class="flight-card-dt-local">{{ flight.departure_local | format_dt(include_time=True, include_tz=True) }}</div>
-  <div class="flight-card-dt-local">{% if flight.duration_h_m %}{{ flight.duration_h_m[0] }}h {{ "%02d" | format(flight.duration_h_m[1]) }}m{% endif %}</div>
-  <div class="flight-card-dt-local">{{ flight.arrival_local | format_dt(include_time=True, include_tz=True) }}</div>
+  <div class="flight-card-dt-local">{{ flight.local_time("departure") | format_dt(include_time=True, include_tz=True) }}</div>
+  <div class="flight-card-dt-local">{% if flight.duration_h_m() %}{{ flight.duration_h_m()[0] }}h {{ "%02d" | format(flight.duration_h_m()[1]) }}m{% endif %}</div>
+  <div class="flight-card-dt-local">{{ flight.local_time("arrival") | format_dt(include_time=True, include_tz=True) }}</div>
 </div>
 
 <table class="flight-details">
-  {% if flight.class_fid %}
+  {% if flight.get("class_fid") is not none %}
   <tr>
     <th scope="row">Seat Class</th>
     <td>
-      {{ icons.seat_class_quality(flight.class_quality) }}<br>
-      <a href="{{ url_for('show_class', class_fid=flight.class_fid) }}">{{ flight.class_name }}</a>
+      {{ icons.seat_class_quality(flight["class"]["quality"]) }}<br>
+      <a href="{{ url_for('show_class', class_fid=flight['class_fid']) }}">{{ flight["class"].get("name") }}</a>
     </td>
   </tr>
   {% endif %}
+  {% if flight.get("airline_fid") is not none %}
   <tr>
     <th scope="row">Airline</th>
     <td>
-      {% if img_path_airline_icon(flight.airline_fid) %}{{ icons.airline(flight.airline_fid) }}<br>{% endif %}
-      {% if flight.airline_fid %}<a href="{{ url_for('show_airline', airline_fid=flight.airline_fid) }}">{{ flight.airline_name }}</a>{% else %}None{% endif %}
+      {% if img_path_airline_icon(flight["airline_fid"]) %}{{ icons.airline(flight["airline_fid"]) }}<br>{% endif %}
+      <a href="{{ url_for('show_airline', airline_fid=flight['airline_fid']) }}">{{ flight["airline"].get("name") }}</a>
     </td>
   </tr>
+  {% endif %}
+  {% if flight.get("operator_fid") is not none %}
   <tr>
     <th scope="row">Operated By</th>
     <td>
-      {% if img_path_airline_icon(flight.operator_fid) %}{{ icons.airline(flight.operator_fid) }}<br>{% endif %}
-      {% if flight.operator_fid %}<a href="{{ url_for('show_operator', operator_fid=flight.operator_fid) }}">{{ flight.operator_name }}</a>{% else %}None{% endif %}
+      {% if img_path_airline_icon(flight["operator_fid"]) %}{{ icons.airline(flight["operator_fid"]) }}<br>{% endif %}
+      <a href="{{ url_for('show_operator', operator_fid=flight['operator_fid']) }}">{{ flight["operator"].get("name") }}</a>
     </td>
   </tr>
-  {% if flight.codeshare_airline_fid %}
+  {% endif %}
+  {% if flight.get("codeshare_airline_fid") is not none %}
   <tr>
     <th scope="row">Codeshare</th>
     <td>
-      {% if img_path_airline_icon(flight.codeshare_airline_fid) %}{{ icons.airline(flight.codeshare_airline_fid) }}<br>{% endif %}
-      {{ flight.codeshare_airline_name }}{% if flight.codeshare_flight_number %} {{ flight.codeshare_flight_number }}{% endif %}
+      {% if img_path_airline_icon(flight["codeshare_airline_fid"]) %}{{ icons.airline(flight["codeshare_airline_fid"]) }}<br>{% endif %}
+      {{ flight["codeshare_airline"].get("name") }}{% if flight["codeshare_flight_number"] %} {{ flight["codeshare_flight_number"] }}{% endif %}
     </td>
   </tr>
   {% endif %}
+  {% if flight.get("aircraft_type_fid") is not none %}
   <tr>
     <th scope="row">Aircraft Type</th>
-    <td>{% if flight.aircraft_type_fid %}<a href="{{ url_for('show_aircraft_type', aircraft_type_fid=flight.aircraft_type_fid) }}">{{ flight.aircraft_type_manufacturer }} {{ flight.aircraft_type_name }}</a>{% else %}Unknown{% endif %}</td>
-  </tr>
-  {% if flight.aircraft_name %}
-  <tr>
-    <th scope="row">Aircraft Name</th>
-    <td class="aircraft-name">{{ flight.aircraft_name }}</td>
+    <td><a href="{{ url_for('show_aircraft_type', aircraft_type_fid=flight['aircraft_type_fid']) }}">{{ flight["aircraft_type"].get("manufacturer") }} {{ flight["aircraft_type"].get("name") }}</a></td>
   </tr>
   {% endif %}
-  {% if flight.tail_number %}
+  {% if flight.get("aircraft_name") is not none %}
+  <tr>
+    <th scope="row">Aircraft Name</th>
+    <td class="aircraft-name">{{ flight["aircraft_name"] }}</td>
+  </tr>
+  {% endif %}
+  {% if flight.get("tail_number") is not none %}
   <tr>
     <th scope="row">Tail Number</th>
-    <td><a href="{{ url_for('show_tail_number', tail_number=flight.tail_number) }}">{{ flight.tail_number_formatted }}</a></td>
+    <td><a href="{{ url_for('show_tail_number', tail_number=flight['tail_number']) }}">{{ flight.tail_number_formatted() }}</a></td>
   </tr>
   {% endif %}
   <tr>
     <th scope="row">Route</th>
     <td>
-      <a href="{{ url_for('show_route', origin_airport_fid=flight.origin_airport_fid, destination_airport_fid=flight.destination_airport_fid) }}">
-        <span class="code">{{ flight.origin_airport_code }}</span>
+      <a href="{{ url_for('show_route', origin_airport_fid=flight.get('origin_airport_fid'), destination_airport_fid=flight.get('destination_airport_fid')) }}">
+        {% if flight.get("origin_airport") is not none %}<span class="code">{{ flight["origin_airport"].code() }}</span>{% endif %}
         &rarr;
-        <span class="code">{{ flight.destination_airport_code }}</span>
+        {% if flight.get("destination_airport") is not none %}<span class="code">{{ flight["destination_airport"].code() }}</span>{% endif %}
     </td>
   </tr>
-  {% if flight.trip_fid %}
+  {% if flight.get("trip_fid") is not none %}
   <tr>
     <th scope="row">Trip</th>
     <td>
-      <a href="{{ url_for('show_trip', trip_fid=flight.trip_fid) }}">{{ flight.trip_name }}</a><br>
-      {{ [flight.trip_start_date, flight.trip_end_date] | format_date_range }}
+      <a href="{{ url_for('show_trip', trip_fid=flight['trip_fid']) }}">{{ flight["trip"].get("name") }}</a><br>
+      {{ [flight["trip"].get("start_date"), flight["trip"].get("end_date")] | format_date_range }}
     </td>
   </tr>
   {% endif %}
-  {% if flight.boarding_pass_data %}
+  {% if flight.get("boarding_pass_data") is not none %}
   <tr>
     <th scope="row">Boarding Pass</th>
     <td><a href="https://paulbogard.net/boarding-pass-parser/?bptext={{ flight.boarding_pass_data | urlencode }}">(Data)</a></td>
