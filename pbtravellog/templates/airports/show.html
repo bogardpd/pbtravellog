@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Airports", url_for("index_airports")), (airport.get("iata_code") if airport.get("iata_code") is not None else airport.get("name"), None)] %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Airports", url_for("index_airports")), (airport.get("iata_code") if airport.get("iata_code") is not none else airport.get("name"), None)] %}
 {% block title %}{{ airport.get("name") }}{% endblock %}
 {% block content %}
 <table class="summary">

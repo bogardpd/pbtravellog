@@ -1,6 +1,7 @@
 """Scripts for interacting with the flight log."""
 
 # Standard imports
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 import json
 from math import ceil
@@ -434,6 +435,123 @@ class FlightTable(RecordTable):
     """Represents a dict of Flight instances."""
     RECORD_CLASS = Flight
 
+    def collect_aircraft_types(self) -> AircraftTypeTable:
+        """Builds aircraft type records from this FlightTable."""
+        aircraft_type_flight_count = defaultdict(int)
+        for _, flight in self.items():
+            aircraft_type_flight_count[flight["aircraft_type_fid"]] += 1
+        aircraft_type_flight_count.pop(None, None) # Remove None count
+        ranks = _rank_count(aircraft_type_flight_count)
+        aircraft_types = AircraftTypeTable.from_fids(
+            aircraft_type_flight_count.keys()
+        )
+        for aircraft_type_fid, aircraft_type in aircraft_types.items():
+            aircraft_type["count"] = aircraft_type_flight_count[aircraft_type_fid]
+            aircraft_type["rank"] = ranks[aircraft_type_fid]
+        aircraft_types = aircraft_types.sort("name").sort("manufacturer") \
+            .sort("count", ascending=False)
+        return aircraft_types
+
+    def collect_airlines(self, operators: bool = False) -> AirlineTable:
+        """Builds airline records from this FlightTable."""
+        column = "operator_fid" if operators else "airline_fid"
+        airline_flight_count = defaultdict(int)
+        for _, flight in self.items():
+            airline_flight_count[flight[column]] += 1
+        airline_flight_count.pop(None, None) # Remove None count
+        ranks = _rank_count(airline_flight_count)
+        airlines = AirlineTable.from_fids(airline_flight_count.keys())
+        for airline_fid, airline in airlines.items():
+            airline["count"] = airline_flight_count[airline_fid]
+            airline["rank"] = ranks[airline_fid]
+        airlines = airlines.sort("name").sort("count", ascending=False)
+        return airlines
+
+    def collect_airports(self) -> AirportTable:
+        """Builds airport records from this FlightTable."""
+        airport_visit_count = defaultdict(int)
+        prev_trip_sec = [None, None]
+        for _, flight in self.items():
+            curr_trip_sec = [flight["trip_fid"], flight["trip_section"]]
+            if curr_trip_sec != prev_trip_sec:
+                # This is not following a layover, so count the origin.
+                airport_visit_count[flight["origin_airport_fid"]] += 1
+            airport_visit_count[flight["destination_airport_fid"]] += 1
+            prev_trip_sec = curr_trip_sec
+        airport_visit_count.pop(None, None) # Remove None count
+        ranks = _rank_count(airport_visit_count)
+        airports = AirportTable.from_fids(airport_visit_count.keys())
+        for airport_fid, airport in airports.items():
+            airport["visits"] = airport_visit_count[airport_fid]
+            airport["rank"] = ranks[airport_fid]
+        airports = airports.sort("name").sort("visits", ascending=False)
+        return airports
+
+    def collect_classes(self) -> SeatClassTable:
+        """Builds flight class records from this FlightTable."""
+        seat_class_flight_count = defaultdict(int)
+        for _, flight in self.items():
+            seat_class_flight_count[flight["class_fid"]] += 1
+        seat_class_flight_count.pop(None, None) # Remove none count
+        # Classes are always sorted by quality, so no need to rank.
+        seat_classes = SeatClassTable.from_fids(seat_class_flight_count.keys())
+        for seat_class_fid, seat_class in seat_classes.items():
+            seat_class["count"] = seat_class_flight_count[seat_class_fid]
+        seat_classes = seat_classes.sort("quality", ascending=False)
+        return seat_classes
+
+    def collect_routes(self) -> RouteTable:
+        """Builds route records from this FlightTable.
+
+        Although routes already store their flight_count, the value is
+        only good for all flights. This method calculates routes for
+        whatever flights are passed into it.
+        """
+        route_flight_count = defaultdict(int)
+        for _, flight in self.items():
+            airport_fids = (
+                flight["origin_airport_fid"],
+                flight["destination_airport_fid"],
+            )
+            route_flight_count[airport_fids] += 1
+        ranks = _rank_count(route_flight_count)
+        routes = RouteTable.from_fids(route_flight_count.keys()).joined()
+        for route_fid, route in routes.items():
+            route["count"] = route_flight_count[route_fid]
+            route["rank"] = ranks[route_fid]
+            # Add derived columns for sorting.
+            route["origin_airport_code"] = route["origin_airport"].code()
+            route["destination_airport_code"] = (
+                route["destination_airport"].code()
+            )
+        routes = routes.sort("destination_airport_code") \
+            .sort("origin_airport_code").sort("count", ascending=False)
+        return routes
+
+    def collect_tail_numbers(self) -> dict[dict]:
+        """Builds tail number records from flight records."""
+        tail_flight_count = defaultdict(int)
+        aircraft_types = {}
+        for _, flight in self.items():
+            tail_flight_count[flight["tail_number"]] += 1
+            aircraft_types[flight["tail_number"]] = flight["aircraft_type"]
+        tail_flight_count.pop(None, None) # Remove None count
+        ranks = _rank_count(tail_flight_count)
+        tail_number_records = {}
+        for tail_number, count in tail_flight_count.items():
+            record = {
+                "formatted": Flight.format_tail_number(tail_number),
+                "aircraft_type": aircraft_types[tail_number],
+                "count": count,
+                "rank": ranks[tail_number],
+            }
+            tail_number_records[tail_number] = record
+        tail_number_records = dict(sorted(
+            tail_number_records.items(),
+            key=lambda x: (-x[1]["count"], x[0]),
+        ))
+        return tail_number_records
+
     def filter_by_aircraft_type(self, aircraft_type_fid: int) -> Self:
         """Filters flight records by a trip."""
         records = {
@@ -563,7 +681,7 @@ class RouteTable(RecordTable):
     @classmethod
     def from_all(cls):
         """Creates a table of routes with a tuple of airports as keys.
-        
+
         Route FIDs could change when they are refreshed, so we should
         always look up routes by an origin airport/destination airport
         fid pair.
@@ -1152,3 +1270,16 @@ def _local_dt(dt_utc, tz):
     if pd.isna(dt_utc) or pd.isna(tz):
         return None
     return dt_utc.astimezone(ZoneInfo(tz))
+
+def _rank_count(count_dict: dict) -> dict:
+    """Ranks a dictionary of item counts."""
+    sorted_count = sorted(count_dict.items(), key=lambda x: -x[1])
+    ranks = dict()
+    prev_count = None
+    prev_rank = 0
+    for idx, (key, count) in enumerate(sorted_count):
+        rank = prev_rank if count == prev_count else idx + 1
+        ranks[key] = rank
+        prev_count = count
+        prev_rank = rank
+    return ranks
