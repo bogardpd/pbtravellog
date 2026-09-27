@@ -14,9 +14,9 @@
     <tr{% if not loop.last and flight.trip_fid == loop.nextitem[1].trip_fid and flight.trip_section == loop.nextitem[1].trip_section %} class="continue"{% endif %}>
       <td class="rank">{{ loop.index }}</td>
       <td>{{ icons.airline(flight.airline_fid) }}</td>
-      <td><a href="{{ url_for('show_flight', flight_fid=fid) }}">{{ flight.name }}</a></td>
+      <td><a href="{{ url_for('show_flight', flight_fid=fid) }}">{{ flight.name() }}</a></td>
       <td>{% if airport_fid and airport_fid == flight.origin_airport_fid %}<span class="code current-airport">{{ flight.origin_airport_code }}</span>{% else %}<a href="{{ url_for('show_airport', airport_fid=flight.origin_airport_fid) }}" class="code">{{ flight.origin_airport_code }}</a>{% endif %} &rarr; {% if airport_fid and airport_fid == flight.destination_airport_fid %}<span class="code current-airport">{{ flight.destination_airport_code }}</span>{% else %}<a href="{{ url_for('show_airport', airport_fid=flight.destination_airport_fid) }}" class="code">{{ flight.destination_airport_code }}</a>{% endif %}</td>
-      <td>{{ flight.departure_local | format_dt(include_time=False) }}</td>
+      <td>{{ flight.local_time("departure") | format_dt(include_time=False) }}</td>
     </tr>
     {% endfor %}
     <tr class="total">

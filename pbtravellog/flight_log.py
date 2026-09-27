@@ -176,6 +176,21 @@ class Flight(Record):
         }
         return gpd.GeoDataFrame([record], geometry="geometry", crs=CRS)
 
+    def local_time(self, loc) -> datetime:
+        """Returns local departure or arrival time.
+        
+        Calculates the time in the local time zone for the departure or
+        arrival airport.
+
+        Args:
+            loc (str): "departure" or "arrival".
+        """
+        fields = {"departure": "origin", "arrival": "destination"}
+        if loc not in fields.keys():
+            raise ValueError("Location must be 'departure' or 'arrival'.")
+        tz = self[f"{fields[loc]}_airport"]["time_zone"]
+        return self[f"{loc}_utc"].astimezone(ZoneInfo(tz))
+
     def name(self) -> str:
         """Returns a name for the flight."""
         if self.get("airline") is None or self["airline"].get("name") is None:
@@ -397,6 +412,14 @@ class Flight(Record):
 class FlightTable(RecordTable):
     """Represents a dict of Flight instances."""
     RECORD_CLASS = Flight
+
+    def filter_by_trip(self, trip_fid: int) -> Self:
+        """Filters flight records by a trip."""
+        records = {
+            k: v for k, v in self.items()
+            if v["trip_fid"] == trip_fid
+        }
+        return self.__class__(records)
 
     def joined(self) -> Self:
         """Joins other classes on fid fields."""

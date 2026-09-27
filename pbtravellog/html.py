@@ -12,7 +12,7 @@ import pandas as pd
 
 # Project imports
 from pbtravellog.flight_log import (
-    Flight, Airport, Airline, AircraftType, SeatClass, Route
+    Flight, FlightTable, Airport, Airline, AircraftType, SeatClass, Route
 )
 from pbtravellog.travel_log import Trip
 
@@ -24,7 +24,7 @@ def create_browser_app():
     app.jinja_env.filters["format_dt"] = _format_dt
     app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
 
-    all_flights = Flight.joined()
+    all_flights = FlightTable.from_all().joined()
     all_trips = Trip.to_dict()
 
     @app.route("/")
@@ -232,7 +232,8 @@ def create_browser_app():
     @app.route("/trips/<int:trip_fid>/")
     def show_trip(trip_fid: int):
         trip = all_trips[trip_fid]
-        flights = _filter_flights_by_trip(all_flights, trip_fid)
+        # flights = _filter_flights_by_trip(all_flights, trip_fid)
+        flights = all_flights.filter_by_trip(trip_fid)
         return render_template("trips/show.html", trip=trip, flights=flights)
 
     return app
