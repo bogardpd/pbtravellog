@@ -12,8 +12,8 @@ import pandas as pd
 
 # Project imports
 from pbtravellog.flight_log import (
-    Flight, FlightTable, Airport, AirlineTable,
-    AircraftTypeTable, SeatClassTable, Route
+    Flight, FlightTable, AirportTable, AirlineTable,
+    AircraftTypeTable, SeatClassTable, Route, RouteTable
 )
 from pbtravellog.travel_log import Trip
 
@@ -263,7 +263,8 @@ def _collect_aircraft_type_records(
     return aircraft_types
 
 def _collect_airline_records(
-    flight_records: FlightTable, operators: bool=False,
+    flight_records: FlightTable,
+    operators: bool = False,
 ) -> AirlineTable:
     """Builds airline records from flight records."""
     column = "operator_fid" if operators else "airline_fid"
@@ -279,7 +280,7 @@ def _collect_airline_records(
     airlines = airlines.sort("name").sort("count", ascending=False)
     return airlines
 
-def _collect_airport_records(flight_records) -> dict[dict]:
+def _collect_airport_records(flight_records: FlightTable) -> AirportTable:
     """Builds airport records from flight records."""
     airport_visit_count = defaultdict(int)
     prev_trip_sec = [None, None]
@@ -292,26 +293,12 @@ def _collect_airport_records(flight_records) -> dict[dict]:
         prev_trip_sec = curr_trip_sec
     airport_visit_count.pop(None, None) # Remove None count
     ranks = _rank_count(airport_visit_count)
-    airport_records = {}
-    all_airports = Airport.every()
-    for airport_fid, visits in airport_visit_count.items():
-        airport_row = all_airports.loc[airport_fid]
-        record = {
-            "name": airport_row["name"],
-            "iata_code": airport_row["iata_code"],
-            "icao_code": airport_row["icao_code"],
-            "faa_lid": airport_row["faa_lid"],
-            "visits": visits,
-            "rank": ranks[airport_fid],
-        }
-        record = {
-            k: (None if pd.isna(v) else v) for k, v in record.items()
-        }
-        airport_records[airport_fid] = record
-    airport_records = dict(sorted(
-        airport_records.items(), key=lambda x: (-x[1]["visits"], x[1]["name"]),
-    ))
-    return airport_records
+    airports = AirportTable.from_fids(airport_visit_count.keys())
+    for airport_fid, airport in airports.items():
+        airport["visits"] = airport_visit_count[airport_fid]
+        airport["rank"] = ranks[airport_fid]
+    airports = airports.sort("name").sort("visits", ascending=False)
+    return airports
 
 def _collect_class_records(flight_records: FlightTable) -> SeatClassTable:
     """Builds flight class records from flight records."""
@@ -326,7 +313,7 @@ def _collect_class_records(flight_records: FlightTable) -> SeatClassTable:
     seat_classes = seat_classes.sort("quality", ascending=False)
     return seat_classes
 
-def _collect_route_records(flight_records) -> dict[dict]:
+def _collect_route_records(flight_records: FlightTable) -> RouteTable:
     """Builds route records from flight records.
 
     Although routes already store their flight_count, the value is
@@ -334,44 +321,24 @@ def _collect_route_records(flight_records) -> dict[dict]:
     whatever flights are passed into it.
     """
     route_flight_count = defaultdict(int)
-    route_codes = {}
     for _, flight in flight_records.items():
         airport_fids = (
             flight["origin_airport_fid"],
             flight["destination_airport_fid"],
         )
         route_flight_count[airport_fids] += 1
-        route_codes[airport_fids] = (
-            flight["origin_airport_code"],
-            flight["destination_airport_code"],
-        )
     ranks = _rank_count(route_flight_count)
-    route_lookup = Route.every().copy() \
-        .set_index(["origin_airport_fid", "destination_airport_fid"])
-    route_records = {}
-    for route_fids, count in route_flight_count.items():
-        route_row = route_lookup.loc[route_fids]
-        if pd.isna(route_row["distance_mi"]):
-            distance = None
-        else:
-            distance = int(route_row["distance_mi"])
-        record = {
-            "origin_airport_code": route_codes[route_fids][0],
-            "destination_airport_code": route_codes[route_fids][1],
-            "distance_mi": distance,
-            "count": count,
-            "rank": ranks[route_fids],
-        }
-        route_records[route_fids] = record
-    route_records = dict(sorted(
-        route_records.items(),
-        key=lambda x: (
-            -x[1]["count"],
-            x[1]["origin_airport_code"],
-            x[1]["destination_airport_code"]
-        )
-    ))
-    return route_records
+    routes = RouteTable.from_fids(route_flight_count.keys()).joined()
+    print(routes)
+    for route_fid, route in routes.items():
+        route["count"] = route_flight_count[route_fid]
+        route["rank"] = ranks[route_fid]
+        # Add derived columns for sorting.
+        route["origin_airport_code"] = route["origin_airport"].code()
+        route["destination_airport_code"] = route["destination_airport"].code()
+    routes = routes.sort("destination_airport_code") \
+        .sort("origin_airport_code").sort("count", ascending=False)
+    return routes
 
 def _collect_tail_number_records(flight_records) -> dict[dict]:
     """Builds tail number records from flight records."""

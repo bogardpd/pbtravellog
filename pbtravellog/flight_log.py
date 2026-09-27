@@ -487,11 +487,48 @@ class SeatClassTable(RecordTable):
     RECORD_CLASS = SeatClass
 
 class Route(Record):
-    """Represents a route record"""
+    """Represents a route record."""
     DATA_FILE = FLIGHT_LOG
     LAYER = "routes"
     FIND_BY_CODES = []
     DTYPES = {"distance_mi": "Int64"}
+
+class RouteTable(RecordTable):
+    """Represents a dict of Route instances."""
+    RECORD_CLASS = Route
+
+    def joined(self) -> Self:
+        """Joins airports on fid fields."""
+        airports = AirportTable.from_all()
+        joins = [
+            (airports, "origin_airport_fid", "origin_airport"),
+            (airports, "destination_airport_fid", "destination_airport"),
+        ]
+        for _, v in self.items():
+            for j in joins:
+                if v.get(j[1]) is None:
+                    v[j[2]] = {}
+                else:
+                    v[j[2]] = j[0][v[j[1]]]
+        return self
+
+    @classmethod
+    def from_all(cls):
+        """Creates a table of routes with a tuple of airports as keys.
+        
+        Route FIDs could change when they are refreshed, so we should
+        always look up routes by an origin airport/destination airport
+        fid pair.
+        """
+        rec_table = {
+            (v.get("origin_airport_fid"), v.get("destination_airport_fid")): v
+            for _, v in super().from_all().items()
+        }
+        for r in rec_table.values():
+            # Remove flight_count key, since we'll calculate count
+            # separately.
+            r.pop("flight_count", None)
+        return cls(rec_table)
 
 
 def airport_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
