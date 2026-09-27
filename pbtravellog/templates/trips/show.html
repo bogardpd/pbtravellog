@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Trips", url_for("index_trips")), (trip.name, None)] %}
-{% block title %}{{ trip.name }}{% endblock %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Trips", url_for("index_trips")), (trip.get("name"), None)] %}
+{% block title %}{{ trip.get("name") }}{% endblock %}
 {% block content %}
 
-{% if trip.get("comments") is not None %}
+{% if trip.get("comments") is not none %}
 <p>{{ trip["comments"] }}</p>
 {% endif %}
 

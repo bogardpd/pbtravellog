@@ -11,11 +11,11 @@
   <tbody>
     {% for fid, airport in airports.items() %}
     <tr>
-      <td class="rank">{% if loop.first or airport.rank != loop.previtem[1].rank %}{{ airport.rank }}{% else %}⋮{% endif %}</td>
-      <td><a href="{{ url_for('show_airport', airport_fid=fid )}}">{{ airport.name }}</a></td>
-      <td>{% if airport.iata_code %}<span class="code">{{ airport.iata_code }}</span>{% endif %}</td>
-      <td>{% if airport.icao_code %}<span class="code">{{ airport.icao_code }}</span>{% endif %}</td>
-      <td>{{ airport.visits }}</td>
+      <td class="rank">{% if loop.first or airport.get("rank") != loop.previtem[1].get("rank") %}{{ airport.get("rank") }}{% else %}⋮{% endif %}</td>
+      <td><a href="{{ url_for('show_airport', airport_fid=fid )}}">{{ airport.get("name") }}</a></td>
+      <td>{% if airport.get("iata_code") %}<span class="code">{{ airport["iata_code"] }}</span>{% endif %}</td>
+      <td>{% if airport.get("icao_code") %}<span class="code">{{ airport["icao_code"] }}</span>{% endif %}</td>
+      <td>{{ airport.get("visits") }}</td>
     </tr>
     {% endfor %}
     <tr class="total">

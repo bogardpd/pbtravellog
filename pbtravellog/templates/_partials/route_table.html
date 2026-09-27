@@ -10,16 +10,16 @@
   <tbody>
     {% for fids, route in routes.items() %}
     <tr>
-      <td class="rank">{% if loop.first or route.rank != loop.previtem[1].rank %}{{ route.rank }}{% else %}⋮{% endif %}</td>
+      <td class="rank">{% if loop.first or route.get("rank") != loop.previtem[1].get("rank") %}{{ route.get("rank") }}{% else %}⋮{% endif %}</td>
       <td>
         <a href="{{ url_for('show_route', origin_airport_fid=fids[0], destination_airport_fid=fids[1]) }}">
-          <span class="code">{{ route.origin_airport_code }}</span>
+          {% if route.get("origin_airport") is not none %}<span class="code">{{ route["origin_airport"].code() }}</span>{% endif %}
           &rarr;
-          <span class="code">{{ route.destination_airport_code }}</span>
+          {% if route.get("destination_airport") is not none %}<span class="code">{{ route["destination_airport"].code() }}</span>{% endif %}
         </a>
       </td>
-      <td>{% if route.distance_mi or route.distance_mi == 0 %}{{ route.distance_mi }} mi{% endif %}</td>
-      <td>{{ route.count }}</td>
+      <td>{% if route.get("distance_mi") is not none %}{{ route["distance_mi"] }} mi{% endif %}</td>
+      <td>{{ route.get("count") }}</td>
     </tr>
     {% endfor %}
     <tr class="total">

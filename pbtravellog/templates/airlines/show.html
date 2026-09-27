@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Airlines", url_for("index_airlines")), (airline.name, None)] %}
-{% block title %}{{ airline.name }}{% endblock %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Airlines", url_for("index_airlines")), (airline.get("name"), None)] %}
+{% block title %}{{ airline.get("name") }}{% endblock %}
 {% block content %}
 <table class="summary">
   <thead>
@@ -12,22 +12,22 @@
   </thead>
   <tbody>
     <tr>
-      <td><span class="code">{{ airline.iata_code }}</span></td>
-      <td><span class="code">{{ airline.icao_code }}</span></td>
+      <td><span class="code">{{ airline.get("iata_code") }}</span></td>
+      <td><span class="code">{{ airline.get("icao_code") }}</span></td>
       <td>{{ flights | length }}</td>
     </tr>
   </tbody>
 </table>
 
-<h2>{{ airline.name }} Operators</h2>
+<h2>{{ airline.get("name") }} Operators</h2>
 {% include "_partials/operator_table.html" %}
 
-<h2>{{ airline.name }} Aircraft Types</h2>
+<h2>{{ airline.get("name") }} Aircraft Types</h2>
 {% include "_partials/aircraft_type_table.html" %}
 
-<h2>{{ airline.name }} Classes</h2>
+<h2>{{ airline.get("name") }} Classes</h2>
 {% include "_partials/class_table.html" %}
 
-<h2>{{ airline.name }} Flights</h2>
+<h2>{{ airline.get("name") }} Flights</h2>
 {% include "_partials/flight_table.html" %}
 {% endblock content %}

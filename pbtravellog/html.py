@@ -334,20 +334,20 @@ def _collect_route_records(flight_records: FlightTable) -> RouteTable:
         .sort("origin_airport_code").sort("count", ascending=False)
     return routes
 
-def _collect_tail_number_records(flight_records) -> dict[dict]:
+def _collect_tail_number_records(flight_records: FlightTable) -> dict[dict]:
     """Builds tail number records from flight records."""
     tail_flight_count = defaultdict(int)
-    equipment = {}
+    aircraft_types = {}
     for _, flight in flight_records.items():
         tail_flight_count[flight["tail_number"]] += 1
-        equipment[flight["tail_number"]] = flight["aircraft_type_name"]
+        aircraft_types[flight["tail_number"]] = flight["aircraft_type"]
     tail_flight_count.pop(None, None) # Remove None count
     ranks = _rank_count(tail_flight_count)
     tail_number_records = {}
     for tail_number, count in tail_flight_count.items():
         record = {
             "formatted": Flight.format_tail_number(tail_number),
-            "aircraft_type_name": equipment[tail_number],
+            "aircraft_type": aircraft_types[tail_number],
             "count": count,
             "rank": ranks[tail_number],
         }

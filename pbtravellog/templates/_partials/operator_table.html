@@ -16,8 +16,8 @@
       <td class="rank">{% if loop.first or operator.get("rank") != loop.previtem[1].get("rank") %}{{ operator.get("rank") }}{% else %}⋮{% endif %}</td>
       <td>{{ icons.airline(fid) }}</td>
       <td><a href="{{ url_for('show_operator', operator_fid=fid) }}">{{ operator.name }}</a></td>
-      <td>{% if operator.get("iata_code") %}<span class="code">{{ operator.get("iata_code") }}</span>{% endif %}</td>
-      <td>{% if operator.get("iata_code") %}<span class="code">{{ operator.get("icao_code") }}</span>{% endif %}</td>
+      <td>{% if operator.get("iata_code") %}<span class="code">{{ operator["iata_code"] }}</span>{% endif %}</td>
+      <td>{% if operator.get("iata_code") %}<span class="code">{{ operator["icao_code"] }}</span>{% endif %}</td>
       <td>{{ operator.get("count") }}</td>
     </tr>
     {% endfor %}

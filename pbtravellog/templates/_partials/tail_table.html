@@ -10,10 +10,10 @@
   <tbody>
     {% for tail_number, tail_number_record in tail_numbers.items() %}
     <tr>
-      <td class="rank">{% if loop.first or tail_number_record.rank != loop.previtem[1].rank %}{{ tail_number_record.rank }}{% else %}⋮{% endif %}</td>
+      <td class="rank">{% if loop.first or tail_number_record.get("rank") != loop.previtem[1].get("rank") %}{{ tail_number_record.get("rank") }}{% else %}⋮{% endif %}</td>
       <td><a href="{{ url_for('show_tail_number', tail_number=tail_number) }}">{{ tail_number_record.formatted }}</a></td>
-      <td>{{ tail_number_record.aircraft_type_name }}</td>
-      <td>{{ tail_number_record.count }}</td>
+      <td>{% if tail_number_record.get("aircraft_type") is not none %}{{ tail_number_record["aircraft_type"].get("name") }}{% endif %}</td>
+      <td>{{ tail_number_record.get("count") }}</td>
     </tr>
     {% endfor %}
     <tr class="total">
