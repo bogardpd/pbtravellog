@@ -109,3 +109,9 @@ class RecordTable(dict):
         record_dict = records.to_dict(orient="index")
         record_dict = {k: cls.RECORD_CLASS(v) for k, v in record_dict.items()}
         return cls(record_dict)
+
+    @classmethod
+    def from_fids(cls, fids: list[int]) -> Self:
+        """Creates a table with records matching a list of fids."""
+        rec_table = {k: v for k, v in cls.from_all().items() if k in fids}
+        return cls(rec_table)

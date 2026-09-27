@@ -434,6 +434,14 @@ class FlightTable(RecordTable):
     """Represents a dict of Flight instances."""
     RECORD_CLASS = Flight
 
+    def filter_by_aircraft_type(self, aircraft_type_fid: int) -> Self:
+        """Filters flight records by a trip."""
+        records = {
+            k: v for k, v in self.items()
+            if v["aircraft_type_fid"] == aircraft_type_fid
+        }
+        return self.__class__(records)
+
     def filter_by_trip(self, trip_fid: int) -> Self:
         """Filters flight records by a trip."""
         records = {

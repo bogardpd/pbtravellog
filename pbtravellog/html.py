@@ -12,7 +12,8 @@ import pandas as pd
 
 # Project imports
 from pbtravellog.flight_log import (
-    Flight, FlightTable, Airport, Airline, AircraftType, SeatClass, Route
+    Flight, FlightTable, Airport, AirlineTable,
+    AircraftTypeTable, SeatClassTable, Route
 )
 from pbtravellog.travel_log import Trip
 
@@ -52,9 +53,7 @@ def create_browser_app():
     def show_aircraft_type(aircraft_type_fid: int):
         aircraft_type_records = _collect_aircraft_type_records(all_flights)
         aircraft_type = aircraft_type_records[aircraft_type_fid]
-        flights = _filter_flights_by_aircraft_type(
-            all_flights, aircraft_type_fid,
-        )
+        flights = all_flights.filter_by_aircraft_type(aircraft_type_fid)
         airlines = _collect_airline_records(flights, operators=False)
         operators = _collect_airline_records(flights, operators=True)
         classes = _collect_class_records(flights)
@@ -232,7 +231,6 @@ def create_browser_app():
     @app.route("/trips/<int:trip_fid>/")
     def show_trip(trip_fid: int):
         trip = all_trips[trip_fid]
-        # flights = _filter_flights_by_trip(all_flights, trip_fid)
         flights = all_flights.filter_by_trip(trip_fid)
         return render_template("trips/show.html", trip=trip, flights=flights)
 
@@ -245,64 +243,41 @@ def run(port):
     webbrowser.open(f"http://localhost:{port}")
     app.run(host="127.0.0.1", port=port)
 
-def _collect_aircraft_type_records(flight_records) -> dict[dict]:
-    """Builds aircraft type records from flight records."""
+def _collect_aircraft_type_records(
+    flight_records: FlightTable
+) -> AircraftTypeTable:
+    """Builds aircraft type records from a FlightTable."""
     aircraft_type_flight_count = defaultdict(int)
     for _, flight in flight_records.items():
         aircraft_type_flight_count[flight["aircraft_type_fid"]] += 1
     aircraft_type_flight_count.pop(None, None) # Remove None count
     ranks = _rank_count(aircraft_type_flight_count)
-    aircraft_type_records = {}
-    all_aircraft_types = AircraftType.every()
-    for aircraft_type_fid, count in aircraft_type_flight_count.items():
-        aircraft_type_row = all_aircraft_types.loc[aircraft_type_fid]
-        record = {
-            "manufacturer": aircraft_type_row["manufacturer"],
-            "name": aircraft_type_row["name"],
-            "iata_code": aircraft_type_row["iata_code"],
-            "icao_code": aircraft_type_row["icao_code"],
-            "count": count,
-            "rank": ranks[aircraft_type_fid],
-        }
-        record = {
-            k: (None if pd.isna(v) else v) for k, v in record.items()
-        }
-        aircraft_type_records[aircraft_type_fid] = record
-    aircraft_type_records = dict(sorted(
-        aircraft_type_records.items(),
-        key=lambda x: (-x[1]["count"], x[1]["manufacturer"], x[1]["name"])
-    ))
-    return aircraft_type_records
+    aircraft_types = AircraftTypeTable.from_fids(
+        aircraft_type_flight_count.keys()
+    )
+    for aircraft_type_fid, aircraft_type in aircraft_types.items():
+        aircraft_type["count"] = aircraft_type_flight_count[aircraft_type_fid]
+        aircraft_type["rank"] = ranks[aircraft_type_fid]
+    aircraft_types = aircraft_types.sort("name").sort("manufacturer") \
+        .sort("count", ascending=False)
+    return aircraft_types
 
 def _collect_airline_records(
-    flight_records, operators=False,
-) -> dict[dict]:
+    flight_records: FlightTable, operators: bool=False,
+) -> AirlineTable:
     """Builds airline records from flight records."""
     column = "operator_fid" if operators else "airline_fid"
     airline_flight_count = defaultdict(int)
     for _, flight in flight_records.items():
         airline_flight_count[flight[column]] += 1
     airline_flight_count.pop(None, None) # Remove None count
-    all_airlines = Airline.every()
     ranks = _rank_count(airline_flight_count)
-    airline_records = {}
-    for airline_fid, count in airline_flight_count.items():
-        airline_row = all_airlines.loc[airline_fid]
-        record = {
-            "name": airline_row["name"],
-            "iata_code": airline_row["iata_code"],
-            "icao_code": airline_row["icao_code"],
-            "count": count,
-            "rank": ranks[airline_fid],
-        }
-        record = {
-            k: (None if pd.isna(v) else v) for k, v in record.items()
-        }
-        airline_records[airline_fid] = record
-    airline_records = dict(sorted(
-        airline_records.items(), key=lambda x: (-x[1]["count"], x[1]["name"])
-    ))
-    return airline_records
+    airlines = AirlineTable.from_fids(airline_flight_count.keys())
+    for airline_fid, airline in airlines.items():
+        airline["count"] = airline_flight_count[airline_fid]
+        airline["rank"] = ranks[airline_fid]
+    airlines = airlines.sort("name").sort("count", ascending=False)
+    return airlines
 
 def _collect_airport_records(flight_records) -> dict[dict]:
     """Builds airport records from flight records."""
@@ -338,31 +313,18 @@ def _collect_airport_records(flight_records) -> dict[dict]:
     ))
     return airport_records
 
-def _collect_class_records(flight_records) -> dict[dict]:
+def _collect_class_records(flight_records: FlightTable) -> SeatClassTable:
     """Builds flight class records from flight records."""
-    class_flight_count = defaultdict(int)
+    seat_class_flight_count = defaultdict(int)
     for _, flight in flight_records.items():
-        class_flight_count[flight["class_fid"]] += 1
-    class_flight_count.pop(None, None) # Remove none count
+        seat_class_flight_count[flight["class_fid"]] += 1
+    seat_class_flight_count.pop(None, None) # Remove none count
     # Classes are always sorted by quality, so no need to rank.
-    class_records = {}
-    all_classes = SeatClass.every()
-    for class_fid, count in class_flight_count.items():
-        class_row = all_classes.loc[class_fid]
-        record = {
-            "quality": class_row["quality"],
-            "name": class_row["name"],
-            "description": class_row["description"],
-            "count": count,
-        }
-        record = {
-            k: (None if pd.isna(v) else v) for k, v in record.items()
-        }
-        class_records[class_fid] = record
-    class_records = dict(sorted(
-        class_records.items(), key=lambda x: -x[1]["quality"],
-    ))
-    return class_records
+    seat_classes = SeatClassTable.from_fids(seat_class_flight_count.keys())
+    for seat_class_fid, seat_class in seat_classes.items():
+        seat_class["count"] = seat_class_flight_count[seat_class_fid]
+    seat_classes = seat_classes.sort("quality", ascending=False)
+    return seat_classes
 
 def _collect_route_records(flight_records) -> dict[dict]:
     """Builds route records from flight records.
@@ -435,16 +397,6 @@ def _collect_tail_number_records(flight_records) -> dict[dict]:
     ))
     return tail_number_records
 
-def _filter_flights_by_aircraft_type(
-    flight_records, aircraft_type_fid: int,
-) -> dict[dict]:
-    """Filters flight records by an aircraft type."""
-    records = {
-        k: v for k, v in flight_records.items()
-        if v["aircraft_type_fid"] == aircraft_type_fid
-    }
-    return records
-
 def _filter_flights_by_airline(
     flight_records, airline_fid: int, operator=False,
 ) -> dict[dict]:
@@ -493,14 +445,6 @@ def _filter_flights_by_tail_number(
     records = {
         k: v for k, v in flight_records.items()
         if v["tail_number"] == tail_number
-    }
-    return records
-
-def _filter_flights_by_trip(flight_records, trip_fid: int) -> dict[dict]:
-    """Filters flight records by a trip."""
-    records = {
-        k: v for k, v in flight_records.items()
-        if v["trip_fid"] == trip_fid
     }
     return records
 
