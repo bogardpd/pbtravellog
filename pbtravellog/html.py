@@ -8,12 +8,11 @@ import webbrowser
 
 # Third-party imports
 from flask import Flask, current_app, render_template, url_for
-import pandas as pd
 
 # Project imports
 from pbtravellog.flight_log import (
     Flight, FlightTable, AirportTable, AirlineTable,
-    AircraftTypeTable, SeatClassTable, Route, RouteTable
+    AircraftTypeTable, SeatClassTable, RouteTable
 )
 from pbtravellog.travel_log import Trip
 
@@ -86,9 +85,7 @@ def create_browser_app():
             all_flights, operators=False,
         )
         airline = airline_records[airline_fid]
-        flights = _filter_flights_by_airline(
-            all_flights, airline_fid, operator=False,
-        )
+        flights = all_flights.filter_by_airline(airline_fid, operator=False)
         operators = _collect_airline_records(flights, operators=True)
         aircraft_types = _collect_aircraft_type_records(flights)
         classes = _collect_class_records(flights)
@@ -107,9 +104,7 @@ def create_browser_app():
             all_flights, operators=True,
         )
         operator = operator_records[operator_fid]
-        flights = _filter_flights_by_airline(
-            all_flights, operator_fid, operator=True,
-        )
+        flights = all_flights.filter_by_airline(operator_fid, operator=True)
         airlines = _collect_airline_records(flights, operators=False)
         aircraft_types = _collect_aircraft_type_records(flights)
         classes = _collect_class_records(flights)
@@ -131,7 +126,7 @@ def create_browser_app():
     def show_airport(airport_fid: int):
         airport_records = _collect_airport_records(all_flights)
         airport = airport_records[airport_fid]
-        flights = _filter_flights_by_airport(all_flights, airport_fid)
+        flights = all_flights.filter_by_airport(airport_fid)
         airlines = _collect_airline_records(flights, operators=False)
         operators = _collect_airline_records(flights, operators=True)
         aircraft_types = _collect_aircraft_type_records(flights)
@@ -156,7 +151,7 @@ def create_browser_app():
     def show_class(class_fid: int):
         class_records = _collect_class_records(all_flights)
         seat_class = class_records[class_fid]
-        flights = _filter_flights_by_class(all_flights, class_fid)
+        flights = all_flights.filter_by_class(class_fid)
         airlines = _collect_airline_records(flights, operators=False)
         operators = _collect_airline_records(flights, operators=True)
         aircraft_types = _collect_aircraft_type_records(flights)
@@ -181,7 +176,7 @@ def create_browser_app():
         route_records = _collect_route_records(all_flights)
         fids = (origin_airport_fid, destination_airport_fid)
         route = route_records[fids]
-        flights = _filter_flights_by_route(all_flights, *fids)
+        flights = all_flights.filter_by_route(*fids)
         airlines = _collect_airline_records(flights, operators=False)
         operators = _collect_airline_records(flights, operators=True)
         aircraft_types = _collect_aircraft_type_records(flights)
@@ -209,7 +204,7 @@ def create_browser_app():
     def show_tail_number(tail_number: str):
         tail_number_records = _collect_tail_number_records(all_flights)
         tail_number_record = tail_number_records[tail_number]
-        flights = _filter_flights_by_tail_number(all_flights, tail_number)
+        flights = all_flights.filter_by_tail_number(tail_number)
         airlines = _collect_airline_records(flights, operators=False)
         operators = _collect_airline_records(flights, operators=True)
         aircraft_types = _collect_aircraft_type_records(flights)
@@ -329,7 +324,6 @@ def _collect_route_records(flight_records: FlightTable) -> RouteTable:
         route_flight_count[airport_fids] += 1
     ranks = _rank_count(route_flight_count)
     routes = RouteTable.from_fids(route_flight_count.keys()).joined()
-    print(routes)
     for route_fid, route in routes.items():
         route["count"] = route_flight_count[route_fid]
         route["rank"] = ranks[route_fid]
@@ -363,57 +357,6 @@ def _collect_tail_number_records(flight_records) -> dict[dict]:
         key=lambda x: (-x[1]["count"], x[0]),
     ))
     return tail_number_records
-
-def _filter_flights_by_airline(
-    flight_records, airline_fid: int, operator=False,
-) -> dict[dict]:
-    """Filters flight records by an airline."""
-    column = "operator_fid" if operator else "airline_fid"
-    records = {
-        k: v for k, v in flight_records.items()
-        if v[column] == airline_fid
-    }
-    return records
-
-def _filter_flights_by_airport(flight_records, airport_fid: int) -> dict[dict]:
-    """Filters flight records by an airport."""
-    records = {
-        k: v for k, v in flight_records.items()
-        if airport_fid in [
-            v["origin_airport_fid"],
-            v["destination_airport_fid"],
-        ]
-    }
-    return records
-
-def _filter_flights_by_class(flight_records, class_fid: int) -> dict[dict]:
-    """Filters flight records by a flight class."""
-    records = {
-        k: v for k, v in flight_records.items()
-        if v["class_fid"] == class_fid
-    }
-    return records
-
-def _filter_flights_by_route(
-    flight_records, orig_fid: int, dest_fid: int
-) -> dict[dict]:
-    """Filters flight records by a route."""
-    records = {
-        k: v for k, v in flight_records.items()
-        if v["origin_airport_fid"] == orig_fid
-        and v["destination_airport_fid"] == dest_fid
-    }
-    return records
-
-def _filter_flights_by_tail_number(
-    flight_records, tail_number: str,
-) -> dict[dict]:
-    """Filters flight records by a tail number."""
-    records = {
-        k: v for k, v in flight_records.items()
-        if v["tail_number"] == tail_number
-    }
-    return records
 
 def _format_date_range(dates: list[date]) -> str:
     """Formats a date range."""

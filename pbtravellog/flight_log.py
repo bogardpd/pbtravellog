@@ -442,6 +442,54 @@ class FlightTable(RecordTable):
         }
         return self.__class__(records)
 
+    def filter_by_airline(self,
+        airline_fid: int,
+        operator: bool = False,
+    ) -> Self:
+        """Filters flight records by an airline."""
+        column = "operator_fid" if operator else "airline_fid"
+        records = {
+            k: v for k, v in self.items()
+            if v[column] == airline_fid
+        }
+        return self.__class__(records)
+
+    def filter_by_airport(self, airport_fid: int) -> Self:
+        """Filters flight records by an airport."""
+        records = {
+            k: v for k, v in self.items()
+            if airport_fid in [
+                v["origin_airport_fid"],
+                v["destination_airport_fid"],
+            ]
+        }
+        return self.__class__(records)
+
+    def filter_by_class(self, class_fid: int) -> Self:
+        """Filters flight records by a flight class."""
+        records = {
+            k: v for k, v in self.items()
+            if v["class_fid"] == class_fid
+        }
+        return self.__class__(records)
+
+    def filter_by_route(self, orig_fid: int, dest_fid: int) -> Self:
+        """Filters flight records by a route."""
+        records = {
+            k: v for k, v in self.items()
+            if v["origin_airport_fid"] == orig_fid
+            and v["destination_airport_fid"] == dest_fid
+        }
+        return self.__class__(records)
+
+    def filter_by_tail_number(self, tail_number: str) -> Self:
+        """Filters flight records by a tail number."""
+        records = {
+            k: v for k, v in self.items()
+            if v["tail_number"] == tail_number
+        }
+        return self.__class__(records)
+
     def filter_by_trip(self, trip_fid: int) -> Self:
         """Filters flight records by a trip."""
         records = {
