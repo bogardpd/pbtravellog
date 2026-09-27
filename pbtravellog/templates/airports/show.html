@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Airports", url_for("index_airports")), (airport.get("iata_code") if airport.get("iata_code") is not none else airport.get("name"), None)] %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Airports", url_for("index_airports")), (airport.iata_or_name(), None)] %}
 {% block title %}{{ airport.get("name") }}{% endblock %}
 {% block content %}
 <table class="summary">
@@ -23,18 +23,18 @@
   </tbody>
 </table>
 
-<h2>{{ airport["iata_code"] if airport.get("iata_code") is not none else airport.get("name") }} Airlines</h2>
+<h2>{{ airport.iata_or_name() }} Airlines</h2>
 {% include "_partials/airline_table.html" %}
 
-<h2>{{ airport["iata_code"] if airport.get("iata_code") is not none else airport.get("name") }} Operators</h2>
+<h2>{{ airport.iata_or_name() }} Operators</h2>
 {% include "_partials/operator_table.html" %}
 
-<h2>{{ airport["iata_code"] if airport.get("iata_code") is not none else airport.get("name") }} Aircraft Types</h2>
+<h2>{{ airport.iata_or_name() }} Aircraft Types</h2>
 {% include "_partials/aircraft_type_table.html" %}
 
-<h2>{{ airport["iata_code"] if airport.get("iata_code") is not none else airport.get("name") }} Classes</h2>
+<h2>{{ airport.iata_or_name() }} Classes</h2>
 {% include "_partials/class_table.html" %}
 
-<h2>{{ airport["iata_code"] if airport.get("iata_code") is not none else airport.get("name") }} Flights</h2>
+<h2>{{ airport.iata_or_name() }} Flights</h2>
 {% include "_partials/flight_table.html" %}
 {% endblock content %}

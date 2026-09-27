@@ -84,6 +84,10 @@ class Airport(Record):
         return self.get("iata_code") or self.get("icao_code") \
             or self.get("faa_lid")
 
+    def iata_or_name(self) -> str:
+        """Returns IATA code, or name if no IATA code."""
+        return self.get("iata_code") or self.get("name")
+
 class AirportTable(RecordTable):
     """Represents a dict of Airport instances."""
     RECORD_CLASS = Airport
