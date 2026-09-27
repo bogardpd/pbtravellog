@@ -31,6 +31,12 @@
 </div>
 
 <table class="flight-details">
+  {% if flight.get("purpose") is not none %}
+  <tr>
+    <th scope="row">Purpose</th>
+    <td>{{ flight["purpose"] }}</td>
+  </tr>
+  {% endif %}
   {% if flight.get("class_fid") is not none %}
   <tr>
     <th scope="row">Seat Class</th>
