@@ -10,7 +10,7 @@
     {% for fid, aircraft_type in aircraft_types.items() %}
     <tr>
       <td class="rank">{% if loop.first or aircraft_type.get("rank") != loop.previtem[1].get("rank") %}{{ aircraft_type.get("rank") }}{% else %}⋮{% endif %}</td>
-      <td><a href="{{ url_for('show_aircraft_type', aircraft_type_fid=fid) }}">{{ aircraft_type.get("manufacturer") }} {{ aircraft_type.get("name") }}</a></td>
+      <td><a href="{{ url_for('show_aircraft_type', aircraft_type_fid=fid) }}">{{ aircraft_type.full_name() }}</a></td>
       <td>{% if aircraft_type.get("iata_code") is not none %}<span class="code">{{ aircraft_type["iata_code"] }}</span>{% endif %}</td>
       <td>{% if aircraft_type.get("icao_code") is not none %}<span class="code">{{ aircraft_type["icao_code"] }}</span>{% endif %}</td>
       <td>{{ aircraft_type.get("count") }}</td>

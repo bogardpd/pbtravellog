@@ -70,7 +70,7 @@
   {% if flight.get("aircraft_type_fid") is not none %}
   <tr>
     <th scope="row">Aircraft Type</th>
-    <td><a href="{{ url_for('show_aircraft_type', aircraft_type_fid=flight['aircraft_type_fid']) }}">{{ flight["aircraft_type"].get("manufacturer") }} {{ flight["aircraft_type"].get("name") }}</a></td>
+    <td><a href="{{ url_for('show_aircraft_type', aircraft_type_fid=flight['aircraft_type_fid']) }}">{{ flight["aircraft_type"].full_name() }}</a></td>
   </tr>
   {% endif %}
   {% if flight.get("aircraft_name") is not none %}

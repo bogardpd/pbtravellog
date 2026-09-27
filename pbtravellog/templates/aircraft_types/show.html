@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Aircraft Types", url_for("index_aircraft_types")), (aircraft_type.get("name"), None)] %}
-{% block title %}{{ aircraft_type.get("manufacturer") }} {{ aircraft_type.get("name") }}{% endblock %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Aircraft Types", url_for("index_aircraft_types")), (aircraft_type.full_name(), None)] %}
+{% block title %}{{ aircraft_type.full_name() }}{% endblock %}
 {% block content %}
 <table class="summary">
   <thead>
@@ -19,15 +19,15 @@
   </tbody>
 </table>
 
-<h2>{{ aircraft_type.get("manufacturer") }} {{ aircraft_type.get("name") }} Airlines</h2>
+<h2>{{ aircraft_type.full_name() }} Airlines</h2>
 {% include "_partials/airline_table.html" %}
 
-<h2>{{ aircraft_type.get("manufacturer") }} {{ aircraft_type.get("name") }} Operators</h2>
+<h2>{{ aircraft_type.full_name() }} Operators</h2>
 {% include "_partials/operator_table.html" %}
 
-<h2>{{ aircraft_type.get("manufacturer") }} {{ aircraft_type.get("name") }} Classes</h2>
+<h2>{{ aircraft_type.full_name() }} Classes</h2>
 {% include "_partials/class_table.html" %}
 
-<h2>{{ aircraft_type.get("manufacturer") }} {{ aircraft_type.get("name") }} Flights</h2>
+<h2>{{ aircraft_type.full_name() }} Flights</h2>
 {% include "_partials/flight_table.html" %}
 {% endblock content %}

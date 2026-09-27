@@ -49,6 +49,14 @@ class AircraftType(Record):
         "icao_code": "string",
     }
 
+    def full_name(self) -> str:
+        """Returns manufacturer and name."""
+        mfr = self.get("manufacturer")
+        name = self.get("name")
+        if mfr is None or name.startswith(mfr):
+            return name
+        return f"{mfr} {name}"
+
 class AircraftTypeTable(RecordTable):
     """Represents a dict of AircraftType instances."""
     RECORD_CLASS = AircraftType
