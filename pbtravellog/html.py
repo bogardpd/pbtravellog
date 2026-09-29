@@ -18,6 +18,7 @@ def create_browser_app():
 
     app.jinja_env.filters["format_date_range"] = _format_date_range
     app.jinja_env.filters["format_dt"] = _format_dt
+    app.jinja_env.filters["format_duration"] = _format_duration
     app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
 
     all_flights = FlightTable.from_all().joined().sort("departure_utc")
@@ -220,6 +221,19 @@ def _format_dt(dt, include_time=True, include_tz=False) -> str:
     if include_tz:
         parts.append("%Z")
     return dt.strftime(" ".join(parts))
+
+def _format_duration(seconds: int) -> str | None:
+    """Returns flight duration in hours and minutes."""
+    if seconds < 0:
+        return None
+    days, remainder = divmod(int(seconds), 3600*24)
+    hours, remainder = divmod(remainder, 3600)
+    minutes = remainder // 60
+    if days > 0:
+        return f"{days} d {hours:02} h {minutes:02} m"
+    if hours > 0:
+        return f"{hours} h {minutes:02} m"
+    return f"{minutes} m"
 
 def _img_path_airline_icon(airline_fid: int):
     """Returns the path for an airline icon or none."""

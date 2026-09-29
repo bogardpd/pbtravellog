@@ -121,16 +121,11 @@ class Flight(Record):
         "geom_source": "string",
     }
 
-    def duration_h_m(self) -> tuple[int] | None:
-        """Returns flight duration in hours and minutes."""
+    def duration(self) -> int | None:
+        """Returns flight duration in seconds."""
         if self["arrival_utc"] is None:
             return None
-        dur_s = (
-            self["arrival_utc"] - self["departure_utc"]
-        ).total_seconds()
-        hours, remainder = divmod(dur_s, 3600)
-        minutes = remainder // 60
-        return (int(hours), int(minutes))
+        return (self["arrival_utc"] - self["departure_utc"]).total_seconds()
 
     def exit_if_not_complete(self) -> None:
         """Exits if this flight is not complete."""
@@ -386,56 +381,6 @@ class Flight(Record):
         flight["fa_flight_id"] = fa_json.get("fa_flight_id")
         return flight
 
-    @classmethod
-    def joined(cls) -> gpd.GeoDataFrame:
-        """Returns all flight records joined to other tables."""
-        # Load tables.
-        flights_gdf = cls.every().copy()
-        airports_df = pd.DataFrame(Airport.every())
-        airports_df = airports_df.rename(
-            # "airport_" is added in join, so just name this "geom"
-            columns={"geometry": "geom"}
-        )
-        airlines_df = pd.DataFrame(Airline.every())
-        aircraft_types_df = pd.DataFrame(AircraftType.every())
-        classes_df = pd.DataFrame(SeatClass.every())
-        trips_df = pd.DataFrame(Trip.every())
-
-        # Perform joins.
-        flights_gdf = flights_gdf.join(
-            airports_df.add_prefix("origin_airport_"),
-            on="origin_airport_fid",
-        ).join(
-            airports_df.add_prefix("destination_airport_"),
-            on="destination_airport_fid",
-        ).join(
-            airlines_df.add_prefix("airline_"),
-            on="airline_fid",
-        ).join(
-            airlines_df.add_prefix("operator_"),
-            on="operator_fid",
-        ).join(
-            airlines_df.add_prefix("codeshare_airline_"),
-            on="codeshare_airline_fid",
-        ).join(
-            aircraft_types_df.add_prefix("aircraft_type_"),
-            on="aircraft_type_fid",
-        ).join(
-            classes_df.add_prefix("class_"),
-            on="class_fid"
-        ).join(
-            trips_df.add_prefix("trip_"),
-            on="trip_fid",
-        )
-        # Convert to dict.
-        flights_gdf = flights_gdf.astype(object)
-        flights_gdf = flights_gdf.where(pd.notna(flights_gdf), None)
-        records = flights_gdf.to_dict(orient="index")
-        # Add derived fields.
-        records = {k: _add_derived_fields(v) for k, v in records.items()}
-        dict(sorted(records.items(), key=lambda x: x[1]["departure_utc"]))
-        return records
-
     @staticmethod
     def parse_dt(dt_str) -> datetime | None:
         """Parses a datetime string."""
@@ -652,6 +597,14 @@ class FlightTable(RecordTable):
                 else:
                     v[j[2]] = j[0][v[j[1]]]
         return self
+
+    def total_duration(self) -> int:
+        """Returns the total duration of all flights in seconds."""
+        durations = [
+            f.duration() if f.duration() else 0
+            for f in self.values()
+        ]
+        return int(sum(durations))
 
 class SeatClass(Record):
     """Represents a flight class record."""
@@ -1103,40 +1056,6 @@ def split_at_antimeridian(track_ls: LineString) -> MultiLineString:
     # Filter out tracks with only one point.
     tracks = [track for track in tracks if len(track) > 1]
     return MultiLineString(tracks)
-
-def _add_derived_fields(flight: dict) -> dict[dict]:
-    """Calculates derived fields for a Flight record."""
-    flight["name"] = _flight_name(
-        flight["airline_name"], flight["flight_number"]
-    )
-    flight["departure_local"] = _local_dt(
-        flight["departure_utc"], flight["origin_airport_time_zone"]
-    )
-    if flight["arrival_utc"] is None:
-        flight["arrival_local"] = None
-        flight["duration_h_m"] = None
-    else:
-        flight["arrival_local"] = _local_dt(
-            flight["arrival_utc"], flight["destination_airport_time_zone"]
-        )
-        dur_s = (
-            flight["arrival_utc"] - flight["departure_utc"]
-        ).total_seconds()
-        hours, remainder = divmod(dur_s, 3600)
-        minutes = remainder // 60
-        flight["duration_h_m"] = (int(hours), int(minutes))
-    flight["tail_number_formatted"] = Flight.format_tail_number(
-        flight["tail_number"]
-    )
-    flight["origin_airport_code"] = \
-        flight["origin_airport_iata_code"] \
-        or flight["origin_airport_icao_code"] \
-        or flight["origin_airport_faa_lid"]
-    flight["destination_airport_code"] = \
-        flight["destination_airport_iata_code"] \
-        or flight["origin_airport_icao_code"] \
-        or flight["origin_airport_faa_lid"]
-    return flight
 
 def _crossing_point(p1, p2):
     """Return the point where a track crosses the antemeridian.

@@ -24,7 +24,7 @@
     --color-border: #cccccc;
     --color-background-light: #eeeeee;
     --color-text-light: #999999;
-    
+
     --weight-bold: 700;
     --weight-text: 450;
     --weight-light: 300;
@@ -165,9 +165,6 @@ tr.continue {
 tr.total {
     border-top: var(--border-heavy);
     background-color: var(--color-background-light);
-    td {
-        font-weight: var(--weight-bold);
-    }
 }
 td.aircraft-name {
     font-style: italic;

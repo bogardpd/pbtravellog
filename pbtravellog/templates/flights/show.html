@@ -26,7 +26,7 @@
   </div>
   <!-- Local Time -->
   <div class="flight-card-dt-local">{{ flight.local_time("departure") | format_dt(include_time=True, include_tz=True) }}</div>
-  <div class="flight-card-dt-local">{% if flight.duration_h_m() %}{{ flight.duration_h_m()[0] }}h {{ "%02d" | format(flight.duration_h_m()[1]) }}m{% endif %}</div>
+  <div class="flight-card-dt-local">{% if flight.duration() is not none %}{{ flight.duration() | format_duration }}{% endif %}</div>
   <div class="flight-card-dt-local">{{ flight.local_time("arrival") | format_dt(include_time=True, include_tz=True) }}</div>
 </div>
 
