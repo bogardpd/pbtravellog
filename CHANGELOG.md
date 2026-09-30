@@ -5,7 +5,8 @@
 ### Added
 
 - Added purpose field to Show Flight.
-- Added flight duration totals to flight tables.
+- Added flight distance and duration totals to flight tables.
+- Added flight distance to show flight.
 - Added style guide to documentation.
 
 ### Changed
