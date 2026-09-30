@@ -31,6 +31,8 @@
       <td colspan="5">
         {{ flights | length }}&nbsp;flight{% if (flights | length) != 1 %}s{% endif %}
         &middot;
+        {{ flights.total_distance() | format_thousands }}&nbsp;miles
+        &middot;
         {{ flights.total_duration() | format_duration }}
       </td>
     </tr>

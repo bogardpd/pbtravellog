@@ -4,7 +4,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 import json
-from math import ceil
 import os
 from pathlib import Path
 import re
@@ -17,21 +16,18 @@ from zoneinfo import ZoneInfo
 from dateutil.parser import isoparse
 import geopandas as gpd
 import pandas as pd
-from pyproj import Geod
-from shapely.geometry import Point, LineString, MultiLineString
+from shapely.geometry import Point, LineString
 from tabulate import tabulate
 
 # Project imports
 import pbtravellog.aeroapi as aero
 from pbtravellog.boarding_pass import BoardingPass, PKPass
+from pbtravellog.geometry import (
+    METERS_PER_HUNDRED_FEET, CRS,
+    gc_distance, great_circle_route, split_at_antimeridian,
+)
 from pbtravellog.record import Record, RecordTable
 from pbtravellog.travel_log import Trip, TripTable
-
-METERS_PER_MILE = 1609.344
-METERS_PER_HUNDRED_FEET = 30.48
-METERS_BETWEEN_GC_POINTS = 100000
-
-CRS = "EPSG:4326" # WGS-84
 
 FLIGHT_LOG = os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH")
 if FLIGHT_LOG is None:
@@ -120,6 +116,21 @@ class Flight(Record):
         "boarding_pass_data": "string",
         "geom_source": "string",
     }
+
+    def distance(self) -> int | None:
+        """Returns flight distance or great circle distance in miles."""
+        flown_distance = self.get("distance_mi")
+        if flown_distance is not None:
+            return flown_distance
+        orig_airport = self.get("origin_airport")
+        dest_airport = self.get("destination_airport")
+        if orig_airport is None or dest_airport is None:
+            return None
+        orig_point = orig_airport.get("geometry")
+        dest_point = dest_airport.get("geometry")
+        if orig_point is None or dest_point is None:
+            return None
+        return gc_distance(orig_point, dest_point)
 
     def duration(self) -> int | None:
         """Returns flight duration in seconds."""
@@ -598,13 +609,15 @@ class FlightTable(RecordTable):
                     v[j[2]] = j[0][v[j[1]]]
         return self
 
+    def total_distance(self) -> int:
+        """Returns the total distance of all flights in miles."""
+        dists = [f.distance() if f.distance() else 0 for f in self.values()]
+        return int(sum(dists))
+
     def total_duration(self) -> int:
         """Returns the total duration of all flights in seconds."""
-        durations = [
-            f.duration() if f.duration() else 0
-            for f in self.values()
-        ]
-        return int(sum(durations))
+        durs = [f.duration() if f.duration() else 0 for f in self.values()]
+        return int(sum(durs))
 
 class SeatClass(Record):
     """Represents a flight class record."""
@@ -774,33 +787,7 @@ def flights_table(
         headers=["fid", *table_cols.values()],
     )
 
-def great_circle_route(point1, point2) -> pd.Series:
-    """
-    Creates a great circle line between points.
 
-    Returns a Pandas series with distance in integer miles and a
-    MultiLineString geometry.
-    """
-    if point1 == point2:
-        # Returned to same airport. Return zero great circle distance
-        # and no geometry.
-        return pd.Series([0, None])
-    geod = Geod(ellps="WGS84")
-    _, _, dist_m = geod.inv(point1.x, point1.y, point2.x, point2.y)
-    dist_mi = int(round(dist_m / METERS_PER_MILE))
-
-    # Create a great circle LineString.
-    num_points = ceil(dist_m / METERS_BETWEEN_GC_POINTS) + 1
-    midpoints = geod.npts(
-        point1.x, point1.y,
-        point2.x, point2.y,
-        num_points - 2,
-    )
-    geom = split_at_antimeridian(
-        LineString([point1, *midpoints, point2])
-    )
-
-    return pd.Series([dist_mi, geom])
 
 def import_flight_bcbp(bcbp_str, geojson: Path | None = None) -> None:
     """Parses a Bar-Coded Boarding Pass string."""
@@ -1020,63 +1007,6 @@ def show_tail(tail_number: str) -> None:
         print(f"No flights found for tail number '{tail_number}'.")
         sys.exit(0)
     print(flights_table(flights_gdf))
-
-def split_at_antimeridian(track_ls: LineString) -> MultiLineString:
-    """Split a LineString at the antimeridian."""
-    # Find all points where the track crosses the antimeridian.
-    crossings = [
-        i + 1 for i, (p1, p2)
-        in enumerate(zip(track_ls.coords[:-1], track_ls.coords[1:]))
-        if abs(p1[0] - p2[0]) > 180
-    ]
-    if len(crossings) == 0:
-        return MultiLineString([track_ls])
-
-    # Split the track at the indices.
-    tracks = []
-    starts = [0, *crossings]
-    ends = [*crossings, len(track_ls.coords)]
-    tracks = [
-        track_ls.coords[start:end] for start, end in zip(starts, ends)
-    ]
-    for i, track in enumerate(tracks):
-        if i > 0:
-            p1 = track[0]
-            p2 = tracks[i-1][-1]
-            p_cross = _crossing_point(p1, p2)
-            if p_cross is not None:
-                track.insert(0, p_cross)
-        if i < len(crossings):
-            p1 = track[-1]
-            p2 = tracks[i+1][0]
-            p_cross = _crossing_point(p1, p2)
-            if p_cross is not None:
-                track.append(p_cross)
-
-    # Filter out tracks with only one point.
-    tracks = [track for track in tracks if len(track) > 1]
-    return MultiLineString(tracks)
-
-def _crossing_point(p1, p2):
-    """Return the point where a track crosses the antemeridian.
-    Returns None if p1 is already on the antemeridian.
-
-    p1 : tuple(float)
-        The point on the current track
-    p2 : tuple(float)
-        The point on the adjacent track.
-    """
-    p2 = list(p2)
-    if -180 < p1[0] < 0:
-        lon = -180
-        p2[0] = p2[0] - 360
-    elif 0 < p1[0] < 180:
-        lon = 180
-        p2[0] = p2[0] + 360
-    else:
-        return None
-    x_frac = (lon - p1[0]) / (p2[0] - p1[0])
-    return tuple([c1 + (x_frac * (c2 - c1)) for c1, c2 in zip(p1, p2)])
 
 def _estimate_trip_section(
         trip_fid: int, departure_dt: datetime

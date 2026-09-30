@@ -10,21 +10,14 @@
 
 <div class="card flight-card">
   <!-- Code -->
-  <div class="flight-card-airport">
-    {% if flight.get("origin_airport_fid") is not none %}
-    <span class="flight-card-head">{{ flight["origin_airport"].code() }}</span><br>
-    <a href="{{ url_for('show_airport', airport_fid=flight['origin_airport_fid']) }}">{{ flight["origin_airport"].get("name") }}</a></div>
-    {% endif %}
-  <div class="flight-card-airport">
-    <span class="flight-card-head">&rarr;</span>
-  </div>
-  <div class="flight-card-airport">
-    {% if flight.get("destination_airport") is not none %}
-    <span class="flight-card-head">{{ flight["destination_airport"].code() }}</span><br>
-    <a href="{{ url_for('show_airport', airport_fid=flight['destination_airport_fid']) }}">{{ flight["destination_airport"].get("name") }}</a>
-    {% endif %}
-  </div>
-  <!-- Local Time -->
+  <div class="flight-card-head">{% if flight.get("origin_airport_fid") is not none %}{{ flight["origin_airport"].code() }}{% endif %}</div>
+  <div class="flight-card-head">&rarr;</div>
+  <div class="flight-card-head">{% if flight.get("destination_airport") is not none %}{{ flight["destination_airport"].code() }}{% endif %}</div>
+  <!-- Airport names and distance -->
+  <div class="flight-card-airport-name"><a href="{{ url_for('show_airport', airport_fid=flight['origin_airport_fid']) }}">{{ flight["origin_airport"].get("name") }}</a></div>
+  <div>{% if flight.distance() is not none %}{{ flight.distance() | format_thousands }}&nbsp;miles{% endif %}</div>
+  <div class="flight-card-airport-name"><a href="{{ url_for('show_airport', airport_fid=flight['destination_airport_fid']) }}">{{ flight["destination_airport"].get("name") }}</a></div>
+  <!-- Local times and duration -->
   <div class="flight-card-dt-local">{{ flight.local_time("departure") | format_dt(include_time=True, include_tz=True) }}</div>
   <div class="flight-card-dt-local">{% if flight.duration() is not none %}{{ flight.duration() | format_duration }}{% endif %}</div>
   <div class="flight-card-dt-local">{{ flight.local_time("arrival") | format_dt(include_time=True, include_tz=True) }}</div>

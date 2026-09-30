@@ -108,9 +108,10 @@ div.flight-card {
         text-align: center;
     }
     .flight-card-head {
+        font-weight: var(--weight-bold);
         font-size: 250%;
     }
-    .flight-card-airport {
+    .flight-card-airport-name {
         font-weight: var(--weight-bold);
     }
 }
