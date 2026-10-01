@@ -9,6 +9,7 @@ from pathlib import Path
 # Project imports
 import pbtravellog.extract_photo_metadata as epm
 import pbtravellog.html as html
+import pbtravellog.flight_cli as flc
 import pbtravellog.flight_log as fl
 import pbtravellog.report as report
 
@@ -46,7 +47,7 @@ def main():
                 fl.import_flight_pkpasses(geojson=args.geojson)
     elif args.command == "index":
         if args.entity == "airports":
-            fl.index_airports(args.year, args.output)
+            flc.index_airports(args.year, args.output)
         elif args.entity == "tails":
             fl.index_tails()
     elif args.command == "refresh":

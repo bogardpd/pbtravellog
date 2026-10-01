@@ -584,6 +584,14 @@ class FlightTable(RecordTable):
         }
         return self.__class__(records)
 
+    def filter_by_year(self, year: int) -> Self:
+        """Filters flight records by departure year."""
+        records = {
+            k: v for k, v in self.items()
+            if v["departure_utc"].year == year
+        }
+        return self.__class__(records)
+
     def joined(self) -> Self:
         """Joins other classes on fid fields."""
         airports = AirportTable.from_all()
