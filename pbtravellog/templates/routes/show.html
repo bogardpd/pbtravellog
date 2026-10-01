@@ -15,7 +15,7 @@
     <tr>
       <td>{% if fids[0] is not none %}<a href="{{ url_for('show_airport', airport_fid=fids[0]) }}" class="code">{{ route["origin_airport"].code() }}</a>{% endif %}</td>
       <td>{% if fids[1] is not none %}<a href="{{ url_for('show_airport', airport_fid=fids[1]) }}" class="code">{{ route["destination_airport"].code() }}</a>{% endif %}</td>
-      <td>{% if route.get("distance_mi") is not none %}{{ route.get("distance_mi") }} mi{% endif %}</td>
+      <td>{% if route.get("distance_mi") is not none %}{{ route.get("distance_mi") }}&nbsp;miles{% endif %}</td>
       <td>{{ flights | length }}</td>
     </tr>
   </tbody>

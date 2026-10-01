@@ -18,7 +18,7 @@
           {% if route.get("destination_airport") is not none %}<span class="code">{{ route["destination_airport"].code() }}</span>{% endif %}
         </a>
       </td>
-      <td>{% if route.get("distance_mi") is not none %}{{ route["distance_mi"] }} mi{% endif %}</td>
+      <td>{% if route.get("distance_mi") is not none %}{{ route["distance_mi"] }}&nbsp;mi{% endif %}</td>
       <td>{{ route.get("count") }}</td>
     </tr>
     {% endfor %}

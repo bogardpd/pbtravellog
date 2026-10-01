@@ -231,10 +231,10 @@ def _format_duration(seconds: int | None) -> str | None:
     hours, remainder = divmod(remainder, 3600)
     minutes = remainder // 60
     if days > 0:
-        return f"{days} d {hours:02} h {minutes:02} m"
+        return f"{days}d {hours:02}h {minutes:02}m"
     if hours > 0:
-        return f"{hours} h {minutes:02} m"
-    return f"{minutes} m"
+        return f"{hours}h {minutes:02}m"
+    return f"{minutes}m"
 
 def _format_thousands(num: int | float) -> str:
     return f"{num:,}"
