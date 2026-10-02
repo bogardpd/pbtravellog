@@ -3,7 +3,6 @@
 # Standard imports
 from typing import Self
 import re
-import sys
 
 # Third-party imports
 import geopandas as gpd
@@ -92,14 +91,11 @@ class RecordTable(dict):
 
     def print(self) -> None:
         """Prints a table to the console."""
-        if len(self) == 0:
-            print("No matching records found.")
-            sys.exit(1)
         rows = (
             [fid, *(r[col] for col in self.PRINT_COLS)]
             for fid, r in self.items()
         )
-        print(tabulate(rows, headers=["fid", *self.PRINT_COLS])) 
+        print(tabulate(rows, headers=["fid", *self.PRINT_COLS]))
 
     def sort(self, col: str, ascending: bool = True) -> Self:
         """Sorts the table by the provided column."""

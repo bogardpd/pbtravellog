@@ -2,6 +2,7 @@
 
 # Standard imports
 from pathlib import Path
+import sys
 
 # Project imports
 from pbtravellog.flight_log import FlightTable
@@ -14,6 +15,9 @@ def index_airports(
     flights = FlightTable.from_all()
     if year is not None:
         flights = flights.filter_by_year(year)
+    if len(flights) == 0:
+        print("No matching records found.")
+        sys.exit(1)
     airports = flights.collect_airports()
     if output_file is None:
         airports.print()
