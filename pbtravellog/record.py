@@ -3,10 +3,12 @@
 # Standard imports
 from typing import Self
 import re
+import sys
 
 # Third-party imports
 import geopandas as gpd
 import pandas as pd
+from tabulate import tabulate
 
 class Record(dict):
     """Represents a generic travel record.
@@ -86,8 +88,20 @@ class RecordTable(dict):
     Designed to be inherited by specific travel table types.
     """
     RECORD_CLASS = Record
+    PRINT_COLS = []
 
-    def sort(self, col, ascending=True):
+    def print(self) -> None:
+        """Prints a table to the console."""
+        if len(self) == 0:
+            print("No matching records found.")
+            sys.exit(1)
+        rows = (
+            [fid, *(r[col] for col in self.PRINT_COLS)]
+            for fid, r in self.items()
+        )
+        print(tabulate(rows, headers=["fid", *self.PRINT_COLS])) 
+
+    def sort(self, col: str, ascending: bool = True) -> Self:
         """Sorts the table by the provided column."""
         records = self.__class__(sorted(
             self.items(),

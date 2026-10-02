@@ -95,6 +95,9 @@ class Airport(Record):
 class AirportTable(RecordTable):
     """Represents a dict of Airport instances."""
     RECORD_CLASS = Airport
+    PRINT_COLS = [
+        "rank", "name", "iata_code", "icao_code", "faa_lid", "visits",
+    ]
 
 class Flight(Record):
     """Represents a flight record."""
