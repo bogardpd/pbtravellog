@@ -409,7 +409,7 @@ class FlightTable(RecordTable):
     def collect_aircraft_types(self) -> AircraftTypeTable:
         """Builds aircraft type records from this FlightTable."""
         aircraft_type_flight_count = defaultdict(int)
-        for _, flight in self.items():
+        for _, flight in self.sort("departure_utc").items():
             aircraft_type_flight_count[flight["aircraft_type_fid"]] += 1
         aircraft_type_flight_count.pop(None, None) # Remove None count
         ranks = _rank_count(aircraft_type_flight_count)
@@ -427,7 +427,7 @@ class FlightTable(RecordTable):
         """Builds airline records from this FlightTable."""
         column = "operator_fid" if operators else "airline_fid"
         airline_flight_count = defaultdict(int)
-        for _, flight in self.items():
+        for _, flight in self.sort("departure_utc").items():
             airline_flight_count[flight[column]] += 1
         airline_flight_count.pop(None, None) # Remove None count
         ranks = _rank_count(airline_flight_count)
@@ -442,7 +442,7 @@ class FlightTable(RecordTable):
         """Builds airport records from this FlightTable."""
         airport_visit_count = defaultdict(int)
         prev_trip_sec = [None, None]
-        for _, flight in self.items():
+        for _, flight in self.sort("departure_utc").items():
             curr_trip_sec = [flight["trip_fid"], flight["trip_section"]]
             if curr_trip_sec != prev_trip_sec:
                 # This is not following a layover, so count the origin.
@@ -461,7 +461,7 @@ class FlightTable(RecordTable):
     def collect_classes(self) -> SeatClassTable:
         """Builds flight class records from this FlightTable."""
         seat_class_flight_count = defaultdict(int)
-        for _, flight in self.items():
+        for _, flight in self.sort("departure_utc").items():
             seat_class_flight_count[flight["class_fid"]] += 1
         seat_class_flight_count.pop(None, None) # Remove none count
         # Classes are always sorted by quality, so no need to rank.
@@ -479,7 +479,7 @@ class FlightTable(RecordTable):
         whatever flights are passed into it.
         """
         route_flight_count = defaultdict(int)
-        for _, flight in self.items():
+        for _, flight in self.sort("departure_utc").items():
             airport_fids = (
                 flight["origin_airport_fid"],
                 flight["destination_airport_fid"],
@@ -503,7 +503,7 @@ class FlightTable(RecordTable):
         """Builds tail number records from flight records."""
         tail_flight_count = defaultdict(int)
         aircraft_types = {}
-        for _, flight in self.items():
+        for _, flight in self.sort("departure_utc").items():
             tail_flight_count[flight["tail_number"]] += 1
             aircraft_types[flight["tail_number"]] = flight["aircraft_type"]
         tail_flight_count.pop(None, None) # Remove None count
