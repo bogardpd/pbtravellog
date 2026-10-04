@@ -590,7 +590,7 @@ class FlightTable(RecordTable):
         return self.__class__(records)
 
     def filter_by_year(self, year: int) -> Self:
-        """Filters flight records by departure year."""
+        """Filters flight records by UTC departure year."""
         records = {
             k: v for k, v in self.items()
             if v["departure_utc"].year == year
