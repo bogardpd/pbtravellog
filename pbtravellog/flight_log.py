@@ -441,7 +441,9 @@ class FlightTable(RecordTable):
     def collect_airports(self) -> AirportTable:
         """Builds airport records from this FlightTable."""
         airport_visit_count = defaultdict(int)
-        prev_trip_sec = [None, None]
+        # Start with an empty list. [None, None] would cause miscounts
+        # if the first flight had no trip or section.
+        prev_trip_sec = []
         for _, flight in self.sort("departure_utc").items():
             curr_trip_sec = [flight["trip_fid"], flight["trip_section"]]
             if curr_trip_sec != prev_trip_sec:
