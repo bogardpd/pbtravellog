@@ -21,6 +21,7 @@ def index_airports(
     airports = flights.collect_airports()
     if output_file is None:
         airports.print()
+        print(f"{len(airports)} airport(s) flown")
     else:
         pass
         # TODO: Write CSV export
