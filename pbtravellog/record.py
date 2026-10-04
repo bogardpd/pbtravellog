@@ -1,8 +1,10 @@
 """Manages travel records."""
 
 # Standard imports
-from typing import Self
+import csv
+from pathlib import Path
 import re
+from typing import Self
 
 # Third-party imports
 import geopandas as gpd
@@ -91,11 +93,7 @@ class RecordTable(dict):
 
     def print(self) -> None:
         """Prints a table to the console."""
-        rows = (
-            [fid, *(r[col] for col in self.PRINT_COLS)]
-            for fid, r in self.items()
-        )
-        print(tabulate(rows, headers=["fid", *self.PRINT_COLS]))
+        print(tabulate(self._rows(), headers=["fid", *self.PRINT_COLS]))
 
     def sort(self, col: str, ascending: bool = True) -> Self:
         """Sorts the table by the provided column."""
@@ -105,6 +103,21 @@ class RecordTable(dict):
             reverse=(not ascending),
         ))
         return self.__class__(records)
+
+    def write_csv(self, output_file: Path) -> None:
+        """Writes a table to a CSV file."""
+        with open(output_file, "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["fid", *self.PRINT_COLS])
+            writer.writerows(self._rows())
+        print(f"Wrote CSV to \"{output_file}\".")
+
+    def _rows(self):
+        """Converts the table into rows based on PRINT_COLS."""
+        return (
+            [fid, *(r[col] for col in self.PRINT_COLS)]
+            for fid, r in self.items()
+        )
 
     @classmethod
     def from_all(cls) -> Self:

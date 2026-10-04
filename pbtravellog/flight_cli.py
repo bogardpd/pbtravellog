@@ -1,6 +1,7 @@
 """Manages flight data CLI commands."""
 
 # Standard imports
+import csv
 from pathlib import Path
 import sys
 
@@ -23,5 +24,4 @@ def index_airports(
         airports.print()
         print(f"{len(airports)} airport(s) flown")
     else:
-        pass
-        # TODO: Write CSV export
+        airports.write_csv(output_file)
