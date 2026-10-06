@@ -1,7 +1,6 @@
 """Manages flight data CLI commands."""
 
 # Standard imports
-import csv
 from pathlib import Path
 import sys
 

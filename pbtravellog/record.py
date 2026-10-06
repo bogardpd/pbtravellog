@@ -106,7 +106,7 @@ class RecordTable(dict):
 
     def write_csv(self, output_file: Path) -> None:
         """Writes a table to a CSV file."""
-        with open(output_file, "w", newline="") as csvfile:
+        with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["fid", *self.PRINT_COLS])
             writer.writerows(self._rows())
