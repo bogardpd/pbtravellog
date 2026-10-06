@@ -68,7 +68,7 @@ class TripTable(RecordLayerTable):
     def from_all(cls):
         """Creates a table of trips."""
 
-        rec_table =  super().from_all().sort("end_date").sort("start_date")
+        rec_table = super().from_all().sort("end_date").sort("start_date")
         for idx, (_, v) in enumerate(rec_table.items()):
             v["order"] = idx + 1
         return cls(rec_table)

@@ -100,7 +100,10 @@ def create_browser_app():
     @app.route("/airports/<int:airport_fid>/")
     def show_airport(airport_fid: int):
         airport_records = all_flights.collect_airports()
-        flights = all_flights.filter_by_airport(airport_fid)
+        flights = all_flights.filter_by_airport(
+            airport_fid,
+            count_cumulative=True,
+        )
         return render_template(
             "airports/show.html",
             airport_fid=airport_fid,

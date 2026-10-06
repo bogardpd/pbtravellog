@@ -36,5 +36,7 @@
 {% include "_partials/class_table.html" %}
 
 <h2>{{ airport.iata_or_name() }} Flights</h2>
-{% include "_partials/flight_table.html" %}
+{% with include_cumulative_airport_visits = True %}
+  {% include "_partials/flight_table.html" %}
+{% endwith %}
 {% endblock content %}

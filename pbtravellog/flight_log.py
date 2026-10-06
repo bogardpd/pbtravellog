@@ -95,9 +95,14 @@ class Airport(Record):
 class AirportTable(RecordLayerTable):
     """Represents a dict of Airport instances."""
     RECORD_CLASS = Airport
-    PRINT_COLS = [
-        "name", "iata_code", "icao_code", "faa_lid", "visits", "rank",
-    ]
+    PRINT_COLS = {
+        "name": "name",
+        "iata": "iata_code",
+        "icao": "icao_code",
+        "faa": "faa_lid",
+        "visits": "visits",
+        "rank": "rank",
+    }
 
 class Flight(Record):
     """Represents a flight record."""
@@ -405,6 +410,12 @@ class Flight(Record):
 class FlightTable(RecordLayerTable):
     """Represents a dict of Flight instances."""
     RECORD_CLASS = Flight
+    PRINT_COLS = {
+        "departure": lambda f: f.local_time("departure"),
+        "name": lambda f: f.name(),
+        "orig": lambda f: f["origin_airport"].code(),
+        "dest": lambda f: f["destination_airport"].code(),
+    }
 
     def collect_aircraft_types(self) -> AircraftTypeTable:
         """Builds aircraft type records from this FlightTable."""
@@ -546,7 +557,10 @@ class FlightTable(RecordLayerTable):
         }
         return self.__class__(records)
 
-    def filter_by_airport(self, airport_fid: int) -> Self:
+    def filter_by_airport(self,
+        airport_fid: int,
+        count_cumulative: bool = False,
+    ) -> Self:
         """Filters flight records by an airport."""
         records = {
             k: v for k, v in self.items()
@@ -555,6 +569,19 @@ class FlightTable(RecordLayerTable):
                 v["destination_airport_fid"],
             ]
         }
+        if count_cumulative:
+            cumulative_visits = 0
+            prev_trip_sec = []
+            for v in records.values():
+                curr_trip_sec = [v['trip_fid'], v['trip_section']]
+                if v["origin_airport_fid"] == airport_fid:
+                    if v["trip_fid"] is None or curr_trip_sec != prev_trip_sec:
+                        cumulative_visits += 1
+                if v["destination_airport_fid"] == airport_fid:
+                    cumulative_visits += 1
+                v["cumulative_visits"] = cumulative_visits
+                prev_trip_sec = curr_trip_sec
+
         return self.__class__(records)
 
     def filter_by_class(self, class_fid: int) -> Self:
@@ -695,7 +722,11 @@ class TailNumberTable(RecordTable):
     """Represents a dict of tail numbers."""
     RECORD_CLASS = TailNumber
     FID_LABEL = "tail_number"
-    PRINT_COLS = ["aircraft_type", "count", "rank"]
+    PRINT_COLS = {
+        "aircraft_type": "aircraft_type",
+        "count": "count",
+        "rank": "rank",
+    }
 
 def airport_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
     """Calculates airport visit counts from flights."""
@@ -939,20 +970,6 @@ def refresh_routes():
     print(
         f"Updated all routes in {FLIGHT_LOG}."
     )
-
-def show_airport(identifier: str) -> None:
-    """Shows data about a specific airport."""
-    airport = Airport.find_by_code(identifier.upper(), check_fid=True)
-    if airport is None:
-        sys.exit(1)
-    print(airport)
-
-    flights_gdf = Flight.every()
-    flights_gdf = flights_gdf[
-        (flights_gdf["origin_airport_fid"] == airport.get("fid"))
-        | (flights_gdf["destination_airport_fid"] == airport.get("fid"))
-    ]
-    print(flights_table(flights_gdf, visit_airport_fid=airport.get("fid")))
 
 def show_tail(tail_number: str) -> None:
     """Shows data about a specific tail number."""

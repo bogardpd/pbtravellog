@@ -21,6 +21,10 @@ class Record(dict):
     FIND_BY_CODES = []
     DTYPES = {}
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fid: int | None = None
+
     @classmethod
     def every(cls) -> gpd.GeoDataFrame:
         """Returns a GeoDataFrame of all records."""
@@ -74,14 +78,23 @@ class Record(dict):
             # Search for matching codes.
             matching_code = records[records[code_type] == code]
             if len(matching_code) == 1:
-                record_dict = matching_code.iloc[0].to_dict()
-                record_dict["fid"] = int(matching_code.index[0])
-                record = cls()
-                for key, value in record_dict.items():
-                    setattr(record, key, value)
+                record = cls.from_gpd_row(matching_code.iloc[0])
+                # record_dict = matching_code.iloc[0].to_dict()
+                # record_dict["fid"] = int(matching_code.index[0])
+                # record = cls()
+                # for key, value in record_dict.items():
+                #     setattr(record, key, value)
                 return record
         print(f"⚠️ Could not find {cls.__name__} matching \"{code}\".")
         return None
+
+    @classmethod
+    def from_gpd_row(cls, row: pd.Series) -> Self:
+        """Creates a class instance from a geopandas row."""
+        record_row = row.copy().astype(object).where(pd.notna(row), None)
+        record = cls(record_row.to_dict())
+        record.fid = int(record_row.name)
+        return record
 
 class RecordTable(dict):
     """Represents a dict of instances of travel log records.
@@ -90,7 +103,7 @@ class RecordTable(dict):
     """
     RECORD_CLASS = Record
     FID_LABEL = "fid"
-    PRINT_COLS = []
+    PRINT_COLS = {}
 
     def print(self) -> None:
         """Prints a table to the console."""
@@ -115,14 +128,22 @@ class RecordTable(dict):
 
     def _headers(self) -> list:
         """Returns print column names."""
-        return [self.FID_LABEL, *self.PRINT_COLS]
+        return [self.FID_LABEL, *self.PRINT_COLS.keys()]
 
-    def _rows(self) -> tuple:
+    def _rows(self) -> list:
         """Converts the table into rows based on PRINT_COLS."""
-        return (
-            [fid, *(r[col] for col in self.PRINT_COLS)]
-            for fid, r in self.items()
-        )
+        rows = []
+        for fid, record in self.items():
+            row = [fid]
+            for column in self.PRINT_COLS.values():
+                if callable(column):
+                    value = column(record)
+                else:
+                    value = record[column]
+                row.append(value)
+            rows.append(row)
+        return rows
+
 
 class RecordLayerTable(RecordTable):
     """A RecordTable that comes from a GeoPackage layer."""

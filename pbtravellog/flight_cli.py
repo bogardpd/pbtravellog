@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 # Project imports
-from pbtravellog.flight_log import FlightTable
+from pbtravellog.flight_log import FlightTable, Airport
 
 def index_airports(
     output_file: Path | None = None,
@@ -24,6 +24,15 @@ def index_airports(
         print(f"{len(airports)} airport(s) visited")
     else:
         airports.write_csv(output_file)
+
+def show_airport(identifier: str) -> None:
+    """Shows flights for a specific airport."""
+    airport = Airport.find_by_code(identifier.upper(), check_fid=True)
+    if airport is None:
+        sys.exit(1)
+    flights = FlightTable.from_all().joined().filter_by_airport(airport.fid)
+    flights.print()
+    print(f"{len(flights)} matching flight(s)")
 
 def index_tails(output_file: Path | None = None) -> None:
     """Provides an index of all tails."""

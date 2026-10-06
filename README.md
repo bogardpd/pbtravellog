@@ -103,7 +103,7 @@ Create a new flight (or new flights) in the flight log.
 
   To reduce ambiguity, ICAO airline codes (three letter codes, like `AAL`) are preferred. However, this will attempt to look up IATA airline codes (two character codes, like `AA`).
 
-  **Example**
+    **Example**
     ```bash
     pbtravellog import flight --number AAL 1234
     ```
@@ -194,23 +194,22 @@ pbtravellog show airports LGA
 ```
 
 ```
-  fid    #  Departure    Flight    Orig    Dest      Cumulative
-                                                         Visits
------  ---  -----------  --------  ------  ------  ------------
-   10    1  2009-01-02   FL 327    LGA     MKE                1
-   20    2  2014-04-09   WN 651    MDW     LGA                2
-   30    3  2016-12-02   DL 746    MCO     LGA                3
-   31    4  2016-12-02   DL 3977   LGA     DAY                3
-   40    5  2017-06-08   DL 2646   TPA     LGA                4
-   41    6  2017-06-08   DL 3496   LGA     DAY                4
-   50    7  2019-10-18   AA 1556   MIA     LGA                5
-   51    8  2019-10-18   AA 5432   LGA     DAY                5
-   60    9  2022-11-14   AA 2119   DCA     LGA                6
-   70   10  2022-11-17   AA 2950   LGA     DCA                7
-   80   11  2023-03-06   AA 4383   DCA     LGA                8
-   90   12  2023-03-09   AA 473    LGA     DCA                9
-  100   13  2024-01-09   DL 5186   DAY     LGA               10
-  101   14  2024-01-09   DL 5843   LGA     RDU               10
+  fid  departure                  name           orig    dest
+-----  -------------------------  -------------  ------  ------
+   10  2009-01-02 18:04:00-05:00  AirTran 327    LGA     MKE
+   20  2014-04-09 07:50:00-05:00  Southwest 651  MDW     LGA
+   30  2016-12-02 15:50:00-05:00  Delta 746      MCO     LGA
+   31  2016-12-02 20:29:00-05:00  Delta 3977     LGA     DAY
+   40  2017-06-08 15:25:00-04:00  Delta 2646     TPA     LGA
+   41  2017-06-08 20:30:00-04:00  Delta 3496     LGA     DAY
+   50  2019-10-18 12:42:00-04:00  American 1556  MIA     LGA
+   51  2019-10-18 18:09:00-04:00  American 5432  LGA     DAY
+   60  2022-11-14 11:53:00-05:00  American 2119  DCA     LGA
+   70  2022-11-17 19:24:00-05:00  American 2950  LGA     DCA
+   80  2023-03-06 12:51:00-05:00  American 4383  DCA     LGA
+   90  2023-03-09 15:54:00-05:00  American 473   LGA     DCA
+  100  2024-01-09 07:00:00-05:00  Delta 5186     DAY     LGA
+  101  2024-01-09 11:10:00-05:00  Delta 5843     LGA     RDU
  ```
 
 ### `show tail`

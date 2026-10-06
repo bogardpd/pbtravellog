@@ -58,7 +58,7 @@ def main():
             report.report_milestones()
     elif args.command == "show":
         if args.entity == "airport":
-            fl.show_airport(args.id)
+            flc.show_airport(args.id)
         elif args.entity == "tail":
             fl.show_tail(args.tail_number)
     elif args.command == "run":

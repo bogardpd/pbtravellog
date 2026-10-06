@@ -7,6 +7,9 @@
       <th>Flight</th>
       <th>Route</th>
       <th>Departure</th>
+      {% if include_cumulative_airport_visits %}
+      <th>Visit #</th>
+      {% endif %}
     </tr>
   </thead>
   <tbody>
@@ -25,10 +28,13 @@
         {% endif %}
       </td>
       <td>{{ flight.local_time("departure") | format_dt(include_time=False) }}</td>
+      {% if include_cumulative_airport_visits %}
+      <td>{{ flight.cumulative_visits }}</td>
+      {% endif %}
     </tr>
     {% endfor %}
     <tr class="total">
-      <td colspan="5">
+      <td colspan="{% if include_cumulative_airport_visits %}6{% else %}5{% endif %}">
         {{ flights | length }}&nbsp;flight{% if (flights | length) != 1 %}s{% endif %}
         &middot;
         {{ flights.total_distance() | format_thousands }}&nbsp;miles
