@@ -26,7 +26,7 @@ from pbtravellog.geometry import (
     METERS_PER_HUNDRED_FEET, CRS,
     gc_distance, great_circle_route, split_at_antimeridian,
 )
-from pbtravellog.record import Record, RecordLayerTable
+from pbtravellog.record import Record, RecordTable, RecordLayerTable
 from pbtravellog.travel_log import Trip, TripTable
 
 FLIGHT_LOG = os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH")
@@ -96,7 +96,7 @@ class AirportTable(RecordLayerTable):
     """Represents a dict of Airport instances."""
     RECORD_CLASS = Airport
     PRINT_COLS = [
-        "rank", "name", "iata_code", "icao_code", "faa_lid", "visits",
+        "name", "iata_code", "icao_code", "faa_lid", "visits", "rank",
     ]
 
 class Flight(Record):
@@ -501,13 +501,14 @@ class FlightTable(RecordLayerTable):
             .sort("origin_airport_code").sort("count", ascending=False)
         return routes
 
-    def collect_tail_numbers(self) -> dict[dict]:
+    def collect_tail_numbers(self) -> TailNumberTable:
         """Builds tail number records from flight records."""
         tail_flight_count = defaultdict(int)
         aircraft_types = {}
         for _, flight in self.sort("departure_utc").items():
-            tail_flight_count[flight["tail_number"]] += 1
-            aircraft_types[flight["tail_number"]] = flight["aircraft_type"]
+            tn = flight["tail_number"]
+            tail_flight_count[tn] += 1
+            aircraft_types[tn] = flight.get("aircraft_type")
         tail_flight_count.pop(None, None) # Remove None count
         ranks = _rank_count(tail_flight_count)
         tail_number_records = {}
@@ -519,7 +520,7 @@ class FlightTable(RecordLayerTable):
                 "rank": ranks[tail_number],
             }
             tail_number_records[tail_number] = record
-        tail_number_records = dict(sorted(
+        tail_number_records = TailNumberTable(sorted(
             tail_number_records.items(),
             key=lambda x: (-x[1]["count"], x[0]),
         ))
@@ -687,6 +688,14 @@ class RouteTable(RecordLayerTable):
             r.pop("flight_count", None)
         return cls(rec_table)
 
+class TailNumber(Record):
+    """Represents a tail number."""
+
+class TailNumberTable(RecordTable):
+    """Represents a dict of tail numbers."""
+    RECORD_CLASS = TailNumber
+    FID_LABEL = "tail_number"
+    PRINT_COLS = ["aircraft_type", "count", "rank"]
 
 def airport_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
     """Calculates airport visit counts from flights."""
@@ -891,72 +900,6 @@ def import_flight_pkpasses(geojson: Path | None = None) -> None:
         pkpass_file.move(archive_file_path)
         print(f"Archived PKPass to \"{archive_file_path}\"")
     refresh_routes()
-
-def index_airports(
-    year: int | None = None,
-    output_file : Path | None = None,
-) -> None:
-    """Provides an index of all airports."""
-    flights_gdf = Flight.every()
-    if year is not None:
-        flights_gdf = flights_gdf[flights_gdf["departure_utc"].dt.year == year]
-    if len(flights_gdf) == 0:
-        print("No airport visits found.")
-        if year is not None:
-            print(
-                "Try searching a different year or removing the year filter."
-            )
-        sys.exit(1)
-    visits = airport_visits(flights_gdf)
-    airports_gdf = Airport.every()
-    output = airports_gdf.join(visits, how="right")
-    output = output.rename(columns={"count": "visits"})
-    output = output.sort_values(by=["visits", "name"], ascending=[False, True])
-    output["rank"] = output["visits"].rank(
-        ascending=False,
-        method="min",
-    ).astype(int)
-    output = output[["rank","name","iata_code","icao_code","faa_lid","visits"]]
-    if output_file is None:
-        output = output.fillna("")
-        print(tabulate(
-            output.to_records(),
-            headers=[
-                "fid",
-                "Rank",
-                "Name",
-                "IATA\nCode",
-                "ICAO\nCode",
-                "FAA\nLID",
-                "Visits",
-            ],
-        ))
-        print(f"{len(output)} airport(s) visited")
-    else:
-        output.to_csv(output_file, index=False)
-        print(f"Wrote report to \"{output_file}\"")
-
-def index_tails() -> None:
-    """Provides an index of all tail numbers."""
-    flights_gdf = Flight.every()
-    flights_gdf = flights_gdf.dropna(subset="tail_number")
-    tails_df = flights_gdf.groupby("tail_number").agg(
-        count=("tail_number", "count"),
-        aircraft_type_fid=("aircraft_type_fid", "last"),
-    )
-    types_gdf = AircraftType.every()[["manufacturer", "name"]]
-    tails_df = tails_df.join(types_gdf, on="aircraft_type_fid")
-    tails_df["type"] = tails_df["manufacturer"].str.cat(
-        tails_df["name"],
-        sep=" ",
-    )
-    tails_df = tails_df.sort_values(
-        by=["count", tails_df.index.name],
-        ascending=[False, True],
-    )
-    tails_df = tails_df[["type", "count"]]
-    print(tabulate(tails_df.to_records(), headers=["Tail", "Type", "Count"]))
-    print(f"{len(tails_df)} tails(s) flown")
 
 def refresh_routes():
     """Updates the routes layer based on logged flights."""

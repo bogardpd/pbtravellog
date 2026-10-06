@@ -8,8 +8,8 @@ import sys
 from pbtravellog.flight_log import FlightTable
 
 def index_airports(
+    output_file: Path | None = None,
     year: int | None = None,
-    output_file : Path | None = None,
 ) -> None:
     """Provides an index of all airports."""
     flights = FlightTable.from_all()
@@ -21,6 +21,19 @@ def index_airports(
     airports = flights.collect_airports()
     if output_file is None:
         airports.print()
-        print(f"{len(airports)} airport(s) flown")
+        print(f"{len(airports)} airport(s) visited")
     else:
         airports.write_csv(output_file)
+
+def index_tails(output_file: Path | None = None) -> None:
+    """Provides an index of all tails."""
+    flights = FlightTable.from_all().joined()
+    tail_numbers = flights.collect_tail_numbers()
+    for tn in tail_numbers.values():
+        if tn.get("aircraft_type") is not None:
+            tn["aircraft_type"] = tn["aircraft_type"].full_name()
+    if output_file is None:
+        tail_numbers.print()
+        print(f"{len(tail_numbers)} unique tail(s) flown")
+    else:
+        tail_numbers.write_csv(output_file)

@@ -47,9 +47,9 @@ def main():
                 fl.import_flight_pkpasses(geojson=args.geojson)
     elif args.command == "index":
         if args.entity == "airports":
-            flc.index_airports(args.year, args.output)
+            flc.index_airports(args.output, args.year)
         elif args.entity == "tails":
-            fl.index_tails()
+            flc.index_tails(args.output)
     elif args.command == "refresh":
         if args.entity == "routes":
             fl.refresh_routes()
@@ -154,9 +154,14 @@ def _add_parsers_index(subparsers) -> None:
     )
 
     # Index_tails
-    index_parser_subparsers.add_parser(
+    index_tails_parser = index_parser_subparsers.add_parser(
         "tails",
         help="Display a tail number index",
+    )
+    index_tails_parser.add_argument("-o", "--output",
+        help="Write index to a file (CSV format)",
+        metavar="FILE",
+        type=Path,
     )
 
 

@@ -13,7 +13,7 @@ from typing import Self
 import geopandas as gpd
 
 # Project imports
-from pbtravellog.record import Record, RecordTable
+from pbtravellog.record import Record, RecordLayerTable
 
 TRAVEL_LOG = os.getenv("PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH")
 if TRAVEL_LOG is None:
@@ -60,7 +60,7 @@ class Trip(Record):
             )
         return record
 
-class TripTable(RecordTable):
+class TripTable(RecordLayerTable):
     """Represents a dict of Trip instances."""
     RECORD_CLASS = Trip
 

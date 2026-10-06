@@ -121,9 +121,9 @@ Generates an index of airports visited, sorted by number of visits. ([Layovers c
 
 #### Options
 
-- `--year <year>` (`-y <year>`): Filter the flights that airport visits are calculated from to those whose UTC departure is in the provided year. If this option is not used, airport visits will be calculated on all flights.
-
 - `--output <file>` (`-o <file>`): Save the index table in CSV format to the provided filename.
+
+- `--year <year>` (`-y <year>`): Filter the flights that airport visits are calculated from to those whose UTC departure is in the provided year. If this option is not used, airport visits will be calculated on all flights.
 
 #### Examples
 
@@ -134,30 +134,33 @@ pbtravellog index airports --year 2015
 ```
 
 ```
-  fid    Rank  Name                          IATA    ICAO    FAA      Visits
-                                             Code    Code    LID
------  ------  ----------------------------  ------  ------  -----  --------
-    5       1                  Dayton       DAY      KDAY     DAY         42
-   10       2        Chicago (O’Hare)       ORD      KORD     ORD         16
-   15       3 Orlando (International)       MCO      KMCO     MCO         12
-   20       4       Dallas/Fort Worth       DFW      KDFW     DFW         10
-   25       4                   Tulsa       TUL      KTUL     TUL         10
-   30       6               Baltimore       BWI      KBWI     BWI          5
-   35       6               Charlotte       CLT      KCLT     CLT          5
-   40       6            Columbus, OH       CMH      KCMH     CMH          5
-   45       9          Seattle/Tacoma       SEA      KSEA     SEA          4
-   50       9               St. Louis       STL      KSTL     STL          4
+  fid  nName                    iata_code    icao_code    faa_lid      visits    rank
+-----  -----------------------  -----------  -----------  ---------  --------  ------
+    5  Dayton                   DAY          KDAY         DAY              42       1
+   10  Chicago (O’Hare)         ORD          KORD         ORD              16       2
+   15  Orlando (International)  MCO          KMCO         MCO              12       3
+   20  Dallas/Fort Worth        DFW          KDFW         DFW              10       4
+   25  Tulsa                    TUL          KTUL         TUL              10       4
+   30  Baltimore                BWI          KBWI         BWI               5       6
+   35  Charlotte                CLT          KCLT         CLT               5       6
+   40  Columbus, OH             CMH          KCMH         CMH               5       6
+   45  Seattle/Tacoma           SEA          KSEA         SEA               4       9
+   50  St. Louis                STL          KSTL         STL               4       9
 10 airport(s) visited
 ```
 Save 2015 airport visits to airports.csv:
 
 ```bash
-pbtravellog index airports --year 2015 --output airports.csv
+pbtravellog index airports --output airports.csv --year 2015
 ```
 
 ### `index tails`
 
 Generates an index of tail numbers flown, sorted by number of flights.
+
+#### Options
+
+- `--output <file>` (`-o <file>`): Save the index table in CSV format to the provided filename.
 
 #### Examples
 
@@ -166,12 +169,18 @@ pbtravellog index tails
 ```
 
 ```
-Tail    Type                         Count
-------  -------------------------  -------
-N123AA  McDonnell Douglas MD-82          2
-N456BB  Embraer ERJ-145                  1
-N789CC  Embraer ERJ-145                  1
+tail_number    aircraft_type                count    rank
+-------------  -------------------------  -------  ------
+N123AA         McDonnell Douglas MD-82          2       1
+N456BB         Embraer ERJ-145                  1       2
+N789CC         Embraer ERJ-145                  1       2
 3 tails(s) flown
+```
+
+Save tail numbers to tails.csv:
+
+```bash
+pbtravellog index airports --output tails.csv
 ```
 
 ### `show airport`

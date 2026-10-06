@@ -89,11 +89,12 @@ class RecordTable(dict):
     Designed to be inherited by specific travel table types.
     """
     RECORD_CLASS = Record
+    FID_LABEL = "fid"
     PRINT_COLS = []
 
     def print(self) -> None:
         """Prints a table to the console."""
-        print(tabulate(self._rows(), headers=["fid", *self.PRINT_COLS]))
+        print(tabulate(self._rows(), headers=self._headers()))
 
     def sort(self, col: str, ascending: bool = True) -> Self:
         """Sorts the table by the provided column."""
@@ -108,11 +109,15 @@ class RecordTable(dict):
         """Writes a table to a CSV file."""
         with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(["fid", *self.PRINT_COLS])
+            writer.writerow(self._headers())
             writer.writerows(self._rows())
         print(f"Wrote CSV to \"{output_file}\".")
 
-    def _rows(self):
+    def _headers(self) -> list:
+        """Returns print column names."""
+        return [self.FID_LABEL, *self.PRINT_COLS]
+
+    def _rows(self) -> tuple:
         """Converts the table into rows based on PRINT_COLS."""
         return (
             [fid, *(r[col] for col in self.PRINT_COLS)]
