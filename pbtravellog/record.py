@@ -119,6 +119,9 @@ class RecordTable(dict):
             for fid, r in self.items()
         )
 
+class RecordLayerTable(RecordTable):
+    """A RecordTable that comes from a GeoPackage layer."""
+
     @classmethod
     def from_all(cls) -> Self:
         """Creates a table of every object."""

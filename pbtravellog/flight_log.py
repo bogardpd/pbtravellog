@@ -26,7 +26,7 @@ from pbtravellog.geometry import (
     METERS_PER_HUNDRED_FEET, CRS,
     gc_distance, great_circle_route, split_at_antimeridian,
 )
-from pbtravellog.record import Record, RecordTable
+from pbtravellog.record import Record, RecordLayerTable
 from pbtravellog.travel_log import Trip, TripTable
 
 FLIGHT_LOG = os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH")
@@ -53,7 +53,7 @@ class AircraftType(Record):
             return name
         return f"{mfr} {name}"
 
-class AircraftTypeTable(RecordTable):
+class AircraftTypeTable(RecordLayerTable):
     """Represents a dict of AircraftType instances."""
     RECORD_CLASS = AircraftType
 
@@ -68,7 +68,7 @@ class Airline(Record):
         "numeric_code": "string",
     }
 
-class AirlineTable(RecordTable):
+class AirlineTable(RecordLayerTable):
     """Represents a dict of Airline instances."""
     RECORD_CLASS = Airline
 
@@ -92,7 +92,7 @@ class Airport(Record):
         """Returns IATA code, or name if no IATA code."""
         return self.get("iata_code") or self.get("name")
 
-class AirportTable(RecordTable):
+class AirportTable(RecordLayerTable):
     """Represents a dict of Airport instances."""
     RECORD_CLASS = Airport
     PRINT_COLS = [
@@ -402,7 +402,7 @@ class Flight(Record):
             return None
         return isoparse(dt_str)
 
-class FlightTable(RecordTable):
+class FlightTable(RecordLayerTable):
     """Represents a dict of Flight instances."""
     RECORD_CLASS = Flight
 
@@ -639,7 +639,7 @@ class SeatClass(Record):
     FIND_BY_CODES = []
     DTYPES = {"quality": "Int64"}
 
-class SeatClassTable(RecordTable):
+class SeatClassTable(RecordLayerTable):
     """Represents a dict of SeatClass instances."""
     RECORD_CLASS = SeatClass
 
@@ -650,7 +650,7 @@ class Route(Record):
     FIND_BY_CODES = []
     DTYPES = {"distance_mi": "Int64"}
 
-class RouteTable(RecordTable):
+class RouteTable(RecordLayerTable):
     """Represents a dict of Route instances."""
     RECORD_CLASS = Route
 
