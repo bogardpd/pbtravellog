@@ -134,7 +134,7 @@ pbtravellog index airports --year 2015
 ```
 
 ```
-  fid  nName                    iata_code    icao_code    faa_lid      visits    rank
+  fid  name                     iata_code    icao_code    faa_lid      visits    rank
 -----  -----------------------  -----------  -----------  ---------  --------  ------
     5  Dayton                   DAY          KDAY         DAY              42       1
    10  Chicago (O’Hare)         ORD          KORD         ORD              16       2
