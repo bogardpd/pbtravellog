@@ -2,17 +2,21 @@
 
 ## [Unreleased]
 
+## [0.5.0]
+
 ### Added
 
 - Added purpose field to Show Flight.
 - Added flight distance and duration totals to flight tables.
 - Added flight distance to show flight.
 - Added style guide to documentation.
+- Added `--output` option to `index tails`.
 
 ### Changed
 
 - Sorted Index Trips from newest to oldest.
 - Refactored travel log browser classes and methods.
+- Moved airport visit count from `show airport` command to browser Show Airport view.
 
 ## [0.4.0]
 
