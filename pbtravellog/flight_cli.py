@@ -46,3 +46,14 @@ def index_tails(output_file: Path | None = None) -> None:
         print(f"{len(tail_numbers)} unique tail(s) flown")
     else:
         tail_numbers.write_csv(output_file)
+
+def show_tail(tail_number: str) -> None:
+    """Shows flights for a specific tail number."""
+    flights = FlightTable.from_all().joined().filter_by_tail_number(
+        tail_number.upper()
+    )
+    if len(flights) == 0:
+        print("No matching flights found.")
+        sys.exit(1)
+    flights.print()
+    print(f"{len(flights)} matching flight(s)")

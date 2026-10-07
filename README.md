@@ -210,6 +210,7 @@ pbtravellog show airports LGA
    90  2023-03-09 15:54:00-05:00  American 473   LGA     DCA
   100  2024-01-09 07:00:00-05:00  Delta 5186     DAY     LGA
   101  2024-01-09 11:10:00-05:00  Delta 5843     LGA     RDU
+14 matching flight(s)
  ```
 
 ### `show tail`
@@ -223,10 +224,11 @@ pbtravellog show tail N123AA
 ```
 
 ```
-  fid    #  Departure    Flight    Orig    Dest
------  ---  -----------  --------  ------  ------
-  100    1  2012-03-16   AA 1000   DFW     ORD
-  200    2  2012-07-23   AA 1100   ORD     LAX
+  fid  departure                  name           orig    dest
+-----  -------------------------  -------------  ------  ------
+  100  2012-05-16 12:00:00-05:00  American 1000  DFW     ORD
+  200  2012-07-23 12:00:00-05:00  American 1100  ORD     LAX
+2 matching flight(s)
 ```
 
 ### `refresh routes`

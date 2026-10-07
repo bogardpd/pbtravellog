@@ -60,7 +60,7 @@ def main():
         if args.entity == "airport":
             flc.show_airport(args.id)
         elif args.entity == "tail":
-            fl.show_tail(args.tail_number)
+            flc.show_tail(args.tail_number)
     elif args.command == "run":
         html.run(args.port)
 

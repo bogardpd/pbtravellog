@@ -37,13 +37,6 @@ class Record(dict):
         return records
 
     @classmethod
-    def to_dict(cls) -> dict:
-        """Returns a dictionary of all records."""
-        records = cls.every().copy()
-        records = records.astype(object).where(pd.notna(records), None)
-        return records.to_dict(orient="index")
-
-    @classmethod
     def find_by_code(cls, code: str, check_fid=False) -> Self | None:
         """Finds a record by searching through code fields."""
         if getattr(cls, "FIND_BY_CODES", None) is None:
@@ -79,11 +72,6 @@ class Record(dict):
             matching_code = records[records[code_type] == code]
             if len(matching_code) == 1:
                 record = cls.from_gpd_row(matching_code.iloc[0])
-                # record_dict = matching_code.iloc[0].to_dict()
-                # record_dict["fid"] = int(matching_code.index[0])
-                # record = cls()
-                # for key, value in record_dict.items():
-                #     setattr(record, key, value)
                 return record
         print(f"⚠️ Could not find {cls.__name__} matching \"{code}\".")
         return None
@@ -143,7 +131,6 @@ class RecordTable(dict):
                 row.append(value)
             rows.append(row)
         return rows
-
 
 class RecordLayerTable(RecordTable):
     """A RecordTable that comes from a GeoPackage layer."""

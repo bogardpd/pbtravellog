@@ -728,15 +728,6 @@ class TailNumberTable(RecordTable):
         "rank": "rank",
     }
 
-def airport_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
-    """Calculates airport visit counts from flights."""
-    gdf = flights_gdf.copy()
-    count_orig = count_origin_visits(gdf)
-    gdf.loc[~count_orig, "origin_airport_fid"] = pd.NA
-    counts = gdf[["origin_airport_fid", "destination_airport_fid"]] \
-        .stack().value_counts()
-    return counts
-
 def count_origin_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
     """Determines whether to count origins as a visit."""
     flights_gdf = flights_gdf[[
@@ -839,8 +830,6 @@ def flights_table(
         records,
         headers=["fid", *table_cols.values()],
     )
-
-
 
 def import_flight_bcbp(bcbp_str, geojson: Path | None = None) -> None:
     """Parses a Bar-Coded Boarding Pass string."""
@@ -971,16 +960,6 @@ def refresh_routes():
         f"Updated all routes in {FLIGHT_LOG}."
     )
 
-def show_tail(tail_number: str) -> None:
-    """Shows data about a specific tail number."""
-    tail_number = tail_number.upper()
-    flights_gdf = Flight.every()
-    flights_gdf = flights_gdf[flights_gdf["tail_number"] == tail_number]
-    if len(flights_gdf) == 0:
-        print(f"No flights found for tail number '{tail_number}'.")
-        sys.exit(0)
-    print(flights_table(flights_gdf))
-
 def _estimate_trip_section(
         trip_fid: int, departure_dt: datetime
 ) -> int | None:
@@ -1018,14 +997,6 @@ def _flight_from_aeroapi_results(aero_results) -> Flight:
     flight.exit_if_not_complete()
     flight.fetch_aeroapi_track_geometry()
     return flight
-
-def _flight_name(airline_name, flight_number) -> str:
-    """Formats a flight name."""
-    if airline_name is not None:
-        if flight_number is not None:
-            return f"{airline_name} {flight_number}"
-        return airline_name
-    return "Unnamed Flight"
 
 def _format_time(time_val):
     """Format time as ISO 8601 with Z."""
@@ -1098,12 +1069,6 @@ def _import_fa_flight_results(
             setattr(flight, key, value)
 
     flight.save(geojson=geojson)
-
-def _local_dt(dt_utc, tz):
-    """Converts a UTC datetime to local time."""
-    if pd.isna(dt_utc) or pd.isna(tz):
-        return None
-    return dt_utc.astimezone(ZoneInfo(tz))
 
 def _rank_count(count_dict: dict) -> dict:
     """Ranks a dictionary of item counts."""
