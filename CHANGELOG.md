@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added Years views to browser.
+
 ## [0.5.0]
 
 ### Added
