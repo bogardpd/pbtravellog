@@ -159,7 +159,7 @@ def create_browser_app():
     @app.route("/tail_numbers/")
     def index_tail_numbers():
         return render_template(
-            "/tail_numbers/index.html",
+            "tail_numbers/index.html",
             tail_numbers=all_flights.collect_tail_numbers(),
         )
 
@@ -199,7 +199,7 @@ def create_browser_app():
             max([
                 max(flight_counts),
                 datetime.now(UTC).year,
-            ]) + 1
+            ]) + 1,
         )
         years = {
             y: {"flights": flight_counts.get(y, 0)}
@@ -208,6 +208,19 @@ def create_browser_app():
         return render_template(
             "/years/index.html",
             years=years
+        )
+
+    @app.route("/years/<int:year>/")
+    def show_year(year: int):
+        flights = all_flights.filter_by_year(year)
+        return render_template(
+            "years/show.html",
+            year=year,
+            airlines=flights.collect_airlines(operators=False),
+            operators=flights.collect_airlines(operators=True),
+            aircraft_types=flights.collect_aircraft_types(),
+            classes=flights.collect_classes(),
+            flights=flights,
         )
 
     return app

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Years", url_for("index_years")), (year, None)] %}
+{% block title %}{{ year }}{% endblock %}
+{% block content %}
+
+<h2>{{ year }} Airlines</h2>
+{% include "_partials/airline_table.html" %}
+
+<h2>{{ year }} Operators</h2>
+{% include "_partials/operator_table.html" %}
+
+<h2>{{ year }} Aircraft Types</h2>
+{% include "_partials/aircraft_type_table.html" %}
+
+<h2>{{ year }} Classes</h2>
+{% include "_partials/class_table.html" %}
+
+<h2>{{ year }} Flights</h2>
+{% include "_partials/flight_table.html" %}
+
+{% endblock content %}

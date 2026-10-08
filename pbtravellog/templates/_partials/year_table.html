@@ -5,7 +5,7 @@
   </thead>
   <tbody>
     {% for year, data in years.items() %}
-      <td>{{ year }}</td>
+      <td><a href="{{ url_for('show_year', year=year) }}">{{ year }}</a></td>
       <td>{{ data["flights"] }}</td>
     </tr>
     {% endfor %}
