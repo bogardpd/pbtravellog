@@ -21,9 +21,15 @@
 }
 
 :root {
-    --color-border: #cccccc;
-    --color-background-light: #eeeeee;
-    --color-text-light: #999999;
+    --color-background-page:  hsl(210, 5%, 95%);
+    --color-background-light: hsl(210, 20%, 90%);
+    --color-border:           hsl(210, 30%, 80%);
+
+    --color-text:             hsl(210, 10%, 10%);
+    --color-text-light:       hsl(210, 10%, 60%);
+
+    --color-link:             hsl(210, 100%, 50%);
+    --color-link-hover:       hsl(210, 100%, 70%);
 
     --weight-bold: 700;
     --weight-text: 450;
@@ -38,7 +44,15 @@ body {
     font-size: 14pt;
     font-weight: var(--weight-text);
     font-family: 'IBM Plex Sans', sans-serif;
-    background-color: #eeeeee;
+    background-color: var(--color-background-page);
+    color: var(--color-text);
+}
+a {
+    color: var(--color-link);
+    text-decoration: none;
+}
+a:hover {
+    color: var(--color-link-hover);
 }
 div.body-container {
     max-width: 1024px;
@@ -71,9 +85,16 @@ nav#breadcrumbs {
     }
 }
 nav#sidebar {
-    background-color: #cccccc;
+    background-color: hsl(210, 60%, 30%);
+    color: #ffffff;
     padding: 0.5em;
 
+    a {
+        color: #ffffff;
+    }
+    a:hover {
+        color: var(--color-link-hover);
+    }
     div.sidebar-site-title {
         font-weight: var(--weight-bold);
     }
