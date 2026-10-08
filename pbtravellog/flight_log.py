@@ -537,6 +537,13 @@ class FlightTable(RecordLayerTable):
         ))
         return tail_number_records
 
+    def count_by_year(self) -> dict:
+        """Counts flights departing in each year."""
+        year_flight_count = defaultdict(int)
+        for _, flight in self.items():
+            year_flight_count[flight["departure_utc"].year] += 1
+        return year_flight_count
+
     def filter_by_aircraft_type(self, aircraft_type_fid: int) -> Self:
         """Filters flight records by a trip."""
         records = {

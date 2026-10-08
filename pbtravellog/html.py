@@ -1,7 +1,7 @@
 """Builds and runs a static HTML travel log."""
 
 # Standard imports
-from datetime import date
+from datetime import date, datetime, UTC
 from pathlib import Path
 import webbrowser
 
@@ -188,6 +188,27 @@ def create_browser_app():
         trip = all_trips[trip_fid]
         flights = all_flights.filter_by_trip(trip_fid)
         return render_template("trips/show.html", trip=trip, flights=flights)
+
+    @app.route("/years/")
+    def index_years():
+        flight_counts = all_flights.count_by_year()
+        year_range = range(
+            min([
+               min(flight_counts),
+            ]),
+            max([
+                max(flight_counts),
+                datetime.now(UTC).year,
+            ]) + 1
+        )
+        years = {
+            y: {"flights": flight_counts.get(y, 0)}
+            for y in year_range
+        }
+        return render_template(
+            "/years/index.html",
+            years=years
+        )
 
     return app
 

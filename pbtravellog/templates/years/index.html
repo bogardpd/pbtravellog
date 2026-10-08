@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% set breadcrumbs=[("Home", url_for("home")), ("Years", None)] %}
+{% block title %}Years{% endblock %}
+{% block content %}
+{% include "_partials/year_table.html" %}
+{% endblock content %}

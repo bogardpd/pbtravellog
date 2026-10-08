@@ -1,0 +1,13 @@
+<table>
+  <thead>
+    <th>Year</th>
+    <th>Flights</th>
+  </thead>
+  <tbody>
+    {% for year, data in years.items() %}
+      <td>{{ year }}</td>
+      <td>{{ data["flights"] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
