@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Routes", url_for("index_routes")), (route["origin_airport"].code() ~ " → " ~ route["destination_airport"].code(), None)] %}
 {% block title %}{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }}{% endblock %}
+{% block type %}Route{% endblock %}
 {% block content %}
 <table class="summary">
   <thead>

@@ -21,6 +21,7 @@
 }
 
 :root {
+    --color-card:             hsl(210, 70%, 60%);
     --color-background-page:  hsl(210, 5%, 95%);
     --color-background-light: hsl(210, 20%, 90%);
     --color-border:           hsl(210, 30%, 80%);
@@ -38,6 +39,7 @@
     --border-heavy: 2px solid var(--color-border);
     --border-normal: 1px solid var(--color-border);
     --border-light: 1px dotted var(--color-border);
+    font-size: 14pt;
 }
 
 body {
@@ -68,26 +70,14 @@ div.body-container {
 }
 
 main {
-    padding: 1em;
+    padding: 1rem;
     background-color: #ffffff;
 }
-nav#breadcrumbs {
-    ul {
-        margin-top: 0;
-        margin-bottom: 1.5em;
-        display: flex;
-        list-style: none;
-        padding: 0;
-    }
-    li + li::before {
-        content: "›";
-        margin: 0 0.5em;
-    }
-}
+
 nav#sidebar {
     background-color: hsl(210, 60%, 30%);
     color: #ffffff;
-    padding: 0.5em;
+    padding: 0.5rem;
 
     a {
         color: #ffffff;
@@ -100,7 +90,7 @@ nav#sidebar {
     }
     ul {
         list-style-type: none;
-        padding-left: 1em;
+        padding-left: 1rem;
     }
     ul.sidebar-root {
         list-style-type: none;
@@ -114,26 +104,47 @@ h1 {
 
 div.card {
     width: 100%;
-    margin: 1em 0;
-    padding: 0.5em 0;
-    background-color: #eeeeee;
-    border: var(--border-normal);
+    margin: 0 0 1.5rem 0;
+    padding: 0;
+    background-color: var(--color-background-light);
+    border: 1px solid var(--color-card);
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.25);
     text-align: center;
-}
-div.flight-card {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 0.5em 0.5em;
-    div {
-        text-align: center;
-    }
-    .flight-card-head {
+    border-radius: 0.25rem;
+
+    div.entity-type {
+        padding: 0.5rem;
+        color: white;
+        background-color: var(--color-card);
         font-weight: var(--weight-bold);
-        font-size: 250%;
     }
-    .flight-card-airport-name {
-        font-weight: var(--weight-bold);
+    div.card-body {
+        padding: 0.5rem;
+    }
+
+    h1 {
+        margin: 0;
+    }
+    h1.pre-card-content {
+        border-bottom: 1px solid var(--color-card);
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    div.card-content-flight {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 0.5rem 0.5rem;
+        div {
+            text-align: center;
+        }
+        .flight-card-head {
+            font-weight: var(--weight-bold);
+            font-size: 250%;
+        }
+        .flight-card-airport-name {
+            font-weight: var(--weight-bold);
+        }
     }
 }
 
@@ -166,11 +177,11 @@ table {
 }
 table.flight-details {
     img {
-        margin-bottom: 0.5em;
+        margin-bottom: 0.5rem;
     }
 }
 th, td {
-    padding: 0.5em;
+    padding: 0.5rem;
     text-align: center;
     font-variant-numeric: tabular-nums;
 }

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Airlines", url_for("index_airlines")), (operator.get("name") + " (Operator)", None)] %}
 {% block title %}{{ operator.get("name") }}{% endblock %}
+{% block type %}Operator{% endblock %}
 {% block content %}
 <table class="summary">
   <thead>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Tail Numbers", url_for("index_tail_numbers")), (tail_number_record.get("formatted"), None)] %}
 {% block title %}{{ tail_number_record.get("formatted") }}{% endblock %}
+{% block type %}Tail{% endblock %}
 {% block content %}
 <table class="summary">
   <thead>

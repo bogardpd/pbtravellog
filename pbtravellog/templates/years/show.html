@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Years", url_for("index_years")), (year, None)] %}
 {% block title %}{{ year }}{% endblock %}
+{% block type %}Year{% endblock %}
 {% block content %}
 
 <h2>{{ year }} Airlines</h2>

@@ -1,14 +1,10 @@
 {% extends "base.html" %}
 {% import "_macros/icons.html" as icons %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Flights", url_for("index_flights")), (flight.name(), None)] %}
 {% block title %}{{ flight.name() }}{% endblock %}
-{% block content %}
+{% block type %}Flight{% endblock %}
 
-{% if flight.get("comments") is not none %}
-<p>{{ flight["comments"] }}</p>
-{% endif %}
-
-<div class="card flight-card">
+{% block card_content %}
+<div class="card-content-flight">
   <!-- Code -->
   <div class="flight-card-head">{% if flight.get("origin_airport_fid") is not none %}{{ flight["origin_airport"].code() }}{% endif %}</div>
   <div class="flight-card-head">&rarr;</div>
@@ -22,6 +18,13 @@
   <div class="flight-card-dt-local">{% if flight.duration() is not none %}{{ flight.duration() | format_duration }}{% endif %}</div>
   <div class="flight-card-dt-local">{{ flight.local_time("arrival") | format_dt(include_time=True, include_tz=True) }}</div>
 </div>
+{% endblock %}
+
+{% block content %}
+
+{% if flight.get("comments") is not none %}
+<p>{{ flight["comments"] }}</p>
+{% endif %}
 
 <table class="flight-details">
   {% if flight.get("purpose") is not none %}

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros/icons.html" as icons %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Classes", url_for("index_classes")), (seat_class.get("name"), None)] %}
 {% block title %}{{ seat_class.get("name") }} Class{% endblock %}
+{% block type %}Seat Class{% endblock %}
 {% block content %}
 <table class="summary">
   <thead>

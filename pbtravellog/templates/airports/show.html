@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% set breadcrumbs=[("Home", url_for("home")), ("Airports", url_for("index_airports")), (airport.iata_or_name(), None)] %}
 {% block title %}{{ airport.get("name") }}{% endblock %}
+{% block type %}Airport{% endblock %}
 {% block content %}
 <table class="summary">
   <thead>

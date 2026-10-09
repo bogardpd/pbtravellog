@@ -5,6 +5,11 @@
 ### Added
 
 - Added Years views to browser.
+- Added cards to all browser Show views.
+
+### Removed
+
+- Removed breadcrumbs.
 
 ## [0.5.0]
 
