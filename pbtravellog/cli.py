@@ -67,8 +67,18 @@ def main():
 
 def _add_parsers_extract_photo_metadata(subparsers) -> None:
     """Adds parsers for extract-photo-metadata command."""
-    epm_parser = subparsers.add_parser(
-        "extract-photo-metadata",
+    extract_parser = subparsers.add_parser(
+        "extract",
+        help="Extract travel data"
+    )
+    extract_subparsers = extract_parser.add_subparsers(
+        dest="entity",
+        required=True,
+    )
+
+    # Extract photo metadata
+    epm_parser = extract_subparsers.add_parser(
+        "photo-metadata",
         help="Extract metadata from a folder of photos"
     )
     epm_parser.add_argument("--source",
@@ -88,11 +98,15 @@ def _add_parsers_import(subparsers) -> None:
         "import",
         help="Import items to travel log",
     )
-    import_subparsers = import_parser.add_subparsers(dest="entity", required=True)
+    import_subparsers = import_parser.add_subparsers(
+        dest="entity",
+        required=True,
+    )
 
     # Import flight
     import_flight_parser = import_subparsers.add_parser(
         "flight",
+        help="Import flights",
     )
     import_flight_parser.add_argument("--geojson",
         help="Save flight to GeoJSON file instead of database",

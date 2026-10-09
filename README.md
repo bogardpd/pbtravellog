@@ -267,7 +267,7 @@ pbtravellog report milestones
 
 ## Utility Commands
 
-### `extract-photo-metadata`
+### `extract photo-metadata`
 
 Takes a folder of JPEG images, and returns an HTML file with a table of photo metadata, and a GeoPackage and KMZ file of photo locations (for photos with location data).
 
@@ -279,5 +279,5 @@ Takes a folder of JPEG images, and returns an HTML file with a table of photo me
 #### Example
 
 ```bash
-pbtravellog extract-photo-metadata --source ~/source_photos_dir --output ~/output_dir
+pbtravellog extract photo-metadata --source ~/source_photos_dir --output ~/output_dir
 ```
