@@ -1,23 +1,16 @@
 {% extends "base.html" %}
 {% block title %}{{ aircraft_type.full_name() }}{% endblock %}
 {% block type %}Aircraft Type{% endblock %}
+
+{% block card_content %}
+<div class="card-content-general">
+  {% if aircraft_type.get("iata_code") is not none %}<div><div class="card-label">IATA Code</div><div>{{ aircraft_type.get("iata_code") }}</div></div>{% endif %}
+  {% if aircraft_type.get("icao_code") is not none %}<div><div class="card-label">ICAO Code</div><div>{{ aircraft_type.get("icao_code") }}</div></div>{% endif %}
+  <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
+</div>
+{% endblock %}
+
 {% block content %}
-<table class="summary">
-  <thead>
-    <tr>
-      <th>IATA</th>
-      <th>ICAO</th>
-      <th>Flights</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><span class="code">{{ aircraft_type.get("iata_code") }}</span></td>
-      <td><span class="code">{{ aircraft_type.get("icao_code") }}</span></td>
-      <td>{{ flights | length }}</td>
-    </tr>
-  </tbody>
-</table>
 
 <h2>{{ aircraft_type.full_name() }} Airlines</h2>
 {% include "_partials/airline_table.html" %}

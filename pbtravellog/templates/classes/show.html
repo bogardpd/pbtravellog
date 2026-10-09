@@ -2,23 +2,16 @@
 {% import "_macros/icons.html" as icons %}
 {% block title %}{{ seat_class.get("name") }} Class{% endblock %}
 {% block type %}Seat Class{% endblock %}
+
+{% block card_content %}
+<p>{{ seat_class.get("description") }}</p>
+<div class="card-content-general">
+  <div><div class="card-label">Quality</div><div>{{ icons.seat_class_quality(seat_class.get("quality")) }}</div></div>
+  <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
+</div>
+{% endblock %}
+
 {% block content %}
-<table class="summary">
-  <thead>
-    <tr>
-      <th>Quality</th>
-      <th>Description</th>
-      <th>Flights</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>{{ icons.seat_class_quality(seat_class.get("quality")) }}</td>
-      <td>{{ seat_class.get("description") }}</td>
-      <td>{{ flights | length }}</td>
-    </tr>
-  </tbody>
-</table>
 
 <h2>{{ seat_class.get("name") }} Class Airlines</h2>
 {% include "_partials/airline_table.html" %}

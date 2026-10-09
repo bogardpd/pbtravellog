@@ -1,27 +1,18 @@
 {% extends "base.html" %}
 {% block title %}{{ airport.get("name") }}{% endblock %}
 {% block type %}Airport{% endblock %}
+
+{% block card_content %}
+<div class="card-content-general">
+  {% if airport.get("iata_code") is not none %}<div><div class="card-label">IATA Code</div><div>{{ airport.get("iata_code") }}</div></div>{% endif %}
+  {% if airport.get("icao_code") is not none %}<div><div class="card-label">ICAO Code</div><div>{{ airport.get("icao_code") }}</div></div>{% endif %}
+  {% if airport.get("faa_lid") is not none %}<div><div class="card-label">FAA LID</div><div>{{ airport.get("faa_lid") }}</div></div>{% endif %}
+  <div><div class="card-label">Visits</div><div>{{ airport.get("visits") }}</div></div>
+  <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
+</div>
+{% endblock %}
+
 {% block content %}
-<table class="summary">
-  <thead>
-    <tr>
-      <th>IATA Code</th>
-      <th>ICAO Code</th>
-      <th>FAA LID</th>
-      <th>Visits</th>
-      <th>Flights</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><span class="code">{{ airport.get("iata_code") }}</span></td>
-      <td><span class="code">{{ airport.get("icao_code") }}</span></td>
-      <td><span class="code">{{ airport.get("faa_lid") }}</span></td>
-      <td>{{ airport.get("visits") }}</td>
-      <td>{{ flights | length }}</td>
-    </tr>
-  </tbody>
-</table>
 
 <h2>{{ airport.iata_or_name() }} Airlines</h2>
 {% include "_partials/airline_table.html" %}

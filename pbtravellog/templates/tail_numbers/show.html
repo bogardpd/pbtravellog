@@ -1,19 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ tail_number_record.get("formatted") }}{% endblock %}
 {% block type %}Tail{% endblock %}
+
+{% block card_content %}
+<div class="card-content-general">
+  <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
+</div>
+{% endblock %}
+
 {% block content %}
-<table class="summary">
-  <thead>
-    <tr>
-      <th>Flights</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>{{ flights | length }}</td>
-    </tr>
-  </tbody>
-</table>
 
 <h2>{{ tail_number_record.get("formatted") }} Airlines</h2>
 {% include "_partials/airline_table.html" %}

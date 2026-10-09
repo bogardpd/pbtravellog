@@ -1,23 +1,16 @@
 {% extends "base.html" %}
 {% block title %}{{ airline.get("name") }}{% endblock %}
 {% block type %}Airline{% endblock %}
+
+{% block card_content %}
+<div class="card-content-general">
+  {% if airline.get("iata_code") is not none %}<div><div class="card-label">IATA Code</div><div>{{ airline.get("iata_code") }}</div></div>{% endif %}
+  {% if airline.get("icao_code") is not none %}<div><div class="card-label">ICAO Code</div><div>{{ airline.get("icao_code") }}</div></div>{% endif %}
+  <div><div class="card-label">Marketed Flights</div><div>{{ flights | length }}</div></div>
+</div>
+{% endblock %}
+
 {% block content %}
-<table class="summary">
-  <thead>
-    <tr>
-      <th>IATA</th>
-      <th>ICAO</th>
-      <th>Marketed Flights</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><span class="code">{{ airline.get("iata_code") }}</span></td>
-      <td><span class="code">{{ airline.get("icao_code") }}</span></td>
-      <td>{{ flights | length }}</td>
-    </tr>
-  </tbody>
-</table>
 
 <h2>{{ airline.get("name") }} Operators</h2>
 {% include "_partials/operator_table.html" %}
