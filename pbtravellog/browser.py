@@ -11,6 +11,7 @@ from flask import Flask, current_app, render_template, url_for
 # Project imports
 from pbtravellog.flight_log import FlightTable
 from pbtravellog.travel_log import TripTable
+from pbtravellog.geometry import GEOJSON_HEADERS
 
 def create_browser_app():
     """Creates a Flask app for the travel log."""
@@ -35,9 +36,7 @@ def create_browser_app():
 
     @app.route("/flights/flights.geojson")
     def geojson_flights():
-        return (all_flights.geojson(), 200,
-            {"Content-Type": "application/geo+json"},
-        )
+        return all_flights.geojson(), 200, GEOJSON_HEADERS
 
     @app.route("/flights/<int:flight_fid>/")
     def show_flight(flight_fid: int):
