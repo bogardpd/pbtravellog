@@ -35,7 +35,9 @@ def create_browser_app():
 
     @app.route("/flights/flights.geojson")
     def geojson_flights():
-        return all_flights.geojson()
+        return (all_flights.geojson(), 200,
+            {"Content-Type": "application/geo+json"},
+        )
 
     @app.route("/flights/<int:flight_fid>/")
     def show_flight(flight_fid: int):
