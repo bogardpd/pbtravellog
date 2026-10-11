@@ -41,6 +41,8 @@
     --border-normal: 1px solid var(--color-border);
     --border-light: 1px dotted var(--color-border);
     font-size: 14pt;
+
+    --spacing-standard: 1rem;
 }
 
 body {
@@ -160,6 +162,12 @@ div.card {
         font-weight: var(--weight-bold);
         color: var(--color-text-light);
     }
+}
+
+div.mapbox-map {
+    width: 100%;
+    height: 500px;
+    margin: var(--spacing-standard) 0;
 }
 
 img.class-quality-stars {

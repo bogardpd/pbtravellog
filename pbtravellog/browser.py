@@ -2,6 +2,7 @@
 
 # Standard imports
 from datetime import date, datetime, UTC
+import os
 from pathlib import Path
 import webbrowser
 
@@ -17,11 +18,16 @@ def create_browser_app():
     """Creates a Flask app for the travel log."""
     app = Flask(__name__)
 
+    MAPBOX_API_KEY = os.getenv("MAPBOX_API_KEY")
+    if MAPBOX_API_KEY is None:
+        raise KeyError("Environment variable MAPBOX_API_KEY is missing.")
+
     app.jinja_env.filters["format_date_range"] = _format_date_range
     app.jinja_env.filters["format_dt"] = _format_dt
     app.jinja_env.filters["format_duration"] = _format_duration
     app.jinja_env.filters["format_thousands"] = _format_thousands
     app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
+    app.jinja_env.globals["mapbox_api_key"] = MAPBOX_API_KEY
 
     all_flights = FlightTable.from_all().joined().sort("departure_utc")
     all_trips = TripTable.from_all()
