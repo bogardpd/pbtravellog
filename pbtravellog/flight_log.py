@@ -95,9 +95,9 @@ class Airport(Record):
             "type": "Feature",
             "geometry": self["geometry"].__geo_interface__,
             "properties": {
-                "fid": self.fid,
-                "name": self["name"],
-                "code": self.code(),
+                "airport_fid": self.fid,
+                "airport_name": self["name"],
+                "airport_code": self.code(),
             }
         }
         return gj
@@ -672,9 +672,9 @@ class FlightTable(RecordLayerTable):
                     "type": "Feature",
                     "geometry": geom_interface,
                     "properties": {
-                        "airport0": route_key[0],
-                        "airport1": route_key[1],
-                        "dist_mi": dist_mi,
+                        "route_airport0": route_key[0],
+                        "route_airport1": route_key[1],
+                        "route_dist_mi": dist_mi,
                     }
                 }
                 routes[route_key] = feature
