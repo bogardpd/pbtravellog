@@ -7,11 +7,11 @@ from pathlib import Path
 # Third-party imports
 
 # Project imports
-import pbtravellog.extract_photo_metadata as epm
-import pbtravellog.html as html
-import pbtravellog.flight_cli as flc
-import pbtravellog.flight_log as fl
-import pbtravellog.report as report
+from pbtravellog import extract_photo_metadata as epm
+from pbtravellog import browser
+from pbtravellog import flight_cli as flc
+from pbtravellog import flight_log as fl
+from pbtravellog import report
 
 def main():
     """Main CLI entry point."""
@@ -25,13 +25,16 @@ def main():
     _add_parsers_index(subparsers)
     _add_parsers_refresh(subparsers)
     _add_parsers_report(subparsers)
-    _add_parsers_run(subparsers)
+    _add_parsers_browse(subparsers)
     _add_parsers_show(subparsers)
 
     # Parse arguments
     args = parser.parse_args()
+    if args.command == "browse":
+        browser.launch(args.port)
     if args.command == "extract-photo-metadata":
-        epm.extract_photo_metadata(args.source, args.output)
+        if args.entity == "photo-metadata":
+            epm.extract_photo_metadata(args.source, args.output)
     elif args.command == "import":
         if args.entity == "flight":
             if args.bcbp is not None:
@@ -61,8 +64,6 @@ def main():
             flc.show_airport(args.id)
         elif args.entity == "tail":
             flc.show_tail(args.tail_number)
-    elif args.command == "run":
-        html.run(args.port)
 
 
 def _add_parsers_extract_photo_metadata(subparsers) -> None:
@@ -213,13 +214,13 @@ def _add_parsers_report(subparsers) -> None:
         help="Generate a report of flying milestones"
     )
 
-def _add_parsers_run(subparsers) -> None:
-    """Adds parsers for run command."""
-    run_parser = subparsers.add_parser(
-        "run",
+def _add_parsers_browse(subparsers) -> None:
+    """Adds parsers for browse command."""
+    browse_parser = subparsers.add_parser(
+        "browse",
         help="Launch travel log web interface"
     )
-    run_parser.add_argument("--port",
+    browse_parser.add_argument("--port",
         help="Webserver port (default: %(default)s)",
         type=int,
         default=5000,

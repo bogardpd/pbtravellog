@@ -1,4 +1,4 @@
-"""Builds and runs a static HTML travel log."""
+"""Runs a local server for browsing flight data."""
 
 # Standard imports
 from datetime import date, datetime, UTC
@@ -226,7 +226,7 @@ def create_browser_app():
     return app
 
 
-def run(port):
+def launch(port):
     """Launches the travel log web interface."""
     app = create_browser_app()
     webbrowser.open(f"http://localhost:{port}")
