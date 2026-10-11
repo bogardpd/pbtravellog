@@ -7,6 +7,10 @@
 - Added Years views to browser.
 - Added cards to all browser Show views.
 
+### Changed
+
+- Changed `run` command to `browse`.
+
 ### Removed
 
 - Removed breadcrumbs.
