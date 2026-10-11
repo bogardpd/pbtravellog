@@ -28,7 +28,43 @@ class GeoJSONMap():
 
     def bounds(self) -> list:
         """Calculates bounds for the map."""
-        return [[-180, -80],  [180, 80]]
+        default_bounds = [[-180.0, -70.0], [180.0, 80.0]] # WS, EN
+        features = [
+            f for f in self.geojson["features"]
+            if f.get("geometry") is not None
+        ]
+        airports = [
+            f for f in features
+            if f["geometry"]["type"] == "Point"
+        ]
+        if len(airports) == 0:
+            return default_bounds
+        elif len(airports) == 1:
+            coords = list(airports[0]["geometry"]["coordinates"])
+            return [coords, coords]
+        airport_lons = [a["geometry"]["coordinates"][0] for a in airports]
+        airport_lats = [a["geometry"]["coordinates"][1] for a in airports]
+        lons_sorted = sorted(airport_lons)
+        lons_extended = [*lons_sorted, (lons_sorted[0] + 360.0)]
+        lon_widths = [
+            b - a for a, b in zip(lons_extended[:-1], lons_extended[1:])
+        ]
+        biggest_gap_start_index = lon_widths.index(max(lon_widths))
+        bound_e = lons_sorted[biggest_gap_start_index]
+        bound_w = lons_sorted[(biggest_gap_start_index + 1) % len(lons_sorted)]
+        if bound_e < bound_w:
+            bound_e += 360.0
+        bound_n = max(airport_lats)
+        bound_s = min(airport_lats)
+        return [[bound_w, bound_s], [bound_e, bound_n]]
+        # TODO: Implement route checks
+        routes = [
+            f for f in features
+            if f["geometry"]["type"] == "MultiLineString"
+        ]
+
+        return default_bounds
+
 
 def gc_distance(p1: Point, p2: Point) -> int:
     """Returns the great circle distance between points in miles."""
