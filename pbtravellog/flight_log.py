@@ -24,7 +24,8 @@ import pbtravellog.aeroapi as aero
 from pbtravellog.boarding_pass import BoardingPass, PKPass
 from pbtravellog.geometry import (
     METERS_PER_HUNDRED_FEET, CRS,
-    gc_distance, great_circle_route, split_at_antimeridian,
+    gc_distance, great_circle_route, great_circle_route_pd,
+    split_at_antimeridian,
 )
 from pbtravellog.record import Record, RecordTable, RecordLayerTable
 from pbtravellog.travel_log import Trip, TripTable
@@ -87,6 +88,19 @@ class Airport(Record):
         """Returns the best code for the airport."""
         return self.get("iata_code") or self.get("icao_code") \
             or self.get("faa_lid")
+
+    def geojson_feature(self) -> dict:
+        """Returns airport as a dict in GeoJSON feature structure."""
+        gj = {
+            "type": "Feature",
+            "geometry": self["geometry"].__geo_interface__,
+            "properties": {
+                "fid": self.fid,
+                "name": self["name"],
+                "code": self.code(),
+            }
+        }
+        return gj
 
     def iata_or_name(self) -> str:
         """Returns IATA code, or name if no IATA code."""
@@ -632,6 +646,44 @@ class FlightTable(RecordLayerTable):
         }
         return self.__class__(records)
 
+    def geojson(self) -> dict:
+        """Returns flight records as a dict in GeoJSON structure."""
+        airports = {}
+        routes = {}
+        for f in self.values():
+            orig_fid = f["origin_airport_fid"]
+            dest_fid = f["destination_airport_fid"]
+            orig = f["origin_airport"]
+            dest = f["destination_airport"]
+            flight_airports = [(orig_fid, orig), (dest_fid, dest)]
+            for a_fid, a in flight_airports:
+                if a_fid not in airports:
+                    airports[a_fid] = a.geojson_feature()
+            route_key = tuple(sorted([orig_fid, dest_fid]))
+            if route_key not in routes:
+                dist_mi, geom = great_circle_route(
+                    orig["geometry"], dest["geometry"]
+                )
+                if geom is None:
+                    geom_interface = None
+                else:
+                    geom_interface = geom.__geo_interface__
+                feature = {
+                    "type": "Feature",
+                    "geometry": geom_interface,
+                    "properties": {
+                        "airport0": route_key[0],
+                        "airport1": route_key[1],
+                        "dist_mi": dist_mi,
+                    }
+                }
+                routes[route_key] = feature
+        gj = {
+            "type": "FeatureCollection",
+            "features": [*airports.values(), *routes.values()],
+        }
+        return gj
+
     def joined(self) -> Self:
         """Joins other classes on fid fields."""
         airports = AirportTable.from_all()
@@ -655,6 +707,7 @@ class FlightTable(RecordLayerTable):
                     v[j[2]] = {}
                 else:
                     v[j[2]] = j[0][v[j[1]]]
+                    v[j[2]].fid = v[j[1]]
         return self
 
     def total_distance(self) -> int:
@@ -1012,9 +1065,9 @@ def _format_time(time_val):
     return time_val.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 def _great_circle_airport_lookup(row, airports):
-    """Runs great_circle_route with a GeoDataFrame row."""
+    """Runs great_circle_route_pd with a GeoDataFrame row."""
     try:
-        return great_circle_route(
+        return great_circle_route_pd(
             airports.loc[row.origin_airport_fid, "geometry"],
             airports.loc[row.destination_airport_fid, "geometry"],
         )

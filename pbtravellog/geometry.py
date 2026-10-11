@@ -22,16 +22,15 @@ def gc_distance(p1: Point, p2: Point) -> int:
     _, _, dist_m = geod.inv(p1.x, p1.y, p2.x, p2.y)
     return int(round(dist_m / METERS_PER_MILE))
 
-def great_circle_route(point1, point2) -> pd.Series:
-    """Creates a great circle line between points.
-
-    Returns a Pandas series with distance in integer miles and a
-    MultiLineString geometry.
-    """
+def great_circle_route(
+        point1: Point,
+        point2: Point,
+) -> tuple[int, MultiLineString | None]:
+    """Returns great circle miles and geometry between points."""
     if point1 == point2:
         # Returned to same airport. Return zero great circle distance
         # and no geometry.
-        return pd.Series([0, None])
+        return (0, None)
     geod = Geod(ellps=ELLPS)
     _, _, dist_m = geod.inv(point1.x, point1.y, point2.x, point2.y)
     dist_mi = gc_distance(point1, point2)
@@ -46,7 +45,15 @@ def great_circle_route(point1, point2) -> pd.Series:
     geom = split_at_antimeridian(
         LineString([point1, *midpoints, point2])
     )
+    return (dist_mi, geom)
 
+def great_circle_route_pd(point1, point2) -> pd.Series:
+    """Creates a great circle line between points.
+
+    Returns a Pandas series with distance in integer miles and a
+    MultiLineString geometry.
+    """
+    dist_mi, geom = great_circle_route(point1, point2)
     return pd.Series([dist_mi, geom])
 
 def split_at_antimeridian(track_ls: LineString) -> MultiLineString:

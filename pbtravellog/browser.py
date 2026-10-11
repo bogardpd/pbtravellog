@@ -33,6 +33,10 @@ def create_browser_app():
     def index_flights():
         return render_template("flights/index.html", flights=all_flights)
 
+    @app.route("/flights/flights.geojson")
+    def geojson_flights():
+        return all_flights.geojson()
+
     @app.route("/flights/<int:flight_fid>/")
     def show_flight(flight_fid: int):
         flight = all_flights[flight_fid]
