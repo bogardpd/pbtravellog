@@ -20,6 +20,16 @@ GEOJSON_HEADERS = {
     "Expires": "0",
 }
 
+class GeoJSONMap():
+    """Manages GeoJSON map data."""
+    def __init__(self, geojson: dict):
+        self.geojson: dict = geojson
+        self.bounds = self.bounds()
+
+    def bounds(self) -> list:
+        """Calculates bounds for the map."""
+        return [[-180, -80],  [180, 80]]
+
 def gc_distance(p1: Point, p2: Point) -> int:
     """Returns the great circle distance between points in miles."""
     if p1 == p2:
