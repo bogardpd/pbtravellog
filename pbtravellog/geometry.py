@@ -114,7 +114,7 @@ class GeoJSONMap():
             bounds_w, bounds_e = (gap_e, gap_w)
             if bounds_w > bounds_e:
                 bounds_e += 360
-            return [[bounds_w, bounds_s],[bounds_e, bounds_n]]
+            return [[bounds_w, bounds_s], [bounds_e, bounds_n]]
         # Map goes around the world, so set east and west to the center
         # of biggest lowest gap region.
         split_lon = normalize_angle(gap_w + (gap_angle / 2))
