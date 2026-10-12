@@ -22,29 +22,40 @@ GEOJSON_HEADERS = {
 
 class GeoJSONMap():
     """Manages GeoJSON map data."""
+    DEFAULT_BOUNDS = [[-180.0, -70.0], [180.0, 80.0]] # WS, EN
+
     def __init__(self, geojson: dict):
         self.geojson: dict = geojson
-        self.bounds = self.bounds()
+        self.bounds: list[list] = self.calc_bounds()
 
-    def bounds(self) -> list:
+    def calc_bounds(self) -> list:
         """Calculates bounds for the map."""
-        default_bounds = [[-180.0, -70.0], [180.0, 80.0]] # WS, EN
         features = [
             f for f in self.geojson["features"]
             if f.get("geometry") is not None
         ]
+        routes = [
+            f for f in features
+            if f["geometry"]["type"] == "MultiLineString"
+        ]
+        if len(routes) > 0:
+            return self._route_bounds(routes)
         airports = [
             f for f in features
             if f["geometry"]["type"] == "Point"
         ]
-        if len(airports) == 0:
-            return default_bounds
-        elif len(airports) == 1:
+        if len(airports) > 0:
+            return self._airport_bounds(airports)
+        return GeoJSONMap.DEFAULT_BOUNDS
+
+    def _airport_bounds(self, airports) -> list[list]:
+        """Returns bounds for a collection of airport features."""
+        if len(airports) == 1:
             coords = list(airports[0]["geometry"]["coordinates"])
             return [coords, coords]
-        airport_lons = [a["geometry"]["coordinates"][0] for a in airports]
-        airport_lats = [a["geometry"]["coordinates"][1] for a in airports]
-        lons_sorted = sorted(airport_lons)
+        lons = [a["geometry"]["coordinates"][0] for a in airports]
+        lats = [a["geometry"]["coordinates"][1] for a in airports]
+        lons_sorted = sorted(lons)
         lons_extended = [*lons_sorted, (lons_sorted[0] + 360.0)]
         lon_widths = [
             b - a for a, b in zip(lons_extended[:-1], lons_extended[1:])
@@ -52,18 +63,65 @@ class GeoJSONMap():
         biggest_gap_start_index = lon_widths.index(max(lon_widths))
         bound_e = lons_sorted[biggest_gap_start_index]
         bound_w = lons_sorted[(biggest_gap_start_index + 1) % len(lons_sorted)]
-        if bound_e < bound_w:
-            bound_e += 360.0
-        bound_n = max(airport_lats)
-        bound_s = min(airport_lats)
-        return [[bound_w, bound_s], [bound_e, bound_n]]
-        # TODO: Implement route checks
-        routes = [
-            f for f in features
-            if f["geometry"]["type"] == "MultiLineString"
+        return [
+            [bound_w, min(lats)],
+            [bound_e, max(lats)]
         ]
 
-        return default_bounds
+    def _route_bounds(self, routes) -> list[list]:
+        """Returns bounds for a collection of route features."""
+        min_lats = []
+        max_lats = []
+        intervals = []
+        airport_at_180 = False
+        for route in routes:
+            multiline = route["geometry"]["coordinates"]
+            for line in multiline:
+                if len(line) > 0:
+                    lats = [p[1] for p in line]
+                    min_lats.append(min(lats))
+                    max_lats.append(max(lats))
+                    lon_range = sorted([line[0][0], line[-1][0]])
+                    intervals.append(lon_range)
+            if len(multiline) > 0:
+                if (
+                    abs(multiline[0][0][0]) == 180.0
+                    or abs(multiline[-1][-1][0]) == 180.0
+                ):
+                    airport_at_180 = True
+
+        changes = [(-180,0), (180, 0)]
+        for w, e in intervals:
+            changes.extend([(w, 1), (e, -1)])
+        changes.sort()
+        prev = -180
+        count = 0
+        segments = []
+        for lon, change in changes:
+            if lon > prev:
+                segments.append((prev, lon, count))
+            count += change
+            prev = lon
+        if not airport_at_180:
+            # Merge first and last segment.
+            segments.append(
+                (segments[-1][0], segments[0][1] + 360, segments[-1][2])
+            )
+            segments.pop(0)
+        min_count = min([c for _, _, c in segments])
+        candidates = [(w, e, e - w) for w, e, c in segments if c == min_count]
+        dist, west, east = max(candidates, key=lambda x: x[2])
+        if min_count == 0:
+            if west > east:
+                east -= 360
+            return [
+                [east, min(min_lats)],
+                [west, max(max_lats)],
+            ]
+        # Map goes around the world, so set east and west to center
+        # of biggest lowest gap region.
+        split_lon = normalize_angle(west + (dist / 2))
+        return [[split_lon, min(min_lats)], [split_lon + 360, max(max_lats)]]
 
 
 def gc_distance(p1: Point, p2: Point) -> int:
@@ -164,3 +222,6 @@ def _crossing_point(p1, p2):
         return None
     x_frac = (lon - p1[0]) / (p2[0] - p1[0])
     return tuple([c1 + (x_frac * (c2 - c1)) for c1, c2 in zip(p1, p2)])
+
+def normalize_angle(angle: float):
+    return (angle + 180) % 360 - 180
