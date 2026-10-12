@@ -129,6 +129,12 @@ def gc_distance(p1: Point, p2: Point) -> int:
     _, _, dist_m = geod.inv(p1.x, p1.y, p2.x, p2.y)
     return int(round(dist_m / METERS_PER_MILE))
 
+def geo_interface(geom) -> dict | None:
+    """Returns a GeoJSON geometry."""
+    if geom is None:
+        return None
+    return geom.__geo_interface__
+
 def great_circle_route(
         point1: Point,
         point2: Point,
@@ -221,4 +227,5 @@ def _crossing_point(p1, p2):
     return tuple([c1 + (x_frac * (c2 - c1)) for c1, c2 in zip(p1, p2)])
 
 def normalize_angle(angle: float):
+    """Returns an angle in the -180 to 180 range."""
     return (angle + 180) % 360 - 180

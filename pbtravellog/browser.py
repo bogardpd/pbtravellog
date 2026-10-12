@@ -219,7 +219,7 @@ def create_browser_app():
             "trips/show.html.jinja",
             trip=trip,
             flights=flights,
-            flights_map=GeoJSONMap(flights.geojson()),
+            flights_map=GeoJSONMap(flights.geojson(group_routes=False)),
         )
 
     @app.route("/years/")

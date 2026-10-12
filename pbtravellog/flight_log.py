@@ -24,7 +24,7 @@ import pbtravellog.aeroapi as aero
 from pbtravellog.boarding_pass import BoardingPass, PKPass
 from pbtravellog.geometry import (
     METERS_PER_HUNDRED_FEET, CRS,
-    gc_distance, great_circle_route, great_circle_route_pd,
+    gc_distance, geo_interface, great_circle_route, great_circle_route_pd,
     split_at_antimeridian,
 )
 from pbtravellog.record import Record, RecordTable, RecordLayerTable
@@ -227,6 +227,35 @@ class Flight(Record):
             "comments": None,
         }
         return gpd.GeoDataFrame([record], geometry="geometry", crs=CRS)
+
+    def geojson_feature(self) -> dict:
+        """Returns flight as a dict in GeoJSON feature structure."""
+        dist_mi, geom = (self.get("dist_mi"), self.get("geometry"))
+        if geom is None or dist_mi is None:
+            orig = self.get("origin_airport")
+            dest = self.get("destination_airport")
+            if orig is not None and dest is not None:
+                gc_dist_mi, gc_geom = great_circle_route(
+                    orig["geometry"], dest["geometry"]
+                )
+                if geom is None:
+                    geom = gc_geom
+                if dist_mi is None:
+                    dist_mi = gc_dist_mi
+        gj = {
+            "type": "Feature",
+            "geometry": geo_interface(geom),
+            "properties": {
+                "flight_fid": self.fid,
+                "flight_name": self.name(),
+                "flight_origin_airport_fid": self["origin_airport_fid"],
+                "flight_destination_airport_fid": self[
+                    "destination_airport_fid"
+                ],
+                "flight_dist_mi": dist_mi,
+            }
+        }
+        return gj
 
     def local_time(self, loc) -> datetime:
         """Returns local departure or arrival time.
@@ -646,11 +675,19 @@ class FlightTable(RecordLayerTable):
         }
         return self.__class__(records)
 
-    def geojson(self) -> dict:
-        """Returns flight records as a dict in GeoJSON structure."""
+    def geojson(self, group_routes: bool = True) -> dict:
+        """Returns flight records as a dict in GeoJSON structure.
+
+        Args:
+            group_routes (bool, optional): If True, consolidates flights
+                which share routes into single features with great
+                circle geometry. If False, individual flights are added
+                as features with actual geometry if available, or great
+                circle paths if actual geometry is not available.
+        """
         airports = {}
         routes = {}
-        for f in self.values():
+        for idx, f in enumerate(self.values()):
             orig_fid = f["origin_airport_fid"]
             dest_fid = f["destination_airport_fid"]
             orig = f["origin_airport"]
@@ -659,25 +696,24 @@ class FlightTable(RecordLayerTable):
             for a_fid, a in flight_airports:
                 if a_fid not in airports:
                     airports[a_fid] = a.geojson_feature()
-            route_key = tuple(sorted([orig_fid, dest_fid]))
-            if route_key not in routes:
-                dist_mi, geom = great_circle_route(
-                    orig["geometry"], dest["geometry"]
-                )
-                if geom is None:
-                    geom_interface = None
-                else:
-                    geom_interface = geom.__geo_interface__
-                feature = {
-                    "type": "Feature",
-                    "geometry": geom_interface,
-                    "properties": {
-                        "route_airport0": route_key[0],
-                        "route_airport1": route_key[1],
-                        "route_dist_mi": dist_mi,
+            if group_routes:
+                route_key = tuple(sorted([orig_fid, dest_fid]))
+                if route_key not in routes:
+                    dist_mi, geom = great_circle_route(
+                        orig["geometry"], dest["geometry"]
+                    )
+                    feature = {
+                        "type": "Feature",
+                        "geometry": geo_interface(geom),
+                        "properties": {
+                            "route_airport0": route_key[0],
+                            "route_airport1": route_key[1],
+                            "route_dist_mi": dist_mi,
+                        }
                     }
-                }
-                routes[route_key] = feature
+                    routes[route_key] = feature
+            else:
+                routes[idx] = f.geojson_feature()
         gj = {
             "type": "FeatureCollection",
             "features": [*airports.values(), *routes.values()],
