@@ -72,7 +72,7 @@ class GeoJSONMap():
         """Returns bounds for a collection of route features."""
         min_lats = []
         max_lats = []
-        intervals = []
+        lon_ranges = []
         airport_at_180 = False
         for route in routes:
             multiline = route["geometry"]["coordinates"]
@@ -81,35 +81,33 @@ class GeoJSONMap():
                     lats = [p[1] for p in line]
                     min_lats.append(min(lats))
                     max_lats.append(max(lats))
-                    lon_range = sorted([line[0][0], line[-1][0]])
-                    intervals.append(lon_range)
+                    lon_ranges.append(sorted([line[0][0], line[-1][0]]))
             if len(multiline) > 0:
-                if (
-                    abs(multiline[0][0][0]) == 180.0
-                    or abs(multiline[-1][-1][0]) == 180.0
-                ):
+                ends = (multiline[0][0][0], multiline[-1][-1][0])
+                if abs(ends[0]) == 180.0 or abs(ends[1]) == 180.0:
                     airport_at_180 = True
         changes = [(-180,0), (180, 0)]
-        for w, e in intervals:
+        for w, e in lon_ranges:
+            # +1 at start of line (west), -1 at end of line (east).
             changes.extend([(w, 1), (e, -1)])
         changes.sort()
+        # Build longitude bins of route counts.
         prev = -180
         count = 0
-        segments = []
+        bins = []
         for lon, change in changes:
             if lon > prev:
-                segments.append((prev, lon, count))
+                bins.append((prev, lon, count))
             count += change
             prev = lon
         if not airport_at_180:
             # Merge first and last segment.
-            segments.append(
-                (segments[-1][0], segments[0][1] + 360, segments[-1][2])
-            )
-            segments.pop(0)
-        min_count = min([c for _, _, c in segments])
-        candidates = [(w, e, e - w) for w, e, c in segments if c == min_count]
-        gap_w, gap_e, dist = max(candidates, key=lambda x: x[2])
+            bins.append((bins[-1][0], bins[0][1] + 360, bins[-1][2]))
+            bins.pop(0)
+        # Find all segments with the lowest route count.
+        min_count = min([c for _, _, c in bins])
+        candidates = [(w, e, e - w) for w, e, c in bins if c == min_count]
+        gap_w, gap_e, gap_angle = max(candidates, key=lambda x: x[2])
         bounds_s, bounds_n = (min(min_lats), max(max_lats))
         if min_count == 0:
             # No routes cross this gap.
@@ -117,9 +115,9 @@ class GeoJSONMap():
             if bounds_w > bounds_e:
                 bounds_e += 360
             return [[bounds_w, bounds_s],[bounds_e, bounds_n]]
-        # Map goes around the world, so set east and west to center
+        # Map goes around the world, so set east and west to the center
         # of biggest lowest gap region.
-        split_lon = normalize_angle(gap_w + (dist / 2))
+        split_lon = normalize_angle(gap_w + (gap_angle / 2))
         return [[split_lon, bounds_s], [split_lon + 360, bounds_n]]
 
 
