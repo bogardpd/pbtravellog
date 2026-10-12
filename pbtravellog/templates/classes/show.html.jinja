@@ -4,24 +4,32 @@
 {% block type %}Seat Class{% endblock %}
 
 {% block card_content %}
-<p>{{ seat_class.get("description") }}</p>
-<div class="card-content-general">
-  <div><div class="card-label">Quality</div><div>{{ icons.seat_class_quality(seat_class.get("quality")) }}</div></div>
-  <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
-</div>
+
+  <p>{{ seat_class.get("description") }}</p>
+
+  <div class="card-content-general">
+    <div><div class="card-label">Quality</div><div>{{ icons.seat_class_quality(seat_class.get("quality")) }}</div></div>
+    <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
+  </div>
+
+  {% with gj_map = flights_map %}
+    {% include "_partials/map.html.jinja" %}
+  {% endwith %}
+
 {% endblock %}
 
 {% block content %}
 
-<h2>{{ seat_class.get("name") }} Class Airlines</h2>
-{% include "_partials/airline_table.html.jinja" %}
+  <h2>{{ seat_class.get("name") }} Class Airlines</h2>
+  {% include "_partials/airline_table.html.jinja" %}
 
-<h2>{{ seat_class.get("name") }} Class Operators</h2>
-{% include "_partials/operator_table.html.jinja" %}
+  <h2>{{ seat_class.get("name") }} Class Operators</h2>
+  {% include "_partials/operator_table.html.jinja" %}
 
-<h2>{{ seat_class.get("name") }} Class Aircraft Types</h2>
-{% include "_partials/aircraft_type_table.html.jinja" %}
+  <h2>{{ seat_class.get("name") }} Class Aircraft Types</h2>
+  {% include "_partials/aircraft_type_table.html.jinja" %}
 
-<h2>{{ seat_class.get("name") }} Class Flights</h2>
-{% include "_partials/flight_table.html.jinja" %}
+  <h2>{{ seat_class.get("name") }} Class Flights</h2>
+  {% include "_partials/flight_table.html.jinja" %}
+
 {% endblock content %}

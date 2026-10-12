@@ -71,6 +71,7 @@ def create_browser_app():
             operators=flights.collect_airlines(operators=True),
             classes=flights.collect_classes(),
             flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
         )
 
     @app.route("/airlines/")
@@ -92,6 +93,7 @@ def create_browser_app():
             aircraft_types=flights.collect_aircraft_types(),
             classes=flights.collect_classes(),
             flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
         )
 
     @app.route("/airlines/operators/<int:operator_fid>/")
@@ -105,6 +107,7 @@ def create_browser_app():
             aircraft_types=flights.collect_aircraft_types(),
             classes=flights.collect_classes(),
             flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
         )
 
     @app.route("/airports/")
@@ -131,6 +134,7 @@ def create_browser_app():
             aircraft_types=flights.collect_aircraft_types(),
             classes=flights.collect_classes(),
             flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
         )
 
     @app.route("/classes/")
@@ -152,6 +156,7 @@ def create_browser_app():
             operators=flights.collect_airlines(operators=True),
             aircraft_types=flights.collect_aircraft_types(),
             flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
         )
 
     @app.route("/routes/")
@@ -175,6 +180,7 @@ def create_browser_app():
             aircraft_types=flights.collect_aircraft_types(),
             classes=flights.collect_classes(),
             flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
         )
 
     @app.route("/tail_numbers/")
@@ -196,6 +202,7 @@ def create_browser_app():
             aircraft_types=flights.collect_aircraft_types(),
             classes=flights.collect_classes(),
             flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
         )
 
     @app.route("/trips/")
@@ -212,6 +219,7 @@ def create_browser_app():
             "trips/show.html.jinja",
             trip=trip,
             flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
         )
 
     @app.route("/years/")
@@ -232,7 +240,7 @@ def create_browser_app():
         }
         return render_template(
             "/years/index.html.jinja",
-            years=years
+            years=years,
         )
 
     @app.route("/years/<int:year>/")
@@ -246,6 +254,7 @@ def create_browser_app():
             aircraft_types=flights.collect_aircraft_types(),
             classes=flights.collect_classes(),
             flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
         )
 
     return app

@@ -2,8 +2,13 @@
 {% import "_macros/icons.html.jinja" as icons %}
 {% block title %}Flights{% endblock %}
 {% block content %}
-{% with gj_map = flights_map %}
-  {% include "_partials/map.html.jinja" %}
-{% endwith %}
-{% include "_partials/flight_table.html.jinja" %}
+
+  <div class="card"><div class="card-body">
+  {% with gj_map = flights_map %}
+    {% include "_partials/map.html.jinja" %}
+  {% endwith %}
+  </div></div>
+
+  {% include "_partials/flight_table.html.jinja" %}
+
 {% endblock content %}

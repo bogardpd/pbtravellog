@@ -3,28 +3,35 @@
 {% block type %}Route{% endblock %}
 
 {% block card_content %}
-<div class="card-content-general">
-  {% if fids[0] is not none %}<div><div class="card-label">Origin</div><div><a href="{{ url_for('show_airport', airport_fid=fids[0]) }}" class="code">{{ route["origin_airport"].code() }}</a></div></div>{% endif %}
-  {% if fids[1] is not none %}<div><div class="card-label">Destination</div><div><a href="{{ url_for('show_airport', airport_fid=fids[1]) }}" class="code">{{ route["destination_airport"].code() }}</a></div></div>{% endif %}
-  {% if route.get("distance_mi") is not none %}<div><div class="card-label">Distance</div><div>{{ route.get("distance_mi") }}&nbsp;miles</div></div>{% endif %}
-  <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
-</div>
+
+  <div class="card-content-general">
+    {% if fids[0] is not none %}<div><div class="card-label">Origin</div><div><a href="{{ url_for('show_airport', airport_fid=fids[0]) }}" class="code">{{ route["origin_airport"].code() }}</a></div></div>{% endif %}
+    {% if fids[1] is not none %}<div><div class="card-label">Destination</div><div><a href="{{ url_for('show_airport', airport_fid=fids[1]) }}" class="code">{{ route["destination_airport"].code() }}</a></div></div>{% endif %}
+    {% if route.get("distance_mi") is not none %}<div><div class="card-label">Distance</div><div>{{ route.get("distance_mi") }}&nbsp;miles</div></div>{% endif %}
+    <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
+  </div>
+
+  {% with gj_map = flights_map %}
+    {% include "_partials/map.html.jinja" %}
+  {% endwith %}
+
 {% endblock %}
 
 {% block content %}
 
-<h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Airlines</h2>
-{% include "_partials/airline_table.html.jinja" %}
+  <h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Airlines</h2>
+  {% include "_partials/airline_table.html.jinja" %}
 
-<h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Operators</h2>
-{% include "_partials/operator_table.html.jinja" %}
+  <h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Operators</h2>
+  {% include "_partials/operator_table.html.jinja" %}
 
-<h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Aircraft Types</h2>
-{% include "_partials/aircraft_type_table.html.jinja" %}
+  <h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Aircraft Types</h2>
+  {% include "_partials/aircraft_type_table.html.jinja" %}
 
-<h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Classes</h2>
-{% include "_partials/class_table.html.jinja" %}
+  <h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Classes</h2>
+  {% include "_partials/class_table.html.jinja" %}
 
-<h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Flights</h2>
-{% include "_partials/flight_table.html.jinja" %}
+  <h2>{{ route["origin_airport"].code() }} &rarr; {{ route["destination_airport"].code() }} Flights</h2>
+  {% include "_partials/flight_table.html.jinja" %}
+
 {% endblock content %}

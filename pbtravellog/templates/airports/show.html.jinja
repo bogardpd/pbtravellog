@@ -3,31 +3,39 @@
 {% block type %}Airport{% endblock %}
 
 {% block card_content %}
-<div class="card-content-general">
-  {% if airport.get("iata_code") is not none %}<div><div class="card-label">IATA Code</div><div>{{ airport.get("iata_code") }}</div></div>{% endif %}
-  {% if airport.get("icao_code") is not none %}<div><div class="card-label">ICAO Code</div><div>{{ airport.get("icao_code") }}</div></div>{% endif %}
-  {% if airport.get("faa_lid") is not none %}<div><div class="card-label">FAA LID</div><div>{{ airport.get("faa_lid") }}</div></div>{% endif %}
-  <div><div class="card-label">Visits</div><div>{{ airport.get("visits") }}</div></div>
-  <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
-</div>
+
+  <div class="card-content-general">
+    {% if airport.get("iata_code") is not none %}<div><div class="card-label">IATA Code</div><div>{{ airport.get("iata_code") }}</div></div>{% endif %}
+    {% if airport.get("icao_code") is not none %}<div><div class="card-label">ICAO Code</div><div>{{ airport.get("icao_code") }}</div></div>{% endif %}
+    {% if airport.get("faa_lid") is not none %}<div><div class="card-label">FAA LID</div><div>{{ airport.get("faa_lid") }}</div></div>{% endif %}
+    <div><div class="card-label">Visits</div><div>{{ airport.get("visits") }}</div></div>
+    <div><div class="card-label">Flights</div><div>{{ flights | length }}</div></div>
+  </div>
+
+  {% with gj_map = flights_map %}
+    {% include "_partials/map.html.jinja" %}
+  {% endwith %}
+
 {% endblock %}
 
 {% block content %}
 
-<h2>{{ airport.iata_or_name() }} Airlines</h2>
-{% include "_partials/airline_table.html.jinja" %}
+  <h2>{{ airport.iata_or_name() }} Airlines</h2>
+  {% include "_partials/airline_table.html.jinja" %}
 
-<h2>{{ airport.iata_or_name() }} Operators</h2>
-{% include "_partials/operator_table.html.jinja" %}
+  <h2>{{ airport.iata_or_name() }} Operators</h2>
+  {% include "_partials/operator_table.html.jinja" %}
 
-<h2>{{ airport.iata_or_name() }} Aircraft Types</h2>
-{% include "_partials/aircraft_type_table.html.jinja" %}
+  <h2>{{ airport.iata_or_name() }} Aircraft Types</h2>
+  {% include "_partials/aircraft_type_table.html.jinja" %}
 
-<h2>{{ airport.iata_or_name() }} Classes</h2>
-{% include "_partials/class_table.html.jinja" %}
+  <h2>{{ airport.iata_or_name() }} Classes</h2>
+  {% include "_partials/class_table.html.jinja" %}
 
-<h2>{{ airport.iata_or_name() }} Flights</h2>
-{% with include_cumulative_airport_visits = True %}
-  {% include "_partials/flight_table.html.jinja" %}
-{% endwith %}
+  <h2>{{ airport.iata_or_name() }} Flights</h2>
+
+  {% with include_cumulative_airport_visits = True %}
+    {% include "_partials/flight_table.html.jinja" %}
+  {% endwith %}
+
 {% endblock content %}
