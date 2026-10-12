@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% import "_macros/icons.html" as icons %}
-{% block title %}Flights{% endblock %}
-{% block content %}
-{% with gj_map = flights_map %}
-  {% include "_partials/map.html" %}
-{% endwith %}
-{% include "_partials/flight_table.html" %}
-{% endblock content %}

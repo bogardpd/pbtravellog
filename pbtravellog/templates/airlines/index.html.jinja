@@ -1,0 +1,11 @@
+{% extends "base.html.jinja" %}
+{% block title %}Airlines{% endblock %}
+{% block content %}
+
+<h2>Marketing Airlines</h2>
+{% include "_partials/airline_table.html.jinja" %}
+
+<h2>Operators</h2>
+{% include "_partials/operator_table.html.jinja" %}
+
+{% endblock content %}

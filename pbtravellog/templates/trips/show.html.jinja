@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html.jinja" %}
 {% block title %}{{ trip.get("name") }}{% endblock %}
 {% block type %}Trip{% endblock %}
 
@@ -15,6 +15,6 @@
 {% endif %}
 
 <h2>Flights</h2>
-{% include "_partials/flight_table.html" %}
+{% include "_partials/flight_table.html.jinja" %}
 
 {% endblock content %}

@@ -34,12 +34,12 @@ def create_browser_app():
 
     @app.route("/")
     def home():
-        return render_template("home.html")
+        return render_template("home.html.jinja")
 
     @app.route("/flights/")
     def index_flights():
         return render_template(
-            "flights/index.html",
+            "flights/index.html.jinja",
             flights=all_flights,
             flights_map=GeoJSONMap(all_flights.geojson())
         )
@@ -51,12 +51,12 @@ def create_browser_app():
     @app.route("/flights/<int:flight_fid>/")
     def show_flight(flight_fid: int):
         flight = all_flights[flight_fid]
-        return render_template("flights/show.html", flight=flight)
+        return render_template("flights/show.html.jinja", flight=flight)
 
     @app.route("/aircraft_types/")
     def index_aircraft_types():
         return render_template(
-            "aircraft_types/index.html",
+            "aircraft_types/index.html.jinja",
             aircraft_types=all_flights.collect_aircraft_types(),
         )
 
@@ -65,7 +65,7 @@ def create_browser_app():
         aircraft_type_records = all_flights.collect_aircraft_types()
         flights = all_flights.filter_by_aircraft_type(aircraft_type_fid)
         return render_template(
-            "aircraft_types/show.html",
+            "aircraft_types/show.html.jinja",
             aircraft_type=aircraft_type_records[aircraft_type_fid],
             airlines=flights.collect_airlines(operators=False),
             operators=flights.collect_airlines(operators=True),
@@ -76,7 +76,7 @@ def create_browser_app():
     @app.route("/airlines/")
     def index_airlines():
         return render_template(
-            "airlines/index.html",
+            "airlines/index.html.jinja",
             airlines=all_flights.collect_airlines(operators=False),
             operators=all_flights.collect_airlines(operators=True),
         )
@@ -86,7 +86,7 @@ def create_browser_app():
         airline_records = all_flights.collect_airlines(operators=False)
         flights = all_flights.filter_by_airline(airline_fid, operator=False)
         return render_template(
-            "airlines/show.html",
+            "airlines/show.html.jinja",
             airline=airline_records[airline_fid],
             operators=flights.collect_airlines(operators=True),
             aircraft_types=flights.collect_aircraft_types(),
@@ -99,7 +99,7 @@ def create_browser_app():
         operator_records = all_flights.collect_airlines(operators=True)
         flights = all_flights.filter_by_airline(operator_fid, operator=True)
         return render_template(
-            "airlines/show_operator.html",
+            "airlines/show_operator.html.jinja",
             operator=operator_records[operator_fid],
             airlines=flights.collect_airlines(operators=False),
             aircraft_types=flights.collect_aircraft_types(),
@@ -110,7 +110,10 @@ def create_browser_app():
     @app.route("/airports/")
     def index_airports():
         airport_records = all_flights.collect_airports()
-        return render_template("airports/index.html", airports=airport_records)
+        return render_template(
+            "airports/index.html.jinja",
+            airports=airport_records,
+        )
 
     @app.route("/airports/<int:airport_fid>/")
     def show_airport(airport_fid: int):
@@ -120,7 +123,7 @@ def create_browser_app():
             count_cumulative=True,
         )
         return render_template(
-            "airports/show.html",
+            "airports/show.html.jinja",
             airport_fid=airport_fid,
             airport=airport_records[airport_fid],
             airlines=flights.collect_airlines(operators=False),
@@ -133,14 +136,17 @@ def create_browser_app():
     @app.route("/classes/")
     def index_classes():
         class_records = all_flights.collect_classes()
-        return render_template("classes/index.html", classes=class_records)
+        return render_template(
+            "classes/index.html.jinja",
+            classes=class_records,
+        )
 
     @app.route("/classes/<int:class_fid>/")
     def show_class(class_fid: int):
         class_records = all_flights.collect_classes()
         flights = all_flights.filter_by_class(class_fid)
         return render_template(
-            "classes/show.html",
+            "classes/show.html.jinja",
             seat_class=class_records[class_fid],
             airlines=flights.collect_airlines(operators=False),
             operators=flights.collect_airlines(operators=True),
@@ -151,7 +157,7 @@ def create_browser_app():
     @app.route("/routes/")
     def index_routes():
         route_records = all_flights.collect_routes()
-        return render_template("routes/index.html", routes=route_records)
+        return render_template("routes/index.html.jinja", routes=route_records)
 
     @app.route(
         "/routes/<int:origin_airport_fid>/<int:destination_airport_fid>/"
@@ -161,7 +167,7 @@ def create_browser_app():
         fids = (origin_airport_fid, destination_airport_fid)
         flights = all_flights.filter_by_route(*fids)
         return render_template(
-            "routes/show.html",
+            "routes/show.html.jinja",
             fids=fids,
             route=route_records[fids],
             airlines=flights.collect_airlines(operators=False),
@@ -174,7 +180,7 @@ def create_browser_app():
     @app.route("/tail_numbers/")
     def index_tail_numbers():
         return render_template(
-            "tail_numbers/index.html",
+            "tail_numbers/index.html.jinja",
             tail_numbers=all_flights.collect_tail_numbers(),
         )
 
@@ -183,7 +189,7 @@ def create_browser_app():
         tail_number_records = all_flights.collect_tail_numbers()
         flights = all_flights.filter_by_tail_number(tail_number)
         return render_template(
-            "tail_numbers/show.html",
+            "tail_numbers/show.html.jinja",
             tail_number_record=tail_number_records[tail_number],
             airlines=flights.collect_airlines(operators=False),
             operators=flights.collect_airlines(operators=True),
@@ -196,13 +202,17 @@ def create_browser_app():
     def index_trips():
         trip_records = all_trips.sort("end_date", ascending=False) \
             .sort("start_date", ascending=False)
-        return render_template("trips/index.html", trips=trip_records)
+        return render_template("trips/index.html.jinja", trips=trip_records)
 
     @app.route("/trips/<int:trip_fid>/")
     def show_trip(trip_fid: int):
         trip = all_trips[trip_fid]
         flights = all_flights.filter_by_trip(trip_fid)
-        return render_template("trips/show.html", trip=trip, flights=flights)
+        return render_template(
+            "trips/show.html.jinja",
+            trip=trip,
+            flights=flights,
+        )
 
     @app.route("/years/")
     def index_years():
@@ -221,7 +231,7 @@ def create_browser_app():
             for y in year_range
         }
         return render_template(
-            "/years/index.html",
+            "/years/index.html.jinja",
             years=years
         )
 
@@ -229,7 +239,7 @@ def create_browser_app():
     def show_year(year: int):
         flights = all_flights.filter_by_year(year)
         return render_template(
-            "years/show.html",
+            "years/show.html.jinja",
             year=year,
             airlines=flights.collect_airlines(operators=False),
             operators=flights.collect_airlines(operators=True),

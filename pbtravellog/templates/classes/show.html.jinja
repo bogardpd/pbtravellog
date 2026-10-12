@@ -1,5 +1,5 @@
-{% extends "base.html" %}
-{% import "_macros/icons.html" as icons %}
+{% extends "base.html.jinja" %}
+{% import "_macros/icons.html.jinja" as icons %}
 {% block title %}{{ seat_class.get("name") }} Class{% endblock %}
 {% block type %}Seat Class{% endblock %}
 
@@ -14,14 +14,14 @@
 {% block content %}
 
 <h2>{{ seat_class.get("name") }} Class Airlines</h2>
-{% include "_partials/airline_table.html" %}
+{% include "_partials/airline_table.html.jinja" %}
 
 <h2>{{ seat_class.get("name") }} Class Operators</h2>
-{% include "_partials/operator_table.html" %}
+{% include "_partials/operator_table.html.jinja" %}
 
 <h2>{{ seat_class.get("name") }} Class Aircraft Types</h2>
-{% include "_partials/aircraft_type_table.html" %}
+{% include "_partials/aircraft_type_table.html.jinja" %}
 
 <h2>{{ seat_class.get("name") }} Class Flights</h2>
-{% include "_partials/flight_table.html" %}
+{% include "_partials/flight_table.html.jinja" %}
 {% endblock content %}

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html.jinja" %}
 {% block title %}{{ tail_number_record.get("formatted") }}{% endblock %}
 {% block type %}Tail{% endblock %}
 
@@ -11,17 +11,17 @@
 {% block content %}
 
 <h2>{{ tail_number_record.get("formatted") }} Airlines</h2>
-{% include "_partials/airline_table.html" %}
+{% include "_partials/airline_table.html.jinja" %}
 
 <h2>{{ tail_number_record.get("formatted") }} Operators</h2>
-{% include "_partials/operator_table.html" %}
+{% include "_partials/operator_table.html.jinja" %}
 
 <h2>{{ tail_number_record.get("formatted") }} Aircraft Types</h2>
-{% include "_partials/aircraft_type_table.html" %}
+{% include "_partials/aircraft_type_table.html.jinja" %}
 
 <h2>{{ tail_number_record.get("formatted") }} Classes</h2>
-{% include "_partials/class_table.html" %}
+{% include "_partials/class_table.html.jinja" %}
 
 <h2>{{ tail_number_record.get("formatted") }} Flights</h2>
-{% include "_partials/flight_table.html" %}
+{% include "_partials/flight_table.html.jinja" %}
 {% endblock content %}

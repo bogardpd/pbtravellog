@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html.jinja" %}
 {% block title %}{{ aircraft_type.full_name() }}{% endblock %}
 {% block type %}Aircraft Type{% endblock %}
 
@@ -13,14 +13,14 @@
 {% block content %}
 
 <h2>{{ aircraft_type.full_name() }} Airlines</h2>
-{% include "_partials/airline_table.html" %}
+{% include "_partials/airline_table.html.jinja" %}
 
 <h2>{{ aircraft_type.full_name() }} Operators</h2>
-{% include "_partials/operator_table.html" %}
+{% include "_partials/operator_table.html.jinja" %}
 
 <h2>{{ aircraft_type.full_name() }} Classes</h2>
-{% include "_partials/class_table.html" %}
+{% include "_partials/class_table.html.jinja" %}
 
 <h2>{{ aircraft_type.full_name() }} Flights</h2>
-{% include "_partials/flight_table.html" %}
+{% include "_partials/flight_table.html.jinja" %}
 {% endblock content %}

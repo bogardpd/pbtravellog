@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html.jinja" %}
 {% block title %}{{ operator.get("name") }}{% endblock %}
 {% block type %}Operator{% endblock %}
 
@@ -13,14 +13,14 @@
 {% block content %}
 
 <h2>{{ operator.get("name") }} Operated Airlines</h2>
-{% include "_partials/airline_table.html" %}
+{% include "_partials/airline_table.html.jinja" %}
 
 <h2>{{ operator.get("name") }} Operated Aircraft Types</h2>
-{% include "_partials/aircraft_type_table.html" %}
+{% include "_partials/aircraft_type_table.html.jinja" %}
 
 <h2>{{ operator.get("name") }} Operated Classes</h2>
-{% include "_partials/class_table.html" %}
+{% include "_partials/class_table.html.jinja" %}
 
 <h2>{{ operator.get("name") }} Operated Flights</h2>
-{% include "_partials/flight_table.html" %}
+{% include "_partials/flight_table.html.jinja" %}
 {% endblock content %}

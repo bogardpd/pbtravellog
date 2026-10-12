@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html.jinja" %}
 {% block title %}{{ airport.get("name") }}{% endblock %}
 {% block type %}Airport{% endblock %}
 
@@ -15,19 +15,19 @@
 {% block content %}
 
 <h2>{{ airport.iata_or_name() }} Airlines</h2>
-{% include "_partials/airline_table.html" %}
+{% include "_partials/airline_table.html.jinja" %}
 
 <h2>{{ airport.iata_or_name() }} Operators</h2>
-{% include "_partials/operator_table.html" %}
+{% include "_partials/operator_table.html.jinja" %}
 
 <h2>{{ airport.iata_or_name() }} Aircraft Types</h2>
-{% include "_partials/aircraft_type_table.html" %}
+{% include "_partials/aircraft_type_table.html.jinja" %}
 
 <h2>{{ airport.iata_or_name() }} Classes</h2>
-{% include "_partials/class_table.html" %}
+{% include "_partials/class_table.html.jinja" %}
 
 <h2>{{ airport.iata_or_name() }} Flights</h2>
 {% with include_cumulative_airport_visits = True %}
-  {% include "_partials/flight_table.html" %}
+  {% include "_partials/flight_table.html.jinja" %}
 {% endwith %}
 {% endblock content %}
