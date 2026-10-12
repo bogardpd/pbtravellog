@@ -14,13 +14,13 @@ from pbtravellog.flight_log import FlightTable
 from pbtravellog.travel_log import TripTable
 from pbtravellog.geometry import GEOJSON_HEADERS, GeoJSONMap
 
+MAPBOX_API_KEY = os.getenv("MAPBOX_API_KEY")
+if MAPBOX_API_KEY is None:
+    raise KeyError("Environment variable MAPBOX_API_KEY is missing.")
+
 def create_browser_app():
     """Creates a Flask app for the travel log."""
     app = Flask(__name__)
-
-    MAPBOX_API_KEY = os.getenv("MAPBOX_API_KEY")
-    if MAPBOX_API_KEY is None:
-        raise KeyError("Environment variable MAPBOX_API_KEY is missing.")
 
     app.jinja_env.filters["format_date_range"] = _format_date_range
     app.jinja_env.filters["format_dt"] = _format_dt
@@ -51,7 +51,11 @@ def create_browser_app():
     @app.route("/flights/<int:flight_fid>/")
     def show_flight(flight_fid: int):
         flight = all_flights[flight_fid]
-        return render_template("flights/show.html.jinja", flight=flight)
+        return render_template(
+            "flights/show.html.jinja",
+            flight=flight,
+            flight_map=GeoJSONMap(flight.geojson())
+        )
 
     @app.route("/aircraft_types/")
     def index_aircraft_types():

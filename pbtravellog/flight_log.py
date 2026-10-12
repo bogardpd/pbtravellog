@@ -228,6 +228,19 @@ class Flight(Record):
         }
         return gpd.GeoDataFrame([record], geometry="geometry", crs=CRS)
 
+    def geojson(self) -> dict:
+        """Returns a single flight as a dict in GeoJSON structure."""
+        airports = [
+            self.get(a) for a in ["origin_airport", "destination_airport"]
+            if a is not None
+        ]
+        airport_features = {a.fid: a.geojson_feature() for a in airports}
+        gj = {
+            "type": "FeatureCollection",
+            "features": [*airport_features.values(), self.geojson_feature()]
+        }
+        return gj
+
     def geojson_feature(self) -> dict:
         """Returns flight as a dict in GeoJSON feature structure."""
         dist_mi, geom = (self.get("dist_mi"), self.get("geometry"))
@@ -253,6 +266,7 @@ class Flight(Record):
                     "destination_airport_fid"
                 ],
                 "flight_dist_mi": dist_mi,
+                "flight_departure_utc": self["departure_utc"],
             }
         }
         return gj
