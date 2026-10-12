@@ -89,7 +89,6 @@ class GeoJSONMap():
                     or abs(multiline[-1][-1][0]) == 180.0
                 ):
                     airport_at_180 = True
-
         changes = [(-180,0), (180, 0)]
         for w, e in intervals:
             changes.extend([(w, 1), (e, -1)])
@@ -110,18 +109,18 @@ class GeoJSONMap():
             segments.pop(0)
         min_count = min([c for _, _, c in segments])
         candidates = [(w, e, e - w) for w, e, c in segments if c == min_count]
-        dist, west, east = max(candidates, key=lambda x: x[2])
+        gap_w, gap_e, dist = max(candidates, key=lambda x: x[2])
+        bounds_s, bounds_n = (min(min_lats), max(max_lats))
         if min_count == 0:
-            if west > east:
-                east -= 360
-            return [
-                [east, min(min_lats)],
-                [west, max(max_lats)],
-            ]
+            # No routes cross this gap.
+            bounds_w, bounds_e = (gap_e, gap_w)
+            if bounds_w > bounds_e:
+                bounds_e += 360
+            return [[bounds_w, bounds_s],[bounds_e, bounds_n]]
         # Map goes around the world, so set east and west to center
         # of biggest lowest gap region.
-        split_lon = normalize_angle(west + (dist / 2))
-        return [[split_lon, min(min_lats)], [split_lon + 360, max(max_lats)]]
+        split_lon = normalize_angle(gap_w + (dist / 2))
+        return [[split_lon, bounds_s], [split_lon + 360, bounds_n]]
 
 
 def gc_distance(p1: Point, p2: Point) -> int:
