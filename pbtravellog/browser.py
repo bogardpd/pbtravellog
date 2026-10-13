@@ -120,6 +120,7 @@ def create_browser_app():
         return render_template(
             "airports/index.html.jinja",
             airports=airport_records,
+            airports_map=GeoJSONMap(airport_records.geojson()),
         )
 
     @app.route("/airports/<int:airport_fid>/")

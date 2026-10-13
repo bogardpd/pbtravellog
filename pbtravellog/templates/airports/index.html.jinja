@@ -1,5 +1,13 @@
 {% extends "base.html.jinja" %}
 {% block title %}Airports{% endblock %}
 {% block content %}
-{% include "_partials/airport_table.html.jinja" %}
+
+  <div class="card"><div class="card-body">
+  {% with gj_map = airports_map %}
+    {% include "_partials/map.html.jinja" %}
+  {% endwith %}
+  </div></div>
+
+  {% include "_partials/airport_table.html.jinja" %}
+
 {% endblock content %}

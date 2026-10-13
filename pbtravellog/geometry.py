@@ -61,11 +61,13 @@ class GeoJSONMap():
             b - a for a, b in zip(lons_extended[:-1], lons_extended[1:])
         ]
         biggest_gap_start_index = lon_widths.index(max(lon_widths))
-        bound_e = lons_sorted[biggest_gap_start_index]
-        bound_w = lons_sorted[(biggest_gap_start_index + 1) % len(lons_sorted)]
+        bounds_e = lons_sorted[biggest_gap_start_index]
+        bounds_w = lons_sorted[(biggest_gap_start_index + 1) % len(lons_sorted)]
+        if bounds_w > bounds_e:
+            bounds_e += 360
         return [
-            [bound_w, min(lats)],
-            [bound_e, max(lats)]
+            [bounds_w, min(lats)],
+            [bounds_e, max(lats)]
         ]
 
     def _route_bounds(self, routes) -> list[list]:

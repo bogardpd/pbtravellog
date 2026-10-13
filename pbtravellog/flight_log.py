@@ -118,6 +118,14 @@ class AirportTable(RecordLayerTable):
         "rank": "rank",
     }
 
+    def geojson(self) -> dict:
+        """Returns airport records as a dict in GeoJSON structure."""
+        gj = {
+            "type": "FeatureCollection",
+            "features": [a.geojson_feature() for a in self.values()]
+        }
+        return gj
+
 class Flight(Record):
     """Represents a flight record."""
     DATA_FILE = FLIGHT_LOG
