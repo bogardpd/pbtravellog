@@ -20,9 +20,20 @@ When the flight log is done parsing a PKPass, it stores it in a folder which mus
 
 ## API Keys
 
+### AeroAPI
+
 This package interacts with [AeroAPI](https://www.flightaware.com/commercial/aeroapi/) to get flight data. You will need to get an AeroAPI API key and set it as an environment variable:
 
 ```AEROAPI_API_KEY=yourkey```
 
 > [!IMPORTANT]
 > When these scripts call AeroAPI with your API key, you will incur AeroAPI per-query fees as appropriate for your AeroAPI account.
+
+### Mapbox
+
+The browser interacts with [Mapbox](https://www.mapbox.com/) to draw maps. You will need to get a Mapbox API key and set it as an environment variable:
+
+```MAPBOX_API_KEY=yourkey```
+
+> [!IMPORTANT]
+> When these scripts call Mapbox web services APIs with your API key, you will incur Mapbox per-query fees as appropriate for your Mapbox account.

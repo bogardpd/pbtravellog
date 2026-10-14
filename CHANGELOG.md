@@ -6,6 +6,7 @@
 
 - Added Years views to browser.
 - Added cards to all browser Show views.
+- Added Mapbox maps to multiple views.
 
 ### Changed
 
