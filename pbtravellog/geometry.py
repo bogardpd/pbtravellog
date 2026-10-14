@@ -13,12 +13,6 @@ ELLPS = "WGS84"
 METERS_PER_MILE = 1609.344
 METERS_PER_HUNDRED_FEET = 30.48
 METERS_BETWEEN_GC_POINTS = 100000
-GEOJSON_HEADERS = {
-    "Content-Type": "application/geo+json",
-    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-    "Pragma": "no-cache",
-    "Expires": "0",
-}
 
 class GeoJSONMap():
     """Manages GeoJSON map data."""
