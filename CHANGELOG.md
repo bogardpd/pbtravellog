@@ -2,9 +2,11 @@
 
 ## [Unreleased]
 
+## [0.6.0]
+
 ### Added
 
-- Added Years views to browser.
+- Added Index Years and Show Year views to browser.
 - Added cards to all browser Show views.
 - Added Mapbox maps to multiple views.
 
