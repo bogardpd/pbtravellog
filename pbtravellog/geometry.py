@@ -65,10 +65,7 @@ class GeoJSONMap():
         bounds_w = lons_sorted[(biggest_gap_start_index + 1) % len(lons_sorted)]
         if bounds_w > bounds_e:
             bounds_e += 360
-        return [
-            [bounds_w, min(lats)],
-            [bounds_e, max(lats)]
-        ]
+        return [[bounds_w, min(lats)], [bounds_e, max(lats)]]
 
     def _route_bounds(self, routes) -> list[list]:
         """Returns bounds for a collection of route features."""
