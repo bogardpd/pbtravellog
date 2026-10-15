@@ -62,7 +62,12 @@ class GeoJSONMap():
         return [[bounds_w, min(lats)], [bounds_e, max(lats)]]
 
     def _route_bounds(self, routes) -> list[list]:
-        """Returns bounds for a collection of route features."""
+        """Returns bounds for a collection of route features.
+
+        Assumes that route geometry is a MultiLineString containing one
+        or more LineStrings, none of which cross the antimeridian. (The
+        MultiLineString as a whole may span the antimeridian.)
+        """
         min_lats = []
         max_lats = []
         lon_ranges = []
@@ -72,9 +77,10 @@ class GeoJSONMap():
             for line in multiline:
                 if len(line) > 0:
                     lats = [p[1] for p in line]
+                    lons = [p[0] for p in line]
                     min_lats.append(min(lats))
                     max_lats.append(max(lats))
-                    lon_ranges.append(sorted([line[0][0], line[-1][0]]))
+                    lon_ranges.append([min(lons), max(lons)])
             if len(multiline) > 0:
                 ends = (multiline[0][0][0], multiline[-1][-1][0])
                 if abs(ends[0]) == 180.0 or abs(ends[1]) == 180.0:
