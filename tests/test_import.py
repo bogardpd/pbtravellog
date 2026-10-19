@@ -9,6 +9,6 @@ def test_import_flight_bcbp(bcbp_data, monkeypatch, tmp_path):
     )
     monkeypatch.setenv("AEROAPI_API_KEY", "invalid_key")
     env_flight_gpkg = Path(os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"))
-    flight_bcbp = bcbp_data("bcbp_1_leg.txt")
+    flight_bcbp = bcbp_data("bcbp_import.txt")
     import_flight_bcbp(flight_bcbp)
     assert tmp_flight_gpkg.resolve() == env_flight_gpkg.resolve()
