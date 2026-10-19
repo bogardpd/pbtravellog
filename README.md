@@ -281,3 +281,13 @@ Takes a folder of JPEG images, and returns an HTML file with a table of photo me
 ```bash
 pbtravellog extract photo-metadata --source ~/source_photos_dir --output ~/output_dir
 ```
+
+## Testing
+
+PBTravelLog includes pytest tests. Before running any tests, install pytest in PBTravelLog's venv:
+
+`python -m pip install -U pytest`
+
+To run tests:
+
+`python -m pytest`
