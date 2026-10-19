@@ -30,15 +30,22 @@ from pbtravellog.geometry import (
 from pbtravellog.record import Record, RecordTable, RecordLayerTable
 from pbtravellog.travel_log import Trip, TripTable
 
-FLIGHT_LOG = os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH")
-if FLIGHT_LOG is None:
-    raise KeyError(
-        "Environment variable PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is missing."
-    )
+def _get_flight_log():
+    """Gets current value of flight log path.
+    
+    Needed to ensure tests aren't using stale environment variables.
+    """
+    flight_log = os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH")
+    if flight_log is None:
+        raise KeyError(
+            "Environment variable PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH is "
+            "missing."
+        )
+    return flight_log
 
 class AircraftType(Record):
     """Represents an aircraft type record."""
-    DATA_FILE = FLIGHT_LOG
+    DATA_FILE = _get_flight_log()
     LAYER = "aircraft_types"
     FIND_BY_CODES = ["icao_code"]
     DTYPES = {
@@ -60,7 +67,7 @@ class AircraftTypeTable(RecordLayerTable):
 
 class Airline(Record):
     """Represents an airline record."""
-    DATA_FILE = FLIGHT_LOG
+    DATA_FILE = _get_flight_log()
     LAYER = "airlines"
     FIND_BY_CODES = ["icao_code", "iata_code"]
     DTYPES = {
@@ -75,7 +82,7 @@ class AirlineTable(RecordLayerTable):
 
 class Airport(Record):
     """Represents an airport record."""
-    DATA_FILE = FLIGHT_LOG
+    DATA_FILE = _get_flight_log()
     LAYER = "airports"
     FIND_BY_CODES = ["icao_code", "iata_code", "faa_lid"]
     DTYPES = {
@@ -128,7 +135,7 @@ class AirportTable(RecordLayerTable):
 
 class Flight(Record):
     """Represents a flight record."""
-    DATA_FILE = FLIGHT_LOG
+    DATA_FILE = _get_flight_log()
     LAYER = "flights"
     FIND_BY_CODES = []
     DTYPES = {
@@ -330,7 +337,7 @@ class Flight(Record):
             print(f"Wrote flight to {geojson}.")
             sys.exit(0)
         existing = gpd.read_file(
-            FLIGHT_LOG,
+            _get_flight_log(),
             layer=Flight.LAYER,
             engine="pyogrio",
             rows=0,
@@ -366,13 +373,13 @@ class Flight(Record):
         # Reorder columns to match existing schema.
         gdf = record_gdf[existing_cols]
         gdf.to_file(
-            FLIGHT_LOG,
+            _get_flight_log(),
             driver="GPKG",
             engine="pyogrio",
             layer=Flight.LAYER,
             mode="a",
         )
-        print(f"Appended flight to {FLIGHT_LOG}.")
+        print(f"Appended flight to {_get_flight_log()}.")
 
     def tail_number_formatted(self) -> str:
         """Returns the flight's formatted tail number."""
@@ -780,7 +787,7 @@ class FlightTable(RecordLayerTable):
 
 class SeatClass(Record):
     """Represents a flight class record."""
-    DATA_FILE = FLIGHT_LOG
+    DATA_FILE = _get_flight_log()
     LAYER = "classes"
     FIND_BY_CODES = []
     DTYPES = {"quality": "Int64"}
@@ -791,7 +798,7 @@ class SeatClassTable(RecordLayerTable):
 
 class Route(Record):
     """Represents a route record."""
-    DATA_FILE = FLIGHT_LOG
+    DATA_FILE = _get_flight_log()
     LAYER = "routes"
     FIND_BY_CODES = []
     DTYPES = {"distance_mi": "Int64"}
@@ -1041,7 +1048,7 @@ def import_flight_pkpasses(geojson: Path | None = None) -> None:
 
 def refresh_routes():
     """Updates the routes layer based on logged flights."""
-    con = sqlite3.connect(FLIGHT_LOG)
+    con = sqlite3.connect(_get_flight_log())
     flights_sql = """
         SELECT origin_airport_fid, destination_airport_fid,
             COUNT(*) as flight_count
@@ -1053,7 +1060,7 @@ def refresh_routes():
     con.close()
 
     airports = gpd.read_file(
-        FLIGHT_LOG,
+        _get_flight_log(),
         layer="airports",
         engine="pyogrio",
         fid_as_index=True,
@@ -1068,14 +1075,14 @@ def refresh_routes():
     routes_gdf = gpd.GeoDataFrame(flights_df, geometry="geometry", crs=CRS)
 
     routes_gdf.to_file(
-        FLIGHT_LOG,
+        _get_flight_log(),
         driver="GPKG",
         engine="pyogrio",
         layer="routes",
         mode="w",
     )
     print(
-        f"Updated all routes in {FLIGHT_LOG}."
+        f"Updated all routes in {_get_flight_log()}."
     )
 
 def _estimate_trip_section(

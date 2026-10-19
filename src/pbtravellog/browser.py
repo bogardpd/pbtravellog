@@ -14,9 +14,15 @@ from pbtravellog.flight_log import FlightTable
 from pbtravellog.travel_log import TripTable
 from pbtravellog.geometry import GeoJSONMap
 
-MAPBOX_API_KEY = os.getenv("MAPBOX_API_KEY")
-if MAPBOX_API_KEY is None:
-    raise KeyError("Environment variable MAPBOX_API_KEY is missing.")
+def _get_mapbox_api_key():
+    """Gets the current AeroAPI API key.
+        
+    Needed to ensure tests aren't using stale environment variables.
+    """
+    mapbox_api_key = os.getenv("MAPBOX_API_KEY")
+    if mapbox_api_key is None:
+        raise KeyError("Environment variable MAPBOX_API_KEY is missing.")
+    return mapbox_api_key
 
 def create_browser_app():
     """Creates a Flask app for the travel log."""
@@ -27,7 +33,7 @@ def create_browser_app():
     app.jinja_env.filters["format_duration"] = _format_duration
     app.jinja_env.filters["format_thousands"] = _format_thousands
     app.jinja_env.globals["img_path_airline_icon"] = _img_path_airline_icon
-    app.jinja_env.globals["mapbox_api_key"] = MAPBOX_API_KEY
+    app.jinja_env.globals["mapbox_api_key"] = _get_mapbox_api_key()
 
     all_flights = FlightTable.from_all().joined().sort("departure_utc")
     all_trips = TripTable.from_all()

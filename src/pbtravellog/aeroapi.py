@@ -13,9 +13,16 @@ from dateutil.parser import isoparse
 from tabulate import tabulate
 
 # Load API key.
-_API_KEY = os.getenv("AEROAPI_API_KEY")
-if _API_KEY is None:
-    raise KeyError("Environment variable AEROAPI_API_KEY is missing.")
+def _get_aeroapi_api_key():
+    """Gets the current AeroAPI API key.
+    
+    Needed to ensure tests aren't using stale environment variables.
+    """
+    api_key = os.getenv("AEROAPI_API_KEY")
+    if api_key is None:
+        raise KeyError("Environment variable AEROAPI_API_KEY is missing.")
+    return api_key
+
 # Server info.
 SERVER = "https://aeroapi.flightaware.com/aeroapi"
 _TIMEOUT = 10
@@ -53,7 +60,7 @@ def get_flights_ident(ident, ident_type=None):
     """Gets flights matching an ident."""
     print(f"Looking up \"{ident}\" on AeroAPI")
     url = f"{SERVER}/flights/{ident}"
-    headers = {"x-apikey": _API_KEY}
+    headers = {"x-apikey": _get_aeroapi_api_key()}
     params = {"ident_type": ident_type}
     _rate_limiter.wait()
     response = requests.get(
@@ -70,7 +77,7 @@ def get_flights_ident(ident, ident_type=None):
 def get_flights_ident_track(ident):
     """Gets the track for a specific flight."""
     url = f"{SERVER}/flights/{ident}/track"
-    headers = {"x-apikey": _API_KEY}
+    headers = {"x-apikey": _get_aeroapi_api_key()}
     params = {
         "include_estimated_positions": "true",
         "include_surface_positions": "true",
