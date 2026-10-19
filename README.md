@@ -284,7 +284,7 @@ pbtravellog extract photo-metadata --source ~/source_photos_dir --output ~/outpu
 
 ## Testing
 
-PBTravelLog includes pytest tests. Before running any tests, install pytest in PBTravelLog's venv:
+PBTravelLog includes [pytest](https://docs.pytest.org/en/stable/index.html) tests. Before running any tests, install pytest in PBTravelLog's venv:
 
 `python -m pip install -U pytest`
 
