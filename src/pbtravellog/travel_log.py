@@ -48,6 +48,7 @@ class Trip(Record):
             & (records["end_date"].dt.date >= departure_date)
         ].sort_values(by=["start_date", "end_date"], ascending=False)
         if matching.size == 0:
+            print(f"{departure_date} does not fall within any existing trip.")
             return None
         record_dict = matching.iloc[0].to_dict()
         record_dict["fid"] = int(matching.index[0])
