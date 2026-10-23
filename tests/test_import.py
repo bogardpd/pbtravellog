@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import requests
@@ -25,6 +26,7 @@ def test_import_flight_bcbp(bcbp_data, monkeypatch, tmp_path):
     )
     monkeypatch.setenv("AEROAPI_API_KEY", "invalid_key")
     monkeypatch.setattr(requests, "get", mock_get)
+    monkeypatch.setattr("sys.stdin", io.StringIO("6\n"))
     env_flight_gpkg = Path(os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"))
     flight_bcbp = bcbp_data("bcbp_import.txt")
     import_flight_bcbp(flight_bcbp)
