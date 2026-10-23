@@ -30,6 +30,8 @@ from pbtravellog.geometry import (
 from pbtravellog.record import Record, RecordTable, RecordLayerTable
 from pbtravellog.travel_log import Trip, TripTable
 
+FLIGHT_DATA_FILE_ENV = "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"
+
 def _get_flight_log():
     """Gets current value of flight log path.
     
@@ -45,7 +47,7 @@ def _get_flight_log():
 
 class AircraftType(Record):
     """Represents an aircraft type record."""
-    DATA_FILE = _get_flight_log()
+    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
     LAYER = "aircraft_types"
     FIND_BY_CODES = ["icao_code"]
     DTYPES = {
@@ -67,7 +69,7 @@ class AircraftTypeTable(RecordLayerTable):
 
 class Airline(Record):
     """Represents an airline record."""
-    DATA_FILE = _get_flight_log()
+    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
     LAYER = "airlines"
     FIND_BY_CODES = ["icao_code", "iata_code"]
     DTYPES = {
@@ -82,7 +84,7 @@ class AirlineTable(RecordLayerTable):
 
 class Airport(Record):
     """Represents an airport record."""
-    DATA_FILE = _get_flight_log()
+    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
     LAYER = "airports"
     FIND_BY_CODES = ["icao_code", "iata_code", "faa_lid"]
     DTYPES = {
@@ -135,7 +137,7 @@ class AirportTable(RecordLayerTable):
 
 class Flight(Record):
     """Represents a flight record."""
-    DATA_FILE = _get_flight_log()
+    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
     LAYER = "flights"
     FIND_BY_CODES = []
     DTYPES = {
@@ -787,7 +789,7 @@ class FlightTable(RecordLayerTable):
 
 class SeatClass(Record):
     """Represents a flight class record."""
-    DATA_FILE = _get_flight_log()
+    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
     LAYER = "classes"
     FIND_BY_CODES = []
     DTYPES = {"quality": "Int64"}
@@ -798,7 +800,7 @@ class SeatClassTable(RecordLayerTable):
 
 class Route(Record):
     """Represents a route record."""
-    DATA_FILE = _get_flight_log()
+    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
     LAYER = "routes"
     FIND_BY_CODES = []
     DTYPES = {"distance_mi": "Int64"}

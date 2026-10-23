@@ -15,15 +15,11 @@ import geopandas as gpd
 # Project imports
 from pbtravellog.record import Record, RecordLayerTable
 
-TRAVEL_LOG = os.getenv("PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH")
-if TRAVEL_LOG is None:
-    raise KeyError(
-        "Environment variable PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH is missing."
-    )
+TRAVEL_DATA_FILE_ENV = "PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH"
 
 class Trip(Record):
     """Represents a trip record."""
-    DATA_FILE = TRAVEL_LOG
+    DATA_FILE_ENV = TRAVEL_DATA_FILE_ENV
     LAYER = "trips"
     FIND_BY_CODES = []
     DTYPES = {"fh_id": "Int64"}
@@ -37,7 +33,7 @@ class Trip(Record):
         boarding pass.
         """
         records = gpd.read_file(
-            cls.DATA_FILE,
+            cls.data_file(),
             layer=cls.LAYER,
             engine="pyogrio",
             fid_as_index=True,

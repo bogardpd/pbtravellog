@@ -2,6 +2,7 @@
 
 # Standard imports
 import csv
+import os
 from pathlib import Path
 import re
 from typing import Self
@@ -16,7 +17,7 @@ class Record(dict):
 
     Designed to be inherited by specific travel object types.
     """
-    DATA_FILE = None
+    DATA_FILE_ENV = None
     LAYER = None
     FIND_BY_CODES = []
     DTYPES = {}
@@ -26,10 +27,22 @@ class Record(dict):
         self.fid: int | None = None
 
     @classmethod
+    def data_file(cls) -> Path | None:
+        """Gets the path of the geopackage hosting this class."""
+        if cls.DATA_FILE_ENV is None:
+            return None
+        data_log = os.getenv(cls.DATA_FILE_ENV)
+        if data_log is None:
+            raise KeyError(
+                f"Environment variable {cls.DATA_FILE_ENV} is missing."
+            )
+        return data_log
+    
+    @classmethod
     def every(cls) -> gpd.GeoDataFrame:
         """Returns a GeoDataFrame of all records."""
         records = gpd.read_file(
-            cls.DATA_FILE,
+            cls.data_file(),
             layer=cls.LAYER,
             engine="pyogrio",
             fid_as_index=True,
@@ -44,7 +57,7 @@ class Record(dict):
         if len(cls.FIND_BY_CODES) == 0:
             return None
         records = gpd.read_file(
-            cls.DATA_FILE,
+            cls.data_file(),
             layer = cls.LAYER,
             engine="pyogrio",
             fid_as_index=True,
@@ -139,7 +152,7 @@ class RecordLayerTable(RecordTable):
     def from_all(cls) -> Self:
         """Creates a table of every object."""
         records = gpd.read_file(
-            cls.RECORD_CLASS.DATA_FILE,
+            cls.RECORD_CLASS.data_file(),
             layer=cls.RECORD_CLASS.LAYER,
             engine="pyogrio",
             fid_as_index=True,
