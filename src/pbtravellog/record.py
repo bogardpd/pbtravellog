@@ -12,12 +12,18 @@ import geopandas as gpd
 import pandas as pd
 from tabulate import tabulate
 
+DATA_ENV_VARS = {
+    "travel": "PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH",
+    "flight": "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH",
+}
+
 class Record(dict):
     """Represents a generic travel record.
 
     Designed to be inherited by specific travel object types.
     """
     DATA_FILE_ENV = None
+    LOG_TYPE = None
     LAYER = None
     FIND_BY_CODES = []
     DTYPES = {}
@@ -27,14 +33,16 @@ class Record(dict):
         self.fid: int | None = None
 
     @classmethod
-    def data_file(cls) -> Path | None:
+    def data_file(cls, log_type: str | None = None) -> Path | None:
         """Gets the path of the geopackage hosting this class."""
-        if cls.DATA_FILE_ENV is None:
+        if log_type is None:
+            log_type = cls.LOG_TYPE
+        if log_type is None:
             return None
-        data_log = os.getenv(cls.DATA_FILE_ENV)
+        data_log = Path(os.getenv(DATA_ENV_VARS[log_type]))
         if data_log is None:
             raise KeyError(
-                f"Environment variable {cls.DATA_FILE_ENV} is missing."
+                f"Environment variable {DATA_ENV_VARS[log_type]} is missing."
             )
         return data_log
     
@@ -167,3 +175,13 @@ class RecordLayerTable(RecordTable):
         """Creates a table with records matching a list of fids."""
         rec_table = {k: v for k, v in cls.from_all().items() if k in fids}
         return cls(rec_table)
+
+def init_gpkg():
+    """Creates empty GeoPackage files with schema-defined layers."""
+    for log_type in DATA_ENV_VARS.keys():
+        log_path = Record.data_file(log_type=log_type)
+        if log_path.exists():
+            print(f"{log_type.title()} log already exists at {log_path}.")
+            continue
+        print(f"Creating {log_type} log GeoPackage file at {log_path}...")
+    

@@ -47,7 +47,7 @@ def _get_flight_log():
 
 class AircraftType(Record):
     """Represents an aircraft type record."""
-    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
+    LOG_TYPE = "flight"
     LAYER = "aircraft_types"
     FIND_BY_CODES = ["icao_code"]
     DTYPES = {
@@ -69,7 +69,7 @@ class AircraftTypeTable(RecordLayerTable):
 
 class Airline(Record):
     """Represents an airline record."""
-    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
+    LOG_TYPE = "flight"
     LAYER = "airlines"
     FIND_BY_CODES = ["icao_code", "iata_code"]
     DTYPES = {
@@ -84,7 +84,7 @@ class AirlineTable(RecordLayerTable):
 
 class Airport(Record):
     """Represents an airport record."""
-    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
+    LOG_TYPE="flight"
     LAYER = "airports"
     FIND_BY_CODES = ["icao_code", "iata_code", "faa_lid"]
     DTYPES = {
@@ -137,7 +137,7 @@ class AirportTable(RecordLayerTable):
 
 class Flight(Record):
     """Represents a flight record."""
-    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
+    LOG_TYPE = "flight"
     LAYER = "flights"
     FIND_BY_CODES = []
     DTYPES = {
@@ -789,7 +789,7 @@ class FlightTable(RecordLayerTable):
 
 class SeatClass(Record):
     """Represents a flight class record."""
-    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
+    LOG_TYPE = "flight"
     LAYER = "classes"
     FIND_BY_CODES = []
     DTYPES = {"quality": "Int64"}
@@ -800,7 +800,7 @@ class SeatClassTable(RecordLayerTable):
 
 class Route(Record):
     """Represents a route record."""
-    DATA_FILE_ENV = FLIGHT_DATA_FILE_ENV
+    LOG_TYPE = "flight"
     LAYER = "routes"
     FIND_BY_CODES = []
     DTYPES = {"distance_mi": "Int64"}

@@ -7,11 +7,14 @@ from pathlib import Path
 # Third-party imports
 
 # Project imports
-from pbtravellog import extract_photo_metadata as epm
-from pbtravellog import browser
-from pbtravellog import flight_cli as flc
-from pbtravellog import flight_log as fl
-from pbtravellog import report
+from pbtravellog import (
+    extract_photo_metadata as epm,
+    browser,
+    flight_cli as flc,
+    flight_log as fl,
+    report,
+    record,
+)
 
 def main():
     """Main CLI entry point."""
@@ -23,6 +26,7 @@ def main():
     _add_parsers_extract_photo_metadata(subparsers)
     _add_parsers_import(subparsers)
     _add_parsers_index(subparsers)
+    _add_parsers_init(subparsers)
     _add_parsers_refresh(subparsers)
     _add_parsers_report(subparsers)
     _add_parsers_browse(subparsers)
@@ -45,7 +49,10 @@ def main():
                     geojson=args.geojson,
                 )
             elif args.flight_number is not None:
-                fl.import_flight_number(*args.flight_number, geojson=args.geojson)
+                fl.import_flight_number(
+                    *args.flight_number,
+                    geojson=args.geojson,
+                )
             elif args.pkpasses:
                 fl.import_flight_pkpasses(geojson=args.geojson)
     elif args.command == "index":
@@ -53,6 +60,8 @@ def main():
             flc.index_airports(args.output, args.year)
         elif args.entity == "tails":
             flc.index_tails(args.output)
+    elif args.command == "init":
+        record.init_gpkg()
     elif args.command == "refresh":
         if args.entity == "routes":
             fl.refresh_routes()
@@ -179,6 +188,12 @@ def _add_parsers_index(subparsers) -> None:
         type=Path,
     )
 
+def _add_parsers_init(subparsers) -> None:
+    """Adds parsers for the init command."""
+    subparsers.add_parser(
+        "init",
+        help="Create new GeoPackage data files"
+    )
 
 def _add_parsers_refresh(subparsers) -> None:
     """Adds parsers for refresh command."""

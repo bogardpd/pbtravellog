@@ -19,7 +19,7 @@ TRAVEL_DATA_FILE_ENV = "PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH"
 
 class Trip(Record):
     """Represents a trip record."""
-    DATA_FILE_ENV = TRAVEL_DATA_FILE_ENV
+    LOG_TYPE = "travel"
     LAYER = "trips"
     FIND_BY_CODES = []
     DTYPES = {"fh_id": "Int64"}

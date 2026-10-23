@@ -48,6 +48,14 @@ To see help for a specific command:
 pbtravellog <command> --help
 ```
 
+## Initialization
+
+To create new GeoPackage files in the locations specified by the [environment variables]((docs/environment_variables.md), use the `init` command. (This command will not modify or overwrite existing GeoPackage files.)
+
+```bash
+pbtravellog init
+```
+
 ## Travel Log Browser
 
 PBTravelLog can locally run a website to show travel log data. By default, this website will be run at http://localhost:5000.
