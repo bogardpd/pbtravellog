@@ -20,7 +20,16 @@ class MockResponse(requests.Response):
 def test_import_flight_bcbp(bcbp_data, monkeypatch, tmp_path):
     tmp_flight_gpkg = tmp_path / "flight_log.gpkg"
     def mock_get(*args, **kwargs):
-        return MockResponse("aeroapi_get_flights_ident_response.json")
+        provided_url = args[0]
+        mocks = {
+            "https://aeroapi.flightaware.com/aeroapi/flights/AAL777": (
+                "aeroapi_get_flights_ident_response.json"
+            ),
+            "https://aeroapi.flightaware.com/aeroapi/flights/AAL777-1792303609-airline-766p/track": (
+                "aeroapi_get_flights_ident_track_response.json"
+            )
+        }
+        return MockResponse(mocks[provided_url])
     monkeypatch.setenv(
         "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH", str(tmp_flight_gpkg)
     )
