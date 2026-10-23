@@ -1,0 +1,37 @@
+{
+    "title": "Travel Log",
+    "description": "PBTravelLog travel log data file",
+    "layers": [
+        {
+            "name": "trips",
+            "geometry_type": "None",
+            "fields": [
+                {
+                    "name": "fid",
+                    "type": "Integer64",
+                    "description": "Primary key for the trip record"
+                },
+                {
+                    "name": "name",
+                    "type": "String",
+                    "description": "Name of the trip"
+                },
+                {
+                    "name": "start_date",
+                    "type": "Date",
+                    "description": "Start date of the trip in the local time zone of the departure location"
+                },
+                {
+                    "name": "end_date",
+                    "type": "Date",
+                    "description": "End date of the trip in the local time zone of the trip completion location"
+                },
+                {
+                    "name": "comments",
+                    "type": "String",
+                    "description": "Comments about the trip"
+                }
+            ]
+        }
+    ]
+}

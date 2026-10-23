@@ -20,3 +20,15 @@ The `trips` table contains records for trips that flights belong to.
 | `start_date` | DATE | Start date of the trip in the local time zone of the departure location.
 | `end_date` | DATE | End date of the trip in the local time zone of the trip completion location.
 | `comments` | TEXT | *Optional.* Comments about the trip. |
+
+## Template
+
+An empty travel_log.gpkg can be found in [/src/pbtravellog/data/templates](/src/pbtravellog/data/templates).
+
+## OGR Schema
+
+An empty travel_log.gpkg can be generated with [GDAL](https://gdal.org/en/stable/index.html) using [ogr_schema_travel_log.json](/src/pbtravellog/data/schema/ogr_schema_travel_log.json). Download the schema JSON, then run:
+
+```bash
+gdal vector create --schema ogr_schema_travel_log.json travel_log.gpkg
+```
