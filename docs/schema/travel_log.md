@@ -15,7 +15,7 @@ The `trips` table contains records for trips that flights belong to.
 
 | Column | Data Type | Description |
 |--------|-----------|-------------|
-| `fid`  | INT (64 bit) | Primary key for the route record. |
+| `fid`  | INT (64 bit) | Primary key for the trip record. |
 | `name` | TEXT | Name of the trip. |
 | `start_date` | DATE | Start date of the trip in the local time zone of the departure location.
 | `end_date` | DATE | End date of the trip in the local time zone of the trip completion location.
