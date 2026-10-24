@@ -15,7 +15,7 @@ The `aircraft_types` table contains records of aircraft types that `flights` hav
 
 | Column | Data Type | Description |
 |--------|-----------|-------------|
-| `fid` | INT (64 bit) | Primary key for the airline record. |
+| `fid` | INT (64 bit) | Primary key for the aircraft type record. |
 | `manufacturer` | TEXT | The manufacturer of the aircraft type (e.g. `Boeing`).
 | `name` | TEXT | The name of the aircraft type (e.g. `737-800`) |
 | `icao_code` | TEXT | ICAO code for the airline (e.g. `B738`). |
@@ -130,7 +130,7 @@ The `trips` table contains records for trips that flights belong to.
 
 | Column | Data Type | Description |
 |--------|-----------|-------------|
-| `fid`  | INT (64 bit) | Primary key for the route record. |
+| `fid`  | INT (64 bit) | Primary key for the trip record. |
 | `name` | TEXT | Name of the trip. |
 | `start_date` | DATE | Start date of the trip in the local time zone of the departure location.
 | `end_date` | DATE | End date of the trip in the local time zone of the trip completion location.
