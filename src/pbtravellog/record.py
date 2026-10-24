@@ -2,9 +2,11 @@
 
 # Standard imports
 import csv
+from importlib import resources
 import os
 from pathlib import Path
 import re
+import shutil
 from typing import Self
 
 # Third-party imports
@@ -45,7 +47,7 @@ class Record(dict):
                 f"Environment variable {DATA_ENV_VARS[log_type]} is missing."
             )
         return data_log
-    
+
     @classmethod
     def every(cls) -> gpd.GeoDataFrame:
         """Returns a GeoDataFrame of all records."""
@@ -178,10 +180,13 @@ class RecordLayerTable(RecordTable):
 
 def init_gpkg():
     """Creates empty GeoPackage files with schema-defined layers."""
-    for log_type in DATA_ENV_VARS.keys():
+    for log_type, _ in DATA_ENV_VARS.items():
         log_path = Record.data_file(log_type=log_type)
+        proj_path = resources.files("pbtravellog")
         if log_path.exists():
-            print(f"{log_type.title()} log already exists at {log_path}.")
+            print(f"{log_type.title()} log already exists at \"{log_path}\".")
             continue
-        print(f"Creating {log_type} log GeoPackage file at {log_path}...")
-    
+        empty_gpkg_path = proj_path / f"data/gpkg/{log_type}_log_empty.gpkg"
+        with resources.as_file(empty_gpkg_path) as source_path:
+            shutil.copy2(source_path, log_path)
+        print(f"Created {log_type} log GeoPackage file at \"{log_path}\".")

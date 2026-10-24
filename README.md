@@ -22,13 +22,13 @@ pipx install --editable .
 
 After installation, the `pbtravellog` command is available on the command line.
 
-### GeoPackage Files
-
-The travel log is stored in a collection of GeoPackage files, as described in the [schema documentation](docs/schema/schema.md). Empty, ready to use GeoPackage files meeting these schemas can be found in [templates](/src/pbtravellog/data/templates/).
-
 ### Environment Variables
 
 Environment variables must be set as described in the [Environment Variables documentation](docs/environment_variables.md).
+
+### GeoPackage Files
+
+The travel log is stored in a collection of GeoPackage files, as described in the [schema documentation](docs/schema/schema.md). Empty, ready-to-use GeoPackage files are available in [/src/pbtravellog/data/gpkg/](/src/pbtravellog/data/gpkg/), or use the [`pbtravellog init`](#initialization) command to copy them to the locations defined by environment variables.
 
 ## Basic usage
 
