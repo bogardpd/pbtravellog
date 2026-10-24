@@ -2,6 +2,9 @@
 
 The travel log data uses a [GeoPackage file](https://www.geopackage.org/) containing travel log data for a single traveler. (Travel log data is data that doesn't fall under a specific travel mode.)
 
+> [!NOTE]
+> An empty, ready-to-use travel log GeoPackage file is available at [travel_log.gpkg](/src/pbtravellog/data/templates/travel_log.gpkg).
+
 ## GeoPackage Layers
 
 > [!NOTE]
@@ -21,13 +24,10 @@ The `trips` table contains records for trips that flights belong to.
 | `end_date` | DATE | End date of the trip in the local time zone of the trip completion location.
 | `comments` | TEXT | *Optional.* Comments about the trip. |
 
-## Template
-
-An empty travel_log.gpkg can be found in [/src/pbtravellog/data/templates](/src/pbtravellog/data/templates).
 
 ## OGR Schema
 
-An empty travel_log.gpkg can be generated with [GDAL](https://gdal.org/en/stable/index.html) using [ogr_schema_travel_log.json](/src/pbtravellog/data/schema/ogr_schema_travel_log.json). Download the schema JSON, then run:
+The above schema is defined in [ogr_schema_travel_log.json](/src/pbtravellog/data/schema/ogr_schema_travel_log.json). If you wish to generate the GeoPackage file yourself (rather than using the pre-made [template](/src/pbtravellog/data/templates/travel_log.gpkg)), download the schema JSON and run:
 
 ```bash
 gdal vector create --schema ogr_schema_travel_log.json travel_log.gpkg

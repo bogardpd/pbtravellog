@@ -24,7 +24,7 @@ After installation, the `pbtravellog` command is available on the command line.
 
 ### GeoPackage Files
 
-The travel log is stored in a collection of GeoPackage files, as described in the [Schema](docs/schema/schema.md).
+The travel log is stored in a collection of GeoPackage files, as described in the [schema documentation](docs/schema/schema.md). Empty, ready to use GeoPackage files meeting these schemas can be found in [templates](/src/pbtravellog/data/templates/).
 
 ### Environment Variables
 
