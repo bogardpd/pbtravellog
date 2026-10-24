@@ -18,8 +18,8 @@ The `aircraft_types` table contains records of aircraft types that `flights` hav
 | `fid` | INT (64 bit) | Primary key for the aircraft type record. |
 | `manufacturer` | TEXT | The manufacturer of the aircraft type (e.g. `Boeing`).
 | `name` | TEXT | The name of the aircraft type (e.g. `737-800`) |
-| `icao_code` | TEXT | ICAO code for the airline (e.g. `B738`). |
-| `iata_code` | TEXT | IATA code for the airline (e.g. `738`). |
+| `icao_code` | TEXT | ICAO code for the aircraft type (e.g. `B738`). |
+| `iata_code` | TEXT | IATA code for the aircraft type (e.g. `738`). |
 | `family` | TEXT | Family the aircraft type belongs to (e.g. `Boeing 737`). Used for grouping aircraft types. |
 | `category` | TEXT | `wide_body`, `narrow_body`, `regional_jet`, or `turboprop` |
 
