@@ -5,7 +5,7 @@ The flight log data uses a [GeoPackage file](https://www.geopackage.org/) contai
 ## GeoPackage Layers
 
 > [!NOTE]
-> Columns use the data types specified in the GeoPackage Encoding Standards [Table 1. GeoPackage Data Types](https://www.geopackage.org/spec/#table_column_data_types), and geometry types specified in [Annex G: Geometry Types (Normative)](https://www.geopackage.org/spec/#geometry_types). Optional fields must be null when unused.
+> Columns use the data types specified in the GeoPackage Encoding Standards [Table 1. GeoPackage Data Types](https://www.geopackage.org/spec/#table_column_data_types), and geometry types specified in [Annex G: Geometry Types (Normative)](https://www.geopackage.org/spec/#geometry_types). Optional fields must be null when unused. All layers should use `geom` as the geometry column with a CRS of EPSG:4326 (WGS 84).
 
 ![Entity relationship diagram visualizing the below tables](../images/ERD_Flights.png)
 
@@ -33,9 +33,9 @@ The `airlines` table contains records of airlines that `flights` have used as th
 | `name` | TEXT | The name of the airline (e.g. `American`). |
 | `icao_code` | TEXT | ICAO code for the airline (e.g. `AAL`). |
 | `iata_code` | TEXT | IATA code for the airline (e.g. `AA`). |
-| `numeric_code` | TEXT | *Optional.* The three-digit numeric code for the airline (e.g. `001`) |
+| `numeric_code` | TEXT | *Optional.* The three-digit numeric code for the airline (e.g. `001`). |
 | `is_only_operator` | BOOLEAN | True if an airline only operates flights for other airlines, false if it operates flights as its own marketing carrier. (See [Airline Types](#airline-types).) |
-| `is_defunct` | BOOLEAN | True if an airline is no longer in use, false otherwise. When looking up airlines, defunct airlines will be ignored. This is helpful in situations where current airlines use the same codes as an old airline (for example, the current PSA Airlines and the defunct Comair both use the IATA code `OH`.) |
+| `is_defunct` | BOOLEAN | True if an airline is no longer in use, false otherwise. When looking up airlines, defunct airlines will be ignored. This is helpful in situations where current airlines use the same codes as an old airline (for example, the current PSA Airlines and the defunct Comair both use the IATA code `OH`). |
 | `comments` | TEXT | *Optional.* Comments about the airline. |
 
 #### Airline Types
@@ -63,7 +63,7 @@ The `airports` table contains records of airports that `flights` have used.
 | `iata_code` | TEXT | *Optional.* IATA code for the airport (e.g. `ATL`). |
 | `faa_lid` | TEXT | *Optional.* FAA location identifier for the airport (e.g. `ATL`, `I73`). |
 | `time_zone` | TEXT | IANA (tz) time zone for the airport (e.g. `America/New_York`). |
-| `is_defunct` | BOOLEAN | True if an airport is no longer in use, false otherwise. When looking up airports, defunct airports will be ignored. This is helpful in situations where current airports use the same codes as an old airport (for example, the modern Denver airport and the old Denver Stapleton both use `KDEN`/`DEN`.) |
+| `is_defunct` | BOOLEAN | True if an airport is no longer in use, false otherwise. When looking up airports, defunct airports will be ignored. This is helpful in situations where current airports use the same codes as an old airport (for example, the modern Denver airport and the old Denver Stapleton both use `KDEN`/`DEN`). |
 
 ### classes (No Geometry)
 
@@ -73,8 +73,8 @@ The `classes` table contains definition of travel classes such as Economy and Fi
 |--------|-----------|-------------|
 | `fid` | INT (64 bit) | Primary key for the class record. |
 | `quality` | INT (64 bit) | Quality order of the class, with `1` as the lowest and higher being better. |
-| `name` | TEXT | Name of the class (e.g. `Economy`) |
-| `description` | TEXT | Description of the class (e.g. `Standard main cabin seat`) |
+| `name` | TEXT | Name of the class (e.g. `Economy`). |
+| `description` | TEXT | Description of the class (e.g. `Standard main cabin seat`). |
 
 ### flights (MultiLineStringZ)
 
@@ -123,15 +123,3 @@ The `routes` table contains great circle geometry for routes between pairs of ai
 | `destination_airport_fid` | INT (64 bit) | Foreign key referencing the destination airport on the [`airports`](#airports-point) table. |
 | `flight_count` | INT (64 bit) | Number of flights flown in this direction of this route. |
 | `distance_mi` | INT (64 bit) | Geodesic distance of this route in miles. |
-
-### trips (No Geometry)
-
-The `trips` table contains records for trips that flights belong to.
-
-| Column | Data Type | Description |
-|--------|-----------|-------------|
-| `fid`  | INT (64 bit) | Primary key for the trip record. |
-| `name` | TEXT | Name of the trip. |
-| `start_date` | DATE | Start date of the trip in the local time zone of the departure location.
-| `end_date` | DATE | End date of the trip in the local time zone of the trip completion location.
-| `comments` | TEXT | *Optional.* Comments about the trip. |

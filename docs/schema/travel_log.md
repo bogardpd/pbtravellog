@@ -8,7 +8,7 @@ The travel log data uses a [GeoPackage file](https://www.geopackage.org/) contai
 ## GeoPackage Layers
 
 > [!NOTE]
-> Columns use the data types specified in the GeoPackage Encoding Standards [Table 1. GeoPackage Data Types](https://www.geopackage.org/spec/#table_column_data_types), and geometry types specified in [Annex G: Geometry Types (Normative)](https://www.geopackage.org/spec/#geometry_types). Optional fields must be null when unused.
+> Columns use the data types specified in the GeoPackage Encoding Standards [Table 1. GeoPackage Data Types](https://www.geopackage.org/spec/#table_column_data_types), and geometry types specified in [Annex G: Geometry Types (Normative)](https://www.geopackage.org/spec/#geometry_types). Optional fields must be null when unused. All layers should use `geom` as the geometry column with a CRS of EPSG:4326 (WGS 84).
 
 ![Entity relationship diagram visualizing the below tables](../images/ERD_Travel.png)
 
