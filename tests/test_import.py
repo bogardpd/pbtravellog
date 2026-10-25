@@ -1,9 +1,11 @@
 import io
 import json
-import os
-import requests
 from pathlib import Path
-from pbtravellog.flight_log import import_flight_bcbp
+import requests
+
+from pytest import approx
+
+from pbtravellog.flight_log import FlightTable, import_flight_bcbp
 from pbtravellog.record import init_gpkg
 
 class MockResponse(requests.Response):
@@ -18,13 +20,17 @@ class MockResponse(requests.Response):
             data = json.load(f)
         return data
 
-def test_import_flight_bcbp(bcbp_data, monkeypatch, tmp_path):
+def test_import_flight_bcbp_blank_db(bcbp_data, monkeypatch, tmp_path):
+    """
+    Tests importing a flight with no airline, airport, aircraft type, or
+    trip data available to look up.
+    """
     tmp_travel_gpkg = tmp_path / "travel_log.gpkg"
     tmp_flight_gpkg = tmp_path / "flight_log.gpkg"
     def mock_get(*args, **kwargs):
         provided_url = args[0]
         mocks = {
-            "https://aeroapi.flightaware.com/aeroapi/flights/AAL777": (
+            "https://aeroapi.flightaware.com/aeroapi/flights/AA777": (
                 "aeroapi_get_flights_ident_response.json"
             ),
             "https://aeroapi.flightaware.com/aeroapi/flights/AAL777-1792303609-airline-766p/track": (
@@ -41,8 +47,23 @@ def test_import_flight_bcbp(bcbp_data, monkeypatch, tmp_path):
     monkeypatch.setenv("AEROAPI_API_KEY", "invalid_key")
     monkeypatch.setattr(requests, "get", mock_get)
     monkeypatch.setattr("sys.stdin", io.StringIO("6\n"))
-    env_flight_gpkg = Path(os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"))
     init_gpkg()
     flight_bcbp = bcbp_data("bcbp_import.txt")
     import_flight_bcbp(flight_bcbp)
-    assert tmp_flight_gpkg.resolve() == env_flight_gpkg.resolve()
+
+    # Check results.
+    flights = FlightTable.from_all()
+    assert len(flights) == 1
+    flight = flights[list(flights)[-1]]
+    assert flight["airline_fid"] == None
+    assert flight["operator_fid"] == None
+    assert flight["origin_airport_fid"] == None
+    assert flight["destination_airport_fid"] == None
+    assert flight["aircraft_type_fid"] == None
+    assert flight["trip_fid"] == None
+    assert flight["flight_number"] == "777"
+    assert flight["fa_flight_id"] == "AAL777-1792303609-airline-766p"
+    assert flight["geom_source"] == "FlightAware"
+    assert flight["geometry"].geoms[0].coords[0] == approx((
+        -97.03544, 32.89897, 0.0
+    ))

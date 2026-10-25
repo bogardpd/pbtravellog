@@ -1159,7 +1159,10 @@ def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
         ident = f"{airline_code}{leg.flight_number}"
         aero_results = aero.get_flights_ident(ident, "designator")
         flight = _flight_from_aeroapi_results(aero_results)
-        flight["airline_fid"] = airline.get("fid")
+        if airline is None:
+            flight["airline_fid"] = None
+        else:
+            flight["airline_fid"] = airline.get("fid")
         flight["boarding_pass_data"] = leg.bcbp_str
         trip = Trip.select_by_date(leg.flight_date)
         if trip is not None:

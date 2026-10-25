@@ -22,3 +22,4 @@ The `trips` table contains records for trips that flights belong to.
 | `start_date` | DATE | Start date of the trip in the local time zone of the departure location.
 | `end_date` | DATE | End date of the trip in the local time zone of the trip completion location.
 | `comments` | TEXT | *Optional.* Comments about the trip. |
+| `fh_id` | INT (64 bit) | *Optional.* Flight Historian flight record ID. |
