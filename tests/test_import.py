@@ -4,6 +4,7 @@ import os
 import requests
 from pathlib import Path
 from pbtravellog.flight_log import import_flight_bcbp
+from pbtravellog.record import init_gpkg
 
 class MockResponse(requests.Response):
     def __init__(self, filename: str):
@@ -18,6 +19,7 @@ class MockResponse(requests.Response):
         return data
 
 def test_import_flight_bcbp(bcbp_data, monkeypatch, tmp_path):
+    tmp_travel_gpkg = tmp_path / "travel_log.gpkg"
     tmp_flight_gpkg = tmp_path / "flight_log.gpkg"
     def mock_get(*args, **kwargs):
         provided_url = args[0]
@@ -31,12 +33,16 @@ def test_import_flight_bcbp(bcbp_data, monkeypatch, tmp_path):
         }
         return MockResponse(mocks[provided_url])
     monkeypatch.setenv(
+        "PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH", str(tmp_travel_gpkg)
+    )
+    monkeypatch.setenv(
         "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH", str(tmp_flight_gpkg)
     )
     monkeypatch.setenv("AEROAPI_API_KEY", "invalid_key")
     monkeypatch.setattr(requests, "get", mock_get)
     monkeypatch.setattr("sys.stdin", io.StringIO("6\n"))
     env_flight_gpkg = Path(os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"))
+    init_gpkg()
     flight_bcbp = bcbp_data("bcbp_import.txt")
     import_flight_bcbp(flight_bcbp)
     assert tmp_flight_gpkg.resolve() == env_flight_gpkg.resolve()
