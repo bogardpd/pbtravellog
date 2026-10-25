@@ -2,11 +2,19 @@
 
 PBTravelLog is a Python command-line interface (CLI) tool for managing personal travel logs stored in GeoPackage files.
 
+This package assumes that the majority of travel log keeping will be done via applications like [QGIS](https://www.qgis.org/). This package is intended as a supplement to such a travel log, providing utilities and automation that aren't easy to accomplish in QGIS.
+
+## Features
+
+- **Travel Log Browser:** runs a local website to interactively show travel log data and maps.
+- **Command Line Travel Data Viewer:** lets users view aggregated travel log data from the command line.
+- **Flight Importer:** can automatically add flights to the flight log from digital boarding passes, paper boarding pass barcode scans, and more.
+
 ## Setup
 
-### Installation
+### Install PBTravelLog
 
-Navigate to the module's folder and install it with pipx:
+Navigate to the module's folder and install it with [pipx](https://pipx.pypa.io/stable/):
 
 ```bash
 cd path/to/module
@@ -22,15 +30,26 @@ pipx install --editable .
 
 After installation, the `pbtravellog` command is available on the command line.
 
-### Environment Variables
+### Set Environment Variables
 
 Environment variables must be set as described in the [Environment Variables documentation](docs/environment_variables.md).
 
-### GeoPackage Files
+### Initialize GeoPackage Files
 
-The travel log is stored in a collection of GeoPackage files, as described in the [schema documentation](docs/schema/schema.md). Empty, ready-to-use GeoPackage files are available in [/src/pbtravellog/data/gpkg/](/src/pbtravellog/data/gpkg/), or use the [`pbtravellog init`](#initialization) command to copy them to the locations defined by environment variables.
+The travel log is stored in a collection of GeoPackage files, as described in the [schema documentation](docs/schema/schema.md). To create new empty GeoPackage files in the locations specified by the environment variables, use the `init` command:
 
-## Basic usage
+```bash
+pbtravellog init
+```
+
+If a GeoPackage file already exists, the `init` command will skip it.
+
+If you'd prefer to manually download the empty GeoPackage files, they are available in [/src/pbtravellog/data/gpkg/](/src/pbtravellog/data/gpkg/).
+
+
+## Command Reference
+
+### Basic usage
 
 ```bash
 pbtravellog <command> [options]
@@ -48,46 +67,49 @@ To see help for a specific command:
 pbtravellog <command> --help
 ```
 
-## Initialization
-
-To create new GeoPackage files in the locations specified by the [environment variables]((docs/environment_variables.md), use the `init` command. (This command will not modify or overwrite existing GeoPackage files.)
-
-```bash
-pbtravellog init
-```
-
-## Travel Log Browser
-
-PBTravelLog can locally run a website to show travel log data. By default, this website will be run at http://localhost:5000.
-
 ### `browse`
 
-Launches the travel log browser interface.
-
-#### Options
-
-- `--port NNNN`: The port to run the webserver on. Defaults to 5000 if not set.
-
-#### Examples
+PBTravelLog can locally run a website to show travel log data. By default, this website will be run at http://localhost:5000. To launch a server and a browser, use the `browse` command:
 
 ```bash
 pbtravellog browse
 ```
 
+If you need to run the server on a particular port, use the `--port NNNN` flag:
+
 ```bash
 pbtravellog browse --port 12345
 ```
 
-## Travel Log Data Commands
+### `extract photo-metadata`
+
+Takes a folder of JPEG images, and returns an HTML file with a table of photo metadata, and a GeoPackage and KMZ file of photo locations (for photos with location data).
+
+#### Options
+
+- `--source` (required): The path for a directory of photos to extract metadata from.
+- `--output` (required): The path for a directory to save output data to. Three files will be saved in this directory: `photo_data.html`, `timeline.gpkg`, and `photo_data.kmz`.
+
+#### Example
+
+```bash
+pbtravellog extract photo-metadata --source ~/source_photos_dir --output ~/output_dir
+```
 
 ### `import flight`
 
-Create a new flight (or new flights) in the flight log.
+Flights have a lot of fields to fill out, and a lot of this data is already available in FlightAware's [AeroAPI](https://www.flightaware.com/commercial/aeroapi/). To create flights with AeroAPI data, use the import flight command:
 
-> [!IMPORTANT]
-> Flight data is pulled from [AeroAPI](https://www.flightaware.com/commercial/aeroapi/), so an API key must be set in [environment variables](docs/environment_variables.md).
+```bash
+pbtravellog import flight [options]
+```
 
-#### Options (mutually exclusive)
+> [!NOTE]
+> This command uses AeroAPI, so your AeroAPI API key must be set as an [environment variable](/docs/environment_variables.md). Using this command will incur API usage fees against your API key.
+
+There are four ways to import a flight, and exactly one of these options must be used (`import flight` won't work without using an option).
+
+#### Options
 
 - `--bcbp <bcbp_text>`: Parse a string coded in the IATA Bar-Coded Boarding Pass (BCBP) format, and import the flight(s) it represents into the flight log.
 
@@ -191,6 +213,41 @@ Save tail numbers to tails.csv:
 pbtravellog index airports --output tails.csv
 ```
 
+### `refresh routes`
+
+Regenerates the routes table based on all origin and destination airport pairs present in the flights table. Generates great circle geometry for these routes.
+
+> [!WARNING]
+> This will overwrite the routes table, including removing routes that no longer have flights. Do not manually edit the routes table, as any edits will be lost when routes are refreshed.
+
+#### Example
+```bash
+pbtravellog refresh routes
+```
+
+### `report milestones`
+
+Shows flights that include cumulative distance milestones.
+
+> [!NOTE]
+> By default, milestones are set at 50 000, 100 000, 200 000, 500 000, 1 000 000, 2 000 000, 5 000 000, 10 000 000, 20 000 000, and 50 000 000 miles. Milestones can be configured in `config/config.toml`.
+
+#### Example
+
+```bash
+pbtravellog report milestones
+```
+
+```
+  fid    #  Departure    Flight    Orig    Dest      Milestone    Cumulative
+                                                                       Miles
+-----  ---  -----------  --------  ------  ------  -----------  ------------
+   40    1  2009-04-03   AA 1042   DFW     DAY           50000         50642
+   80    2  2010-03-04   AA 3597   DFW     CMH          100000        100089
+  160    3  2012-12-03   UA 3485   CMH     IAD          200000        200125
+  320    4  2018-03-02   AA 82     AKL     LAX          500000        502473
+```
+
 ### `show airport`
 
 Shows a flight table for a specific airport.
@@ -237,57 +294,6 @@ pbtravellog show tail N123AA
   100  2012-05-16 12:00:00-05:00  American 1000  DFW     ORD
   200  2012-07-23 12:00:00-05:00  American 1100  ORD     LAX
 2 matching flight(s)
-```
-
-### `refresh routes`
-
-Regenerates the routes table based on all origin and destination airport pairs present in the flights table. Generates great circle geometry for these routes.
-
-> [!WARNING]
-> This will overwrite the routes table, including removing routes that no longer have flights. Do not manually edit the routes table, as any edits will be lost when routes are refreshed.
-
-#### Example
-```bash
-pbtravellog refresh routes
-```
-### `report milestones`
-
-Shows flights that include cumulative distance milestones.
-
-> [!NOTE]
-> By default, milestones are set at 50 000, 100 000, 200 000, 500 000, 1 000 000, 2 000 000, 5 000 000, 10 000 000, 20 000 000, and 50 000 000 miles. Milestones can be configured in `config/config.toml`.
-
-#### Example
-
-```bash
-pbtravellog report milestones
-```
-
-```
-  fid    #  Departure    Flight    Orig    Dest      Milestone    Cumulative
-                                                                       Miles
------  ---  -----------  --------  ------  ------  -----------  ------------
-   40    1  2009-04-03   AA 1042   DFW     DAY           50000         50642
-   80    2  2010-03-04   AA 3597   DFW     CMH          100000        100089
-  160    3  2012-12-03   UA 3485   CMH     IAD          200000        200125
-  320    4  2018-03-02   AA 82     AKL     LAX          500000        502473
-```
-
-## Utility Commands
-
-### `extract photo-metadata`
-
-Takes a folder of JPEG images, and returns an HTML file with a table of photo metadata, and a GeoPackage and KMZ file of photo locations (for photos with location data).
-
-#### Options
-
-- `--source` (required): The path for a directory of photos to extract metadata from.
-- `--output` (required): The path for a directory to save output data to. Three files will be saved in this directory: `photo_data.html`, `timeline.gpkg`, and `photo_data.kmz`.
-
-#### Example
-
-```bash
-pbtravellog extract photo-metadata --source ~/source_photos_dir --output ~/output_dir
 ```
 
 ## Testing

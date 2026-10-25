@@ -4,6 +4,10 @@ This package stores some configuration in environment variables which must be se
 
 ## Travel Log Paths
 
+This package interacts with a GeoPackage travel log database, containing travel items that are not specific to a specific travel mode, as described in the [travel log schema](schema/travel_log.md). The path to this file must be set as an environment variable:
+
+```PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH=/path/to/travel_log.gpkg```
+
 This package interacts with a GeoPackage flight log database as described in the [flight log schema](schema/flight_log.md). The path to this file must be set as an environment variable:
 
 ```PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH=/path/to/flight_log.gpkg```
