@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import requests
 
+import pytest
 from pytest import approx
 
 from pbtravellog.flight_log import FlightTable, import_flight_bcbp
@@ -20,11 +21,9 @@ class MockResponse(requests.Response):
             data = json.load(f)
         return data
 
-def test_import_flight_bcbp_blank_db(bcbp_data, monkeypatch, tmp_path):
-    """
-    Tests importing a flight with no airline, airport, aircraft type, or
-    trip data available to look up.
-    """
+@pytest.fixture()
+def setup_empty_geopackages(monkeypatch, tmp_path):
+    """Creates empty GeoPackage files for test use."""
     tmp_travel_gpkg = tmp_path / "travel_log.gpkg"
     tmp_flight_gpkg = tmp_path / "flight_log.gpkg"
     def mock_get(*args, **kwargs):
@@ -48,6 +47,18 @@ def test_import_flight_bcbp_blank_db(bcbp_data, monkeypatch, tmp_path):
     monkeypatch.setattr(requests, "get", mock_get)
     monkeypatch.setattr("sys.stdin", io.StringIO("6\n"))
     init_gpkg()
+
+@pytest.fixture()
+def populate_geopackages(setup_empty_geopackages):
+    """Adds some sample data to travel log GeoPackages."""
+    pass
+    # TODO: Implement
+
+def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
+    """
+    Tests importing a flight with no airline, airport, aircraft type, or
+    trip data available to look up.
+    """
     flight_bcbp = bcbp_data("bcbp_import.txt")
     import_flight_bcbp(flight_bcbp)
 
@@ -67,3 +78,8 @@ def test_import_flight_bcbp_blank_db(bcbp_data, monkeypatch, tmp_path):
     assert flight["geometry"].geoms[0].coords[0] == approx((
         -97.03544, 32.89897, 0.0
     ))
+
+def test_import_flight_bcbp(populate_geopackages):
+    """Tests importing a flight via BCBP data."""
+    pass
+    # TODO: Implement
