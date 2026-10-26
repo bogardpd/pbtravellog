@@ -8,7 +8,7 @@ import requests
 import pytest
 from pytest import approx
 
-from pbtravellog.flight_log import FlightTable, import_flight_bcbp
+from pbtravellog.flight_log import Airline, FlightTable, import_flight_bcbp
 from pbtravellog.record import init_gpkg
 
 class MockResponse(requests.Response):
@@ -56,7 +56,11 @@ def fixture_setup_empty_geopackages(monkeypatch, tmp_path):
 @pytest.fixture(name="populate_geopackages")
 def fixture_populate_geopackages(setup_empty_geopackages):
     """Adds some sample data to travel log GeoPackages."""
-    # TODO: Implement
+    Airline({
+        "name": "American",
+        "icao_code": "AAL",
+        "iata_code": "AA",
+    }).save()
 
 def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
     """

@@ -43,12 +43,17 @@ class Record(dict):
 
     def save(self, geojson: Path | None = None) -> None:
         """Saves a record to its GeoPackage layer."""
-        existing_cols = list(gpd.read_file(
+        # Load existing layer table structure.
+        existing = gpd.GeoDataFrame(gpd.read_file(
             self.data_file(),
             layer=self.LAYER,
             engine="pyogrio",
             rows=0,
-        ).rename_geometry(GPKG_GEOM_COL).columns)
+        ))
+        if existing.active_geometry_name is not None:
+            existing = existing.rename_geometry(GPKG_GEOM_COL)
+        existing_cols = list(existing.columns)
+        # Build and format values.
         gpkg_values = {
             col: self._format_field(
                 self.get(col), self.GPKG_FORMAT_FIELDS.get(col)
@@ -83,7 +88,7 @@ class Record(dict):
                     "its value to null."
                 )
         # Reorder columns to match existing schema.
-        gdf = gdf[existing_cols]
+        gdf = gpd.GeoDataFrame(gdf[existing_cols])
         # Write file.
         gdf.to_file(
             self.data_file(),
