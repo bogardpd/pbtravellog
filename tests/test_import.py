@@ -1,3 +1,5 @@
+"""Tests AeroAPI import functionality."""
+
 import io
 import json
 from pathlib import Path
@@ -10,13 +12,16 @@ from pbtravellog.flight_log import FlightTable, import_flight_bcbp
 from pbtravellog.record import init_gpkg
 
 class MockResponse(requests.Response):
+    """Mocks API responses."""
     def __init__(self, filename: str):
+        super().__init__()
         self.response_path = Path(__file__).parent / "fixtures" / filename
         self.status_code = 200
         self.reason = "OK"
         self.url = self.response_path
 
-    def json(self) -> dict:
+    def json(self, **kwargs) -> dict:
+        """Returns a JSON response."""
         with open(self.response_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data
@@ -51,7 +56,6 @@ def setup_empty_geopackages(monkeypatch, tmp_path):
 @pytest.fixture()
 def populate_geopackages(setup_empty_geopackages):
     """Adds some sample data to travel log GeoPackages."""
-    pass
     # TODO: Implement
 
 def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
@@ -66,12 +70,12 @@ def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
     flights = FlightTable.from_all()
     assert len(flights) == 1
     flight = flights[list(flights)[-1]]
-    assert flight["airline_fid"] == None
-    assert flight["operator_fid"] == None
-    assert flight["origin_airport_fid"] == None
-    assert flight["destination_airport_fid"] == None
-    assert flight["aircraft_type_fid"] == None
-    assert flight["trip_fid"] == None
+    assert flight["airline_fid"] is None
+    assert flight["operator_fid"] is None
+    assert flight["origin_airport_fid"] is None
+    assert flight["destination_airport_fid"] is None
+    assert flight["aircraft_type_fid"] is None
+    assert flight["trip_fid"] is None
     assert flight["flight_number"] == "777"
     assert flight["fa_flight_id"] == "AAL777-1792303609-airline-766p"
     assert flight["geom_source"] == "FlightAware"
@@ -81,5 +85,4 @@ def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
 
 def test_import_flight_bcbp(populate_geopackages):
     """Tests importing a flight via BCBP data."""
-    pass
     # TODO: Implement
