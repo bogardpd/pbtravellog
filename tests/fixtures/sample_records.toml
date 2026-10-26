@@ -1,0 +1,4 @@
+[Airline.airline_aa]
+name = "American"
+icao_code = "AAL"
+iata_code = "AA"

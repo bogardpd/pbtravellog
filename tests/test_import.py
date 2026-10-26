@@ -54,13 +54,9 @@ def fixture_setup_empty_geopackages(monkeypatch, tmp_path):
     init_gpkg()
 
 @pytest.fixture(name="populate_geopackages")
-def fixture_populate_geopackages(setup_empty_geopackages):
+def fixture_populate_geopackages(setup_empty_geopackages, sample_record):
     """Adds some sample data to travel log GeoPackages."""
-    Airline({
-        "name": "American",
-        "icao_code": "AAL",
-        "iata_code": "AA",
-    }).save()
+    sample_record(Airline, "airline_aa").save()
 
 def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
     """
