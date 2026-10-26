@@ -3,7 +3,6 @@
 # Standard imports
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-import json
 import os
 from pathlib import Path
 import re
