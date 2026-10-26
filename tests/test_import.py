@@ -26,12 +26,12 @@ class MockResponse(requests.Response):
             data = json.load(f)
         return data
 
-@pytest.fixture()
-def setup_empty_geopackages(monkeypatch, tmp_path):
+@pytest.fixture(name="setup_empty_geopackages")
+def fixture_setup_empty_geopackages(monkeypatch, tmp_path):
     """Creates empty GeoPackage files for test use."""
     tmp_travel_gpkg = tmp_path / "travel_log.gpkg"
     tmp_flight_gpkg = tmp_path / "flight_log.gpkg"
-    def mock_get(*args, **kwargs):
+    def mock_get(*args, **_kwargs):
         provided_url = args[0]
         mocks = {
             "https://aeroapi.flightaware.com/aeroapi/flights/AA777": (
@@ -53,8 +53,8 @@ def setup_empty_geopackages(monkeypatch, tmp_path):
     monkeypatch.setattr("sys.stdin", io.StringIO("6\n"))
     init_gpkg()
 
-@pytest.fixture()
-def populate_geopackages(setup_empty_geopackages):
+@pytest.fixture(name="populate_geopackages")
+def fixture_populate_geopackages(setup_empty_geopackages):
     """Adds some sample data to travel log GeoPackages."""
     # TODO: Implement
 
