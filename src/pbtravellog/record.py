@@ -3,16 +3,21 @@
 # Standard imports
 import csv
 from importlib import resources
+import json
 import os
 from pathlib import Path
 import re
 import shutil
+import sys
 from typing import Self
 
 # Third-party imports
 import geopandas as gpd
 import pandas as pd
 from tabulate import tabulate
+
+# Project imports
+from pbtravellog.geometry import CRS, GPKG_GEOM_COL
 
 DATA_ENV_VARS = {
     "travel": "PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH",
@@ -27,12 +32,78 @@ class Record(dict):
     DATA_FILE_ENV = None
     LOG_TYPE = None
     LAYER = None
+    GEOM_FIELD = None
+    GPKG_FORMAT_FIELDS = {} # Field names to format with _format_field()
     FIND_BY_CODES = []
     DTYPES = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fid: int | None = None
+
+    def save(self, geojson: Path | None = None) -> None:
+        """Saves a record to its GeoPackage layer."""
+        existing_cols = list(gpd.read_file(
+            self.data_file(),
+            layer=self.LAYER,
+            engine="pyogrio",
+            rows=0,
+        ).rename_geometry(GPKG_GEOM_COL).columns)
+        gpkg_values = {
+            col: self._format_field(
+                self.get(col), self.GPKG_FORMAT_FIELDS.get(col)
+            )
+            for col in existing_cols if col != GPKG_GEOM_COL
+        }
+        if self.GEOM_FIELD is None:
+            gdf = gpd.GeoDataFrame([gpkg_values], geometry=None)
+        else:
+            if GPKG_GEOM_COL not in existing_cols:
+                raise ValueError(
+                    f"Geometry column {GPKG_GEOM_COL} not found in existing "
+                    f"layer schema {existing_cols}"
+                )
+            gpkg_values[GPKG_GEOM_COL] = self[self.GEOM_FIELD]
+            gdf = gpd.GeoDataFrame(
+                [gpkg_values],
+                geometry=GPKG_GEOM_COL,
+                crs=CRS,
+            )
+        if geojson is not None:
+            # Save to GeoJSON instead of database.
+            gdf.to_file(geojson, driver="GeoJSON")
+            print(f"Wrote flight to {geojson}.")
+            sys.exit(0)
+        # Add missing columns from existing schema as null values.
+        for col in existing_cols:
+            if col not in gdf.columns:
+                gdf[col] = None
+                print(
+                    f"No value was provided for column '{col}'; setting "
+                    "its value to null."
+                )
+        # Reorder columns to match existing schema.
+        gdf = gdf[existing_cols]
+        # Write file.
+        gdf.to_file(
+            self.data_file(),
+            layer=self.LAYER,
+            engine="pyogrio",
+            mode="a",
+        )
+        print(f"Appended {type(self).__name__} to \"{self.data_file()}\".")
+
+    def _format_field(self, field, field_format):
+        """Applies formatting to a field."""
+        if field_format is None:
+            return field
+        if field is None:
+            return None
+        if field_format == "datetime":
+            return field.strftime("%Y-%m-%dT%H:%M:%SZ")
+        if field_format == "json":
+            return json.dumps(field)
+        return field
 
     @classmethod
     def data_file(cls, log_type: str | None = None) -> Path | None:

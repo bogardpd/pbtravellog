@@ -155,6 +155,12 @@ class Flight(Record):
         "boarding_pass_data": "string",
         "geom_source": "string",
     }
+    GEOM_FIELD = "geometry"
+    GPKG_FORMAT_FIELDS = {
+        "departure_utc": "datetime",
+        "arrival_utc": "datetime",
+        "fa_json": "json",
+    }
 
     def distance(self) -> int | None:
         """Returns flight distance or great circle distance in miles."""
@@ -216,34 +222,6 @@ class Flight(Record):
             self["distance_mi"] = int(fa_json.get("actual_distance"))
         except TypeError, ValueError:
             print(f"⚠️ No distance found for {self["fa_flight_id"]}.")
-
-    def gdf(self) -> gpd.GeoDataFrame:
-        """Returns a GeoDataFrame record for the flight."""
-        record = {
-            "geometry": self.get("geometry"),
-            "departure_utc": _format_time(self.get("departure_utc")),
-            "arrival_utc": _format_time(self.get("arrival_utc")),
-            "trip_fid": self.get("trip_fid"),
-            "trip_section": self.get("trip_section"),
-            "airline_fid": self.get("airline_fid"),
-            "flight_number": self.get("flight_number"),
-            "origin_airport_fid": self.get("origin_airport_fid"),
-            "destination_airport_fid": self.get("destination_airport_fid"),
-            "aircraft_type_fid": self.get("aircraft_type_fid"),
-            "operator_fid": self.get("operator_fid"),
-            "tail_number": self.get("tail_number"),
-            "boarding_pass_data": self.get("boarding_pass_data"),
-            "fh_id": self.get("fh_id"),
-            "fa_flight_id": self.get("fa_flight_id"),
-            "fa_json": (
-                None if self.get("fa_json") is None
-                else json.dumps(self["fa_json"])
-            ),
-            "geom_source": self.get("geom_source"),
-            "distance_mi": self.get("distance_mi"),
-            "comments": None,
-        }
-        return gpd.GeoDataFrame([record], geometry="geometry", crs=CRS)
 
     def geojson(self) -> dict:
         """Returns a single flight as a dict in GeoJSON structure."""
@@ -316,72 +294,6 @@ class Flight(Record):
         if self["flight_number"] is None:
             return self["airline"]["name"]
         return f"{self["airline"]["name"]} {self["flight_number"]}"
-
-    def save(self, geojson: Path | None = None) -> None:
-        """Appends a flight to the geopackage file."""
-        record_gdf = self.gdf()
-
-        # Check for matching tail numbers.
-        if self.get("tail_number") is not None:
-            tails_gdf = Flight.every()
-            tails_gdf = (
-                tails_gdf[tails_gdf["tail_number"] == self["tail_number"]]
-            )
-            if len(tails_gdf) > 0:
-                print(
-                    f"You've now had {len(tails_gdf) + 1} flights on tail "
-                    + f"number '{self["tail_number"]}'!"
-                )
-
-        if geojson is not None:
-            # Save to GeoJSON instead of database.
-            record_gdf.to_file(geojson, driver="GeoJSON")
-            print(f"Wrote flight to {geojson}.")
-            sys.exit(0)
-        existing = gpd.read_file(
-            _get_flight_log(),
-            layer=Flight.LAYER,
-            engine="pyogrio",
-            rows=0,
-        )
-        existing_cols = list(existing.columns)
-        incoming_cols = list(record_gdf.columns)
-
-        # Check that geometry column name matches.
-        geom_col = record_gdf.geometry.name
-        if geom_col not in existing_cols:
-            raise ValueError(
-                f"Geometry column '{geom_col}' not found in existing "
-                "layer schema"
-            )
-
-        # Check for columns in new data not in current schema.
-        extra_cols = set(incoming_cols) - set(existing_cols)
-        if extra_cols:
-            raise ValueError(
-                "Incoming data has columns not present in layer "
-                f"schema: {extra_cols}"
-            )
-
-        # Add missing columns from existing schema as null values.
-        for col in existing_cols:
-            if col not in record_gdf.columns:
-                record_gdf[col] = None
-                print(
-                    f"No value was provided for column '{col}'; setting "
-                    "its value to null."
-                )
-
-        # Reorder columns to match existing schema.
-        gdf = record_gdf[existing_cols]
-        gdf.to_file(
-            _get_flight_log(),
-            driver="GPKG",
-            engine="pyogrio",
-            layer=Flight.LAYER,
-            mode="a",
-        )
-        print(f"Appended flight to {_get_flight_log()}.")
 
     def tail_number_formatted(self) -> str:
         """Returns the flight's formatted tail number."""
