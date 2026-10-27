@@ -30,11 +30,13 @@ _TIMEOUT = 10
 class AeroAPIRateLimiter:
     """Maintains state of wait time."""
 
+    # Set a wait time in seconds to avoid rate limiting on the
+    # Personal tier. If your account has a higher rate limit, you
+    # can set this to 0.
+    DEFAULT_WAIT_TIME = 8
+
     def __init__(self):
-        # Set a wait time in seconds to avoid rate limiting on the
-        # Personal tier. If your account has a higher rate limit, you
-        # can set this to 0.
-        self.wait_time = 8
+        self.wait_time = self.DEFAULT_WAIT_TIME
         self.wait_until = datetime.now(timezone.utc)
 
     def wait(self):

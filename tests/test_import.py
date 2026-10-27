@@ -8,8 +8,10 @@ import requests
 import pytest
 from pytest import approx
 
+from pbtravellog.aeroapi import AeroAPIRateLimiter
 from pbtravellog.flight_log import Airline, FlightTable, import_flight_bcbp
 from pbtravellog.record import init_gpkg
+
 
 class MockResponse(requests.Response):
     """Mocks API responses."""
@@ -42,6 +44,9 @@ def fixture_setup_empty_geopackages(monkeypatch, tmp_path):
             )
         }
         return MockResponse(mocks[provided_url])
+    def zero_wait(*_args, **_kwargs):
+        """Skips API rate limiter wait."""
+        return
     monkeypatch.setenv(
         "PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH", str(tmp_travel_gpkg)
     )
@@ -49,6 +54,7 @@ def fixture_setup_empty_geopackages(monkeypatch, tmp_path):
         "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH", str(tmp_flight_gpkg)
     )
     monkeypatch.setenv("AEROAPI_API_KEY", "invalid_key")
+    monkeypatch.setattr(AeroAPIRateLimiter, "wait", zero_wait)
     monkeypatch.setattr(requests, "get", mock_get)
     monkeypatch.setattr("sys.stdin", io.StringIO("6\n"))
     init_gpkg()
