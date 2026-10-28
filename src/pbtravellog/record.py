@@ -180,7 +180,7 @@ class Record(dict):
         """Creates a class instance from a geopandas row."""
         record_row = row.copy().astype(object).where(pd.notna(row), None)
         record = cls(record_row.to_dict())
-        record.fid = int(record_row.name)
+        record["fid"] = int(record_row.name)
         return record
 
 class RecordTable(dict):

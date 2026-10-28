@@ -39,6 +39,9 @@ def fixture_setup_empty_geopackages(monkeypatch, tmp_path):
             "https://aeroapi.flightaware.com/aeroapi/flights/AA777": (
                 "aeroapi_get_flights_ident_response.json"
             ),
+            "https://aeroapi.flightaware.com/aeroapi/flights/AAL777": (
+                "aeroapi_get_flights_ident_response.json"
+            ),
             "https://aeroapi.flightaware.com/aeroapi/flights/AAL777-1792303609-airline-766p/track": (
                 "aeroapi_get_flights_ident_track_response.json"
             )
@@ -71,7 +74,6 @@ def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
     """
     flight_bcbp = bcbp_data("bcbp_import.txt")
     import_flight_bcbp(flight_bcbp)
-
     # Check results.
     flights = FlightTable.from_all()
     assert len(flights) == 1
@@ -89,6 +91,12 @@ def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
         -97.03544, 32.89897, 0.0
     ))
 
-def test_import_flight_bcbp(populate_geopackages):
+def test_import_flight_bcbp(populate_geopackages, bcbp_data):
     """Tests importing a flight via BCBP data."""
-    # TODO: Implement
+    flight_bcbp = bcbp_data("bcbp_import.txt")
+    import_flight_bcbp(flight_bcbp)
+    flights = FlightTable.from_all().joined()
+    assert len(flights) == 1
+    flight = flights[list(flights)[-1]]
+    print(flight)
+    assert flight["airline"]["icao_code"] == "AAL"

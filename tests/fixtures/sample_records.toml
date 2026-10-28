@@ -2,3 +2,4 @@
 name = "American"
 icao_code = "AAL"
 iata_code = "AA"
+is_defunct = false
