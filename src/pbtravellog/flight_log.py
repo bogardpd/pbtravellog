@@ -86,6 +86,7 @@ class Airport(Record):
     LOG_TYPE="flight"
     LAYER = "airports"
     FIND_BY_CODES = ["icao_code", "iata_code", "faa_lid"]
+    GEOM_FIELD = "geometry"
     DTYPES = {
         "iata_code": "string",
         "icao_code": "string",
@@ -103,7 +104,7 @@ class Airport(Record):
             "type": "Feature",
             "geometry": self["geometry"].__geo_interface__,
             "properties": {
-                "airport_fid": self.fid,
+                "airport_fid": self["fid"],
                 "airport_name": self["name"],
                 "airport_code": self.code(),
             }
@@ -228,7 +229,7 @@ class Flight(Record):
             self.get(a) for a in ["origin_airport", "destination_airport"]
             if a is not None
         ]
-        airport_features = {a.fid: a.geojson_feature() for a in airports}
+        airport_features = {a["fid"]: a.geojson_feature() for a in airports}
         gj = {
             "type": "FeatureCollection",
             "features": [*airport_features.values(), self.geojson_feature()]
@@ -253,7 +254,7 @@ class Flight(Record):
             "type": "Feature",
             "geometry": geo_interface(geom),
             "properties": {
-                "flight_fid": self.fid,
+                "flight_fid": self["fid"],
                 "flight_name": self.name(),
                 "flight_origin_airport_fid": self["origin_airport_fid"],
                 "flight_destination_airport_fid": self[
@@ -358,31 +359,25 @@ class Flight(Record):
         flight["departure_utc"] = flight._dep_utc()
         flight["arrival_utc"] = flight._arr_utc()
         flight["flight_number"] = fa_json.get("flight_number")
-
-        origin = fa_json.get("origin", {})
-        flight["origin_airport_fid"] = getattr(
-            Airport.find_by_code(origin.get("code")), "fid", None
-        )
-        flight["origin_code"] = origin.get("code_iata") or origin.get("code")
-        flight["origin_tz"] = origin.get("timezone")
-
-        destination = fa_json.get("destination", {})
-        flight["destination_airport_fid"] = getattr(
-            Airport.find_by_code(destination.get("code")), "fid", None
-        )
-        flight["destination_code"] = destination.get("code_iata") \
-            or destination.get("code")
-        flight["destination_tz"] = destination.get("timezone")
-
-        flight["aircraft_type_fid"] = getattr(
-            AircraftType.find_by_code(fa_json.get("aircraft_type")),
-            "fid", None
-        )
-        flight["operator_fid"] = getattr(
-            Airline.find_by_code(fa_json.get("operator")), "fid", None
-        )
         flight["tail_number"] = fa_json.get("registration")
         flight["fa_flight_id"] = fa_json.get("fa_flight_id")
+        # Joined airports
+        orig = fa_json.get("origin", {})
+        orig_airport = Airport.find_by_code(orig.get("code"))
+        flight["origin_airport_fid"] = (orig_airport or {}).get("fid")
+        flight["origin_code"] = orig.get("code_iata") or orig.get("code")
+        flight["origin_tz"] = orig.get("timezone")
+        dest = fa_json.get("destination", {})
+        dest_airport = Airport.find_by_code(dest.get("code"))
+        flight["destination_airport_fid"] = (dest_airport or {}).get("fid")
+        flight["destination_code"] = dest.get("code_iata") or dest.get("code")
+        flight["destination_tz"] = dest.get("timezone")
+        # Joined aircraft
+        aircraft = AircraftType.find_by_code(fa_json.get("aircraft_type"))
+        flight["aircraft_type_fid"] = (aircraft or {}).get("fid")
+        # Joined operator
+        operator = Airline.find_by_code(fa_json.get("operator"))
+        flight["operator_fid"] = (operator or {}).get("fid")
         return flight
 
     @staticmethod
@@ -685,7 +680,7 @@ class FlightTable(RecordLayerTable):
                     v[j[2]] = {}
                 else:
                     v[j[2]] = j[0][v[j[1]]]
-                    v[j[2]].fid = v[j[1]]
+                    v[j[2]]["fid"] = v[j[1]]
         return self
 
     def total_distance(self) -> int:
@@ -1070,10 +1065,7 @@ def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
         ident = f"{airline_code}{leg.flight_number}"
         aero_results = aero.get_flights_ident(ident, "designator")
         flight = _flight_from_aeroapi_results(aero_results)
-        if airline is None:
-            flight["airline_fid"] = None
-        else:
-            flight["airline_fid"] = airline.get("fid")
+        flight["airline_fid"] = (airline or {}).get("fid")
         flight["boarding_pass_data"] = leg.bcbp_str
         trip = Trip.select_by_date(leg.flight_date)
         if trip is not None:

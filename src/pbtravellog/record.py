@@ -39,7 +39,6 @@ class Record(dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fid: int | None = None
 
     def save(self, geojson: Path | None = None) -> None:
         """Saves a record to its GeoPackage layer."""
@@ -68,7 +67,7 @@ class Record(dict):
                     f"Geometry column {GPKG_GEOM_COL} not found in existing "
                     f"layer schema {existing_cols}"
                 )
-            gpkg_values[GPKG_GEOM_COL] = self[self.GEOM_FIELD]
+            gpkg_values[GPKG_GEOM_COL] = self.get(self.GEOM_FIELD)
             gdf = gpd.GeoDataFrame(
                 [gpkg_values],
                 geometry=GPKG_GEOM_COL,
@@ -246,6 +245,8 @@ class RecordLayerTable(RecordTable):
         records = records.astype(object).where(pd.notna(records), None)
         record_dict = records.to_dict(orient="index")
         record_dict = {k: cls.RECORD_CLASS(v) for k, v in record_dict.items()}
+        for k, v in record_dict.items():
+            v["fid"] = k
         return cls(record_dict)
 
     @classmethod

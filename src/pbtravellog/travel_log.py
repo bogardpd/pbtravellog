@@ -38,7 +38,6 @@ class Trip(Record):
             engine="pyogrio",
             fid_as_index=True,
         ).dropna(subset=["start_date", "end_date"]).astype(cls.DTYPES)
-
         matching = records[
             (records["start_date"].dt.date <= departure_date)
             & (records["end_date"].dt.date >= departure_date)
@@ -48,14 +47,11 @@ class Trip(Record):
             return None
         record_dict = matching.iloc[0].to_dict()
         record_dict["fid"] = int(matching.index[0])
-        record = cls()
-        for k, v in record_dict.items():
-            setattr(
-                record,
-                k,
-                v.date() if hasattr(v, "date") else v
-            )
-        return record
+        record_dict = {
+            k: v.date() if hasattr(v, "date") else v
+            for k, v in record_dict.items()
+        }
+        return cls(record_dict)
 
 class TripTable(RecordLayerTable):
     """Represents a dict of Trip instances."""

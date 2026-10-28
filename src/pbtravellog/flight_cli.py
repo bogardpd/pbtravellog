@@ -30,7 +30,7 @@ def show_airport(identifier: str) -> None:
     airport = Airport.find_by_code(identifier.upper(), check_fid=True)
     if airport is None:
         sys.exit(1)
-    flights = FlightTable.from_all().joined().filter_by_airport(airport.fid)
+    flights = FlightTable.from_all().joined().filter_by_airport(airport["fid"])
     flights.print()
     print(f"{len(flights)} matching flight(s)")
 

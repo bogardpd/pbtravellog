@@ -1,5 +1,28 @@
-[Airline.airline_aa]
+[Airline.airline_aal]
 name = "American"
 icao_code = "AAL"
 iata_code = "AA"
 is_defunct = false
+
+[Airport.airport_kdfw]
+name = "Dallas/Fort Worth"
+icao_code = "KDFW"
+iata_code = "DFW"
+is_defunct = false
+
+[Airport.airport_klas]
+name = "Las Vegas"
+icao_code = "KLAS"
+iata_code = "LAS"
+is_defunct = false
+
+[AircraftType.aircraft_type_a321]
+manufacturer = "Airbus"
+name = "A321"
+icao_code = "A321"
+iata_code = "321"
+
+[Trip.trip_las_vegas]
+name = "Las Vegas, NV"
+start_date = 2024-09-22
+end_date = 2024-09-27

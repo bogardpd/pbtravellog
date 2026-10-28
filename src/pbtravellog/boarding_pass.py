@@ -2,10 +2,11 @@
 
 # Standard imports
 import calendar
-import json
-import sys
 from datetime import datetime, date, timedelta
+import json
+import os
 from pathlib import Path
+import sys
 from zoneinfo import ZoneInfo
 from zipfile import ZipFile
 
@@ -233,6 +234,13 @@ class Leg():
             f"{self.origin_iata} → {self.destination_iata}"
         )
 
+    def _now(self) -> datetime:
+        """Returns current datetime.
+
+        Allows tests to mock a specific datetime.
+        """
+        return datetime.now()
+
     def _parse_airline_iata(self) -> str | None:
         """Parses airline IATA code."""
         raw = _get_raw(
@@ -274,7 +282,7 @@ class Leg():
         if self._pass_dt is None:
             # Assume flight is up to 3 days in the future, or else the
             # most recent date matching this ordinal in the past.
-            latest_dt = datetime.now() + timedelta(days=3)
+            latest_dt = self._now() + timedelta(days=3)
             latest_dt_year = latest_dt.timetuple().tm_year
             latest_date = latest_dt.date()
             # Loop through years in reverse trying to find a good date.
