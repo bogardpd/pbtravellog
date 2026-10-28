@@ -1,6 +1,6 @@
 """Tests AeroAPI import functionality."""
 # Standard imports
-from dateutil.parser import isoparse
+from datetime import datetime, timezone
 import io
 import json
 from pathlib import Path
@@ -55,7 +55,7 @@ def fixture_setup_empty_geopackages(monkeypatch, tmp_path):
         }
         return MockResponse(mocks[provided_url])
     def mock_date(*_args, **_kwargs):
-        return isoparse("2024-09-22T20:00:00Z")
+        return datetime(2024, 9, 22, 20, 0, 0, tzinfo=timezone.utc)
     def zero_wait(*_args, **_kwargs):
         """Skips API rate limiter wait."""
         return

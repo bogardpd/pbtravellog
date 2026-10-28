@@ -6,11 +6,7 @@ should be defined here.
 
 # Standard imports
 from datetime import date
-import os
 from typing import Self
-
-# Third-party imports
-import geopandas as gpd
 
 # Project imports
 from pbtravellog.record import Record, RecordLayerTable
@@ -22,7 +18,10 @@ class Trip(Record):
     LOG_TYPE = "travel"
     LAYER = "trips"
     FIND_BY_CODES = []
-    DTYPES = {"fh_id": "Int64"}
+    DTYPES = {
+        "fh_id": "Int64",
+    }
+    PARSE_DATES = ["start_date", "end_date"]
 
     @classmethod
     def select_by_date(cls, departure_date: date) -> Self | None:
@@ -32,26 +31,19 @@ class Trip(Record):
         The date provided should be the flight departure date from a
         boarding pass.
         """
-        records = gpd.read_file(
-            cls.data_file(),
-            layer=cls.LAYER,
-            engine="pyogrio",
-            fid_as_index=True,
-        ).dropna(subset=["start_date", "end_date"]).astype(cls.DTYPES)
-        matching = records[
-            (records["start_date"].dt.date <= departure_date)
-            & (records["end_date"].dt.date >= departure_date)
-        ].sort_values(by=["start_date", "end_date"], ascending=False)
-        if matching.size == 0:
+        print("departure_date", type(departure_date))
+        trips = TripTable.from_all()
+        print(trips)
+        trips = [
+            t for t in trips.values()
+            if t["start_date"] is not None and t["end_date"] is not None
+            and t["start_date"] <= departure_date <= t["end_date"]
+        ]
+        if len(trips) == 0:
             print(f"{departure_date} does not fall within any existing trip.")
             return None
-        record_dict = matching.iloc[0].to_dict()
-        record_dict["fid"] = int(matching.index[0])
-        record_dict = {
-            k: v.date() if hasattr(v, "date") else v
-            for k, v in record_dict.items()
-        }
-        return cls(record_dict)
+        trips = sorted(trips, key=lambda x: (x["start_date"], x["end_date"]))
+        return trips[-1]
 
 class TripTable(RecordLayerTable):
     """Represents a dict of Trip instances."""

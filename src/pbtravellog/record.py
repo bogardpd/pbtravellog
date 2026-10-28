@@ -36,6 +36,7 @@ class Record(dict):
     GPKG_FORMAT_FIELDS = {} # Field names to format with _format_field()
     FIND_BY_CODES = []
     DTYPES = {}
+    PARSE_DATES = [] # Only dates, not datetimes!
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -242,6 +243,8 @@ class RecordLayerTable(RecordTable):
             engine="pyogrio",
             fid_as_index=True,
         ).astype(cls.RECORD_CLASS.DTYPES)
+        for col in cls.RECORD_CLASS.PARSE_DATES:
+            records[col] = records[col].dt.date
         records = records.astype(object).where(pd.notna(records), None)
         record_dict = records.to_dict(orient="index")
         record_dict = {k: cls.RECORD_CLASS(v) for k, v in record_dict.items()}
