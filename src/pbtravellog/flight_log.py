@@ -363,20 +363,20 @@ class Flight(Record):
         flight["fa_flight_id"] = fa_json.get("fa_flight_id")
         # Joined airports
         orig = fa_json.get("origin", {})
-        orig_airport = Airport.find_by_code(orig.get("code"))
+        orig_airport = AirportTable.find_by_code(orig.get("code"))
         flight["origin_airport_fid"] = (orig_airport or {}).get("fid")
         flight["origin_code"] = orig.get("code_iata") or orig.get("code")
         flight["origin_tz"] = orig.get("timezone")
         dest = fa_json.get("destination", {})
-        dest_airport = Airport.find_by_code(dest.get("code"))
+        dest_airport = AirportTable.find_by_code(dest.get("code"))
         flight["destination_airport_fid"] = (dest_airport or {}).get("fid")
         flight["destination_code"] = dest.get("code_iata") or dest.get("code")
         flight["destination_tz"] = dest.get("timezone")
         # Joined aircraft
-        aircraft = AircraftType.find_by_code(fa_json.get("aircraft_type"))
+        aircraft = AircraftTypeTable.find_by_code(fa_json.get("aircraft_type"))
         flight["aircraft_type_fid"] = (aircraft or {}).get("fid")
         # Joined operator
-        operator = Airline.find_by_code(fa_json.get("operator"))
+        operator = AirlineTable.find_by_code(fa_json.get("operator"))
         flight["operator_fid"] = (operator or {}).get("fid")
         return flight
 
@@ -885,7 +885,7 @@ def import_flight_number(
     geojson: Path | None = None
 ) -> None:
     """Gets info for a flight number and logs the flight."""
-    airline = Airline.find_by_code(airline_code)
+    airline = AirlineTable.find_by_code(airline_code)
     # If airline is IATA, try to look up ICAO.
     if len(airline_code) == 2:
         if airline is not None and airline.get("icao_code") is not None:
@@ -1057,7 +1057,7 @@ def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
     bp_flights: list[Flight] = []
     for leg in bp.legs:
         print(f"Processing leg \"{leg}\"")
-        airline = Airline.find_by_code(leg.airline_iata)
+        airline = AirlineTable.find_by_code(leg.airline_iata)
         if airline is not None and airline.get("icao_code") is not None:
             airline_code = airline.get("icao_code")
         else:

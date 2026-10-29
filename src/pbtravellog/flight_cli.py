@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 # Project imports
-from pbtravellog.flight_log import FlightTable, Airport
+from pbtravellog.flight_log import FlightTable, AirportTable
 
 def index_airports(
     output_file: Path | None = None,
@@ -27,7 +27,7 @@ def index_airports(
 
 def show_airport(identifier: str) -> None:
     """Shows flights for a specific airport."""
-    airport = Airport.find_by_code(identifier.upper(), check_fid=True)
+    airport = AirportTable.find_by_code(identifier.upper(), check_fid=True)
     if airport is None:
         sys.exit(1)
     flights = FlightTable.from_all().joined().filter_by_airport(airport["fid"])

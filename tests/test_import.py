@@ -16,9 +16,7 @@ from pbtravellog.boarding_pass import Leg
 from pbtravellog.flight_log import (
     AircraftType, Airline, Airport, FlightTable, import_flight_bcbp
 )
-from pbtravellog.record import init_gpkg
 from pbtravellog.travel_log import Trip
-
 
 class MockResponse(requests.Response):
     """Mocks API responses."""
@@ -35,11 +33,8 @@ class MockResponse(requests.Response):
             data = json.load(f)
         return data
 
-@pytest.fixture(name="setup_empty_geopackages")
-def fixture_setup_empty_geopackages(monkeypatch, tmp_path):
-    """Creates empty GeoPackage files for test use."""
-    tmp_travel_gpkg = tmp_path / "travel_log.gpkg"
-    tmp_flight_gpkg = tmp_path / "flight_log.gpkg"
+@pytest.fixture(name="setup_aeroapi_mocking")
+def fixture_setup_aeroapi_mocking(monkeypatch):
     def mock_get(*args, **_kwargs):
         provided_url = args[0]
         mocks = {
@@ -59,18 +54,12 @@ def fixture_setup_empty_geopackages(monkeypatch, tmp_path):
     def zero_wait(*_args, **_kwargs):
         """Skips API rate limiter wait."""
         return
-    monkeypatch.setenv(
-        "PBTRAVELLOG_TRAVEL_GEOPACKAGE_PATH", str(tmp_travel_gpkg)
-    )
-    monkeypatch.setenv(
-        "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH", str(tmp_flight_gpkg)
-    )
     monkeypatch.setenv("AEROAPI_API_KEY", "invalid_key")
     monkeypatch.setattr(AeroAPIRateLimiter, "wait", zero_wait)
     monkeypatch.setattr(Leg, "_now", mock_date)
     monkeypatch.setattr(requests, "get", mock_get)
+    # Always select result 6 from the list of flights:
     monkeypatch.setattr("sys.stdin", io.StringIO("6\n"))
-    init_gpkg()
 
 @pytest.fixture(name="populate_geopackages")
 def fixture_populate_geopackages(setup_empty_geopackages, sample_record):
@@ -81,7 +70,9 @@ def fixture_populate_geopackages(setup_empty_geopackages, sample_record):
     sample_record(AircraftType, "aircraft_type_a321").save()
     sample_record(Trip, "trip_las_vegas").save()
 
-def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
+def test_import_flight_bcbp_blank_db(
+    setup_empty_geopackages, setup_aeroapi_mocking, bcbp_data,
+):
     """
     Tests importing a flight with no airline, airport, aircraft type, or
     trip data available to look up.
@@ -105,7 +96,9 @@ def test_import_flight_bcbp_blank_db(setup_empty_geopackages, bcbp_data):
         -97.03544, 32.89897, 0.0
     ))
 
-def test_import_flight_bcbp(populate_geopackages, bcbp_data):
+def test_import_flight_bcbp(
+    populate_geopackages, setup_aeroapi_mocking, bcbp_data
+):
     """Tests importing a flight via BCBP data."""
     flight_bcbp = bcbp_data("bcbp_import.txt")
     import_flight_bcbp(flight_bcbp)

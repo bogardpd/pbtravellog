@@ -4,6 +4,18 @@ icao_code = "AAL"
 iata_code = "AA"
 is_defunct = false
 
+[Airport.airport_kden]
+name = "Denver (International)"
+icao_code = "KDEN"
+iata_code = "DEN"
+is_defunct = false
+
+[Airport.airport_kden_defunct]
+name = "Denver (Stapleton)"
+icao_code = "KDEN"
+iata_code = "DEN"
+is_defunct = true
+
 [Airport.airport_kdfw]
 name = "Dallas/Fort Worth"
 icao_code = "KDFW"

@@ -135,54 +135,6 @@ class Record(dict):
         ).astype(cls.DTYPES)
         return records
 
-    @classmethod
-    def find_by_code(cls, code: str, check_fid=False) -> Self | None:
-        """Finds a record by searching through code fields."""
-        if getattr(cls, "FIND_BY_CODES", None) is None:
-            return None
-        if len(cls.FIND_BY_CODES) == 0:
-            return None
-        records = gpd.read_file(
-            cls.data_file(),
-            layer = cls.LAYER,
-            engine="pyogrio",
-            fid_as_index=True,
-        )
-
-        # Check for fid on numeric codes. Note that this will allow
-        # defunct records since fids are unique.
-        if check_fid and re.search(r'^[0-9]+$', code):
-            if int(code) in records.index:
-                record_dict = records.loc[int(code)].to_dict()
-                record_dict["fid"] = int(code)
-                record = cls()
-                for key, value in record_dict.items():
-                    setattr(record, key, value)
-                return record
-
-        # Filter out defunct records. This is helpful in situations
-        # where current records use the same codes as an old record
-        # (for example, the current PSA airlines and the defunct Comair
-        # both use the IATA code "OH".)
-        if "is_defunct" in records.columns:
-            records = records[~records["is_defunct"]]
-        for code_type in cls.FIND_BY_CODES:
-            # Search for matching codes.
-            matching_code = records[records[code_type] == code]
-            if len(matching_code) == 1:
-                record = cls.from_gpd_row(matching_code.iloc[0])
-                return record
-        print(f"⚠️ Could not find {cls.__name__} matching \"{code}\".")
-        return None
-
-    @classmethod
-    def from_gpd_row(cls, row: pd.Series) -> Self:
-        """Creates a class instance from a geopandas row."""
-        record_row = row.copy().astype(object).where(pd.notna(row), None)
-        record = cls(record_row.to_dict())
-        record["fid"] = int(record_row.name)
-        return record
-
 class RecordTable(dict):
     """Represents a dict of instances of travel log records.
 
@@ -233,6 +185,41 @@ class RecordTable(dict):
 
 class RecordLayerTable(RecordTable):
     """A RecordTable that comes from a GeoPackage layer."""
+
+    @classmethod
+    def find_by_code(cls, code: str, check_fid: bool = False) -> Record:
+        """Finds a record by searching through code fields."""
+        if getattr(cls.RECORD_CLASS, "FIND_BY_CODES", None) is None:
+            return None
+        if len(cls.RECORD_CLASS.FIND_BY_CODES) == 0:
+            return None
+        records = cls.from_all()
+
+        # Check for fid on numeric codes. Note that this will allow
+        # defunct records since fids are unique.
+        if check_fid and re.search(r'^[0-9]+$', code):
+            if int(code) in records:
+                return records[int(code)]
+
+        # Filter out defunct records. This is helpful in situations
+        # where current records use the same codes as an old record
+        # (for example, the current PSA airlines and the defunct Comair
+        # both use the IATA code "OH".)
+        records = {
+            k: v for k, v in records.items()
+            if (v.get("is_defunct") is None) or (not v.get("is_defunct"))
+        }
+        for code_type in cls.RECORD_CLASS.FIND_BY_CODES:
+            matching = [
+                v for v in records.values()
+                if v.get(code_type) == code
+            ]
+            if len(matching) == 1:
+                return matching[0]
+        print(
+            f"⚠️ Could not find {cls.RECORD_CLASS.__name__} uniquely "
+            f"matching \"{code}\".")
+        return None
 
     @classmethod
     def from_all(cls) -> Self:
