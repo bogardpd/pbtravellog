@@ -1047,12 +1047,6 @@ def _flight_from_aeroapi_results(aero_results) -> Flight:
     flight.fetch_aeroapi_track_geometry()
     return flight
 
-def _format_time(time_val):
-    """Format time as ISO 8601 with Z."""
-    if time_val is None:
-        return None
-    return time_val.strftime("%Y-%m-%dT%H:%M:%SZ")
-
 def _great_circle_airport_lookup(row, airports):
     """Runs great_circle_route_pd with a GeoDataFrame row."""
     try:
