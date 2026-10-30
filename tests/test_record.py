@@ -1,4 +1,4 @@
-"""Tests record classes."""
+"""Tests record module."""
 
 # Project imports
 from pbtravellog.flight_log import Airport, AirportTable

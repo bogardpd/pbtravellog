@@ -31,9 +31,7 @@ class Trip(Record):
         The date provided should be the flight departure date from a
         boarding pass.
         """
-        print("departure_date", type(departure_date))
         trips = TripTable.from_all()
-        print(trips)
         trips = [
             t for t in trips.values()
             if t["start_date"] is not None and t["end_date"] is not None

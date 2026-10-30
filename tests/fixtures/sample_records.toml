@@ -38,3 +38,7 @@ iata_code = "321"
 name = "Las Vegas, NV"
 start_date = 2024-09-22
 end_date = 2024-09-27
+
+[Flight.flight_same_tail]
+# Has the same tail number as the mocked AeroAPI response.
+tail_number = "N159AN"

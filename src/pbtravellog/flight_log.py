@@ -162,6 +162,22 @@ class Flight(Record):
         "fa_json": "json",
     }
 
+    def alert_prior_flown_tail(self) -> int:
+        """Prints alert if this flight's tail has been flown before.
+        
+        Returns count of flights using the tail number, or 0 if this
+        flight has no tail number.
+        """
+        tail_number = self.get("tail_number")
+        if tail_number is None:
+            return 0
+        all_flights = FlightTable.from_all()
+        matching_tail = all_flights.filter_by_tail_number(tail_number)
+        tail_count = len(matching_tail)
+        if tail_count > 1:
+            print(f"You've had {tail_count} flights on tail {tail_number}!")
+        return tail_count
+
     def distance(self) -> int | None:
         """Returns flight distance or great circle distance in miles."""
         flown_distance = self.get("distance_mi")
@@ -1080,6 +1096,7 @@ def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
     if geojson is None:
         for flight in bp_flights:
             flight.save()
+            flight.alert_prior_flown_tail()
     else:
         if len(bp_flights) == 1:
             bp_flights[0].save(geojson=geojson)
