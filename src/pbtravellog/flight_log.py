@@ -33,7 +33,7 @@ FLIGHT_DATA_FILE_ENV = "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"
 
 def _get_flight_log():
     """Gets current value of flight log path.
-    
+
     Needed to ensure tests aren't using stale environment variables.
     """
     flight_log = os.getenv("PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH")
@@ -164,7 +164,7 @@ class Flight(Record):
 
     def alert_prior_flown_tail(self) -> int:
         """Prints alert if this flight's tail has been flown before.
-        
+
         Returns count of flights using the tail number, or 0 if this
         flight has no tail number.
         """
@@ -962,7 +962,6 @@ def import_flight_pkpasses(geojson: Path | None = None) -> None:
 
     # Process passes.
     for pkpass_file, pkpass in pkpasses.items():
-        print(pkpass.relevant_date)
         bp = pkpass.boarding_pass
         _import_bp_flights(bp, geojson=geojson)
         archive_file_path = archive_folder / pkpass.archive_filename
