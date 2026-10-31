@@ -8,24 +8,28 @@ is_defunct = false
 name = "Denver (International)"
 icao_code = "KDEN"
 iata_code = "DEN"
+time_zone = "America/Denver"
 is_defunct = false
 
 [Airport.airport_kden_defunct]
 name = "Denver (Stapleton)"
 icao_code = "KDEN"
 iata_code = "DEN"
+time_zone = "America/Denver"
 is_defunct = true
 
 [Airport.airport_kdfw]
 name = "Dallas/Fort Worth"
 icao_code = "KDFW"
 iata_code = "DFW"
+time_zone = "America/Chicago"
 is_defunct = false
 
 [Airport.airport_klas]
 name = "Las Vegas"
 icao_code = "KLAS"
 iata_code = "LAS"
+time_zone = "America/Los_Angeles"
 is_defunct = false
 
 [AircraftType.aircraft_type_a321]

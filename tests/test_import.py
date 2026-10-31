@@ -14,7 +14,8 @@ from pytest import approx
 from pbtravellog.aeroapi import AeroAPIRateLimiter
 from pbtravellog.boarding_pass import Leg
 from pbtravellog.flight_log import (
-    AircraftType, Airline, Airport, FlightTable, import_flight_bcbp
+    AircraftType, Airline, Airport, FlightTable,
+    import_flight_bcbp, import_flight_number
 )
 from pbtravellog.travel_log import Trip
 
@@ -35,6 +36,7 @@ class MockResponse(requests.Response):
 
 @pytest.fixture(name="setup_aeroapi_mocking")
 def fixture_setup_aeroapi_mocking(monkeypatch):
+    """Mock AeroAPI responses."""
     def mock_get(*args, **_kwargs):
         provided_url = args[0]
         mocks = {
@@ -102,6 +104,20 @@ def test_import_flight_bcbp(
     """Tests importing a flight via BCBP data."""
     flight_bcbp = bcbp_data("bcbp_import.txt")
     import_flight_bcbp(flight_bcbp)
+    flights = FlightTable.from_all().joined()
+    assert len(flights) == 1
+    flight = flights[list(flights)[-1]]
+    assert flight["airline"]["icao_code"] == "AAL"
+    assert flight["operator"]["icao_code"] == "AAL"
+    assert flight["origin_airport"]["icao_code"] == "KDFW"
+    assert flight["destination_airport"]["icao_code"] == "KLAS"
+    assert flight["aircraft_type"]["icao_code"] == "A321"
+    assert flight["trip"]["name"] == "Las Vegas, NV"
+    assert flight["trip_section"] == 1
+
+def test_import_flight_number(populate_geopackages, setup_aeroapi_mocking):
+    """Tests importing a flight via flight number."""
+    import_flight_number("AAL", "777")
     flights = FlightTable.from_all().joined()
     assert len(flights) == 1
     flight = flights[list(flights)[-1]]

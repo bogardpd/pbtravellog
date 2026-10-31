@@ -296,6 +296,9 @@ class Flight(Record):
             raise ValueError("Location must be 'departure' or 'arrival'.")
         dt = self.get(f"{loc}_utc")
         airport = self.get(f"{fields[loc]}_airport")
+        if airport is None:
+            column = f"{fields[loc]}_airport_fid"
+            airport = AirportTable.from_all().get(self.get(column))
         if dt is None or airport is None:
             return None
         tz = airport.get("time_zone")
@@ -1106,10 +1109,21 @@ def _import_fa_flight_results(
     """Processes the results of an AeroAPI flights request."""
     flight = _flight_from_aeroapi_results(aero_results)
 
-    # Set provided fields
+    # Set provided fields.
     if fields is not None:
-        for key, value in fields.items():
-            setattr(flight, key, value)
+        for k, v in fields.items():
+            flight[k] = v
+    # Set trip.
+    departure_utc = flight.get("departure_utc")
+    departure_local = flight.local_time("departure")
+    if departure_local is not None:
+        trip = Trip.select_by_date(departure_local.date())
+        if trip is not None:
+            flight["trip_fid"] = trip.get("fid")
+            if departure_utc is not None:
+                flight["trip_section"] = _estimate_trip_section(
+                    trip.get("fid"), departure_utc,
+                )
 
     flight.save(geojson=geojson)
 
