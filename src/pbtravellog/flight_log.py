@@ -984,6 +984,9 @@ def refresh_routes():
     """
     flights_df = pd.read_sql(flights_sql, con)
     con.close()
+    if flights_df.empty:
+        print(f"Can't update routes: no flights in \"{_get_flight_log()}\".")
+        return None
 
     airports = gpd.read_file(
         _get_flight_log(),
@@ -1007,9 +1010,7 @@ def refresh_routes():
         layer="routes",
         mode="w",
     )
-    print(
-        f"Updated all routes in {_get_flight_log()}."
-    )
+    print(f"Updated all routes in \"{_get_flight_log()}\".")
 
 def _estimate_trip_section(
         trip_fid: int, departure_dt: datetime

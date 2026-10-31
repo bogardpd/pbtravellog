@@ -1,10 +1,12 @@
 """Tests AeroAPI import functionality."""
 # Standard imports
 from datetime import datetime, timezone
+from importlib.resources import files
 import io
 import json
 from pathlib import Path
 import requests
+import shutil
 
 # Third-party imports
 import pytest
@@ -15,7 +17,8 @@ from pbtravellog.aeroapi import AeroAPIRateLimiter
 from pbtravellog.boarding_pass import Leg
 from pbtravellog.flight_log import (
     AircraftType, Airline, Airport, FlightTable,
-    import_flight_bcbp, import_flight_fa_flight_id, import_flight_number
+    import_flight_bcbp, import_flight_fa_flight_id, import_flight_number,
+    import_flight_pkpasses,
 )
 from pbtravellog.travel_log import Trip
 
@@ -82,7 +85,7 @@ def test_import_flight_bcbp_blank_db(
     Tests importing a flight with no airline, airport, aircraft type, or
     trip data available to look up.
     """
-    flight_bcbp = bcbp_data("import.txt")
+    flight_bcbp = bcbp_data("aa777.txt")
     import_flight_bcbp(flight_bcbp)
     # Check results.
     flights = FlightTable.from_all()
@@ -105,7 +108,7 @@ def test_import_flight_bcbp(
     populate_geopackages, setup_aeroapi_mocking, select_flight, bcbp_data
 ):
     """Tests importing a flight from BCBP data."""
-    flight_bcbp = bcbp_data("import.txt")
+    flight_bcbp = bcbp_data("aa777.txt")
     import_flight_bcbp(flight_bcbp)
     flights = FlightTable.from_all().joined()
     assert len(flights) == 1
@@ -153,3 +156,41 @@ def test_import_flight_number(
     assert flight["trip"]["name"] == "Las Vegas, NV"
     assert flight["trip_section"] == 1
     assert flight["boarding_pass_data"] is None
+
+def test_import_flight_pkpasses(
+    monkeypatch, tmp_path, populate_geopackages, setup_aeroapi_mocking,
+    select_flight, bcbp_data,
+):
+    """Tests importing flights from PKPasses."""
+    # Set up folders.
+    folders = [
+        ("import", "PBTRAVELLOG_FLIGHT_IMPORT_PATH"),
+        ("archive", "PBTRAVELLOG_PKPASS_ARCHIVE_PATH"),
+    ]
+    tmp_folders = {}
+    for name, env in folders:
+        tmp_folders[name] = tmp_path / name
+        tmp_folders[name].mkdir()
+        monkeypatch.setenv(env, str(tmp_folders[name]))
+    imp_file = tmp_folders["import"] / "aa777.pkpass"
+    arch_file = tmp_folders["archive"] / "20240922T2057Z_AA_777_DFW-LAS.pkpass"
+    shutil.copy(
+        files("tests.fixtures.pkpass").joinpath("aa777.pkpass"),
+        imp_file,
+    )
+    # Run function and check results.
+    import_flight_pkpasses()
+    flights = FlightTable.from_all().joined()
+    assert len(flights) == 1
+    flight = flights[list(flights)[-1]]
+    assert flight["airline"]["icao_code"] == "AAL"
+    assert flight["operator"]["icao_code"] == "AAL"
+    assert flight["origin_airport"]["icao_code"] == "KDFW"
+    assert flight["destination_airport"]["icao_code"] == "KLAS"
+    assert flight["aircraft_type"]["icao_code"] == "A321"
+    assert flight["trip"]["name"] == "Las Vegas, NV"
+    assert flight["trip_section"] == 1
+    assert flight["boarding_pass_data"] == bcbp_data("aa777.txt")
+    # Verify pass was moved from import to archive.
+    assert not imp_file.exists()
+    assert arch_file.exists()
