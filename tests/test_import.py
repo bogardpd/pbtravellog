@@ -114,6 +114,7 @@ def test_import_flight_bcbp(
     assert flight["aircraft_type"]["icao_code"] == "A321"
     assert flight["trip"]["name"] == "Las Vegas, NV"
     assert flight["trip_section"] == 1
+    assert flight["boarding_pass_data"] == flight_bcbp
 
 def test_import_flight_number(populate_geopackages, setup_aeroapi_mocking):
     """Tests importing a flight via flight number."""
