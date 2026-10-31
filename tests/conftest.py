@@ -13,7 +13,7 @@ from pbtravellog.record import init_gpkg
 def fixture_bcbp_data():
     """Reads sample BCBP data from the fixtures folder."""
     def _get_bcbp(filename: str) -> str:
-        data_path = files("tests.fixtures").joinpath(filename)
+        data_path = files("tests.fixtures.bcbp").joinpath(filename)
         return data_path.read_text(encoding="utf-8").strip()
     return _get_bcbp
 

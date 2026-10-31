@@ -82,7 +82,7 @@ def test_import_flight_bcbp_blank_db(
     Tests importing a flight with no airline, airport, aircraft type, or
     trip data available to look up.
     """
-    flight_bcbp = bcbp_data("bcbp_import.txt")
+    flight_bcbp = bcbp_data("import.txt")
     import_flight_bcbp(flight_bcbp)
     # Check results.
     flights = FlightTable.from_all()
@@ -105,7 +105,7 @@ def test_import_flight_bcbp(
     populate_geopackages, setup_aeroapi_mocking, select_flight, bcbp_data
 ):
     """Tests importing a flight from BCBP data."""
-    flight_bcbp = bcbp_data("bcbp_import.txt")
+    flight_bcbp = bcbp_data("import.txt")
     import_flight_bcbp(flight_bcbp)
     flights = FlightTable.from_all().joined()
     assert len(flights) == 1
