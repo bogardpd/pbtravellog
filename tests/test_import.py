@@ -15,7 +15,7 @@ from pbtravellog.aeroapi import AeroAPIRateLimiter
 from pbtravellog.boarding_pass import Leg
 from pbtravellog.flight_log import (
     AircraftType, Airline, Airport, FlightTable,
-    import_flight_bcbp, import_flight_number
+    import_flight_bcbp, import_flight_fa_flight_id, import_flight_number
 )
 from pbtravellog.travel_log import Trip
 
@@ -40,15 +40,14 @@ def fixture_setup_aeroapi_mocking(monkeypatch):
     def mock_get(*args, **_kwargs):
         provided_url = args[0]
         mocks = {
-            "https://aeroapi.flightaware.com/aeroapi/flights/AA777": (
-                "aeroapi_get_flights_ident_response.json"
-            ),
-            "https://aeroapi.flightaware.com/aeroapi/flights/AAL777": (
-                "aeroapi_get_flights_ident_response.json"
-            ),
-            "https://aeroapi.flightaware.com/aeroapi/flights/AAL777-1792303609-airline-766p/track": (
-                "aeroapi_get_flights_ident_track_response.json"
-            )
+            "https://aeroapi.flightaware.com/aeroapi/flights/AA777": \
+                "aeroapi/get_flights_ident_response.json",
+            "https://aeroapi.flightaware.com/aeroapi/flights/AAL777": \
+                "aeroapi/get_flights_ident_response.json",
+            "https://aeroapi.flightaware.com/aeroapi/flights/AAL777-1792303609-airline-766p": \
+                "aeroapi/get_flights_ident_fa_flight_id_response.json",
+            "https://aeroapi.flightaware.com/aeroapi/flights/AAL777-1792303609-airline-766p/track": \
+                "aeroapi/get_flights_ident_track_response.json",
         }
         return MockResponse(mocks[provided_url])
     def mock_date(*_args, **_kwargs):
@@ -60,6 +59,10 @@ def fixture_setup_aeroapi_mocking(monkeypatch):
     monkeypatch.setattr(AeroAPIRateLimiter, "wait", zero_wait)
     monkeypatch.setattr(Leg, "_now", mock_date)
     monkeypatch.setattr(requests, "get", mock_get)
+
+@pytest.fixture(name="select_flight")
+def fixture_select_flight(monkeypatch):
+    """Selects a flight from the CLI."""
     # Always select result 6 from the list of flights:
     monkeypatch.setattr("sys.stdin", io.StringIO("6\n"))
 
@@ -73,7 +76,7 @@ def fixture_populate_geopackages(setup_empty_geopackages, sample_record):
     sample_record(Trip, "trip_las_vegas").save()
 
 def test_import_flight_bcbp_blank_db(
-    setup_empty_geopackages, setup_aeroapi_mocking, bcbp_data,
+    setup_empty_geopackages, setup_aeroapi_mocking, select_flight, bcbp_data,
 ):
     """
     Tests importing a flight with no airline, airport, aircraft type, or
@@ -99,9 +102,9 @@ def test_import_flight_bcbp_blank_db(
     ))
 
 def test_import_flight_bcbp(
-    populate_geopackages, setup_aeroapi_mocking, bcbp_data
+    populate_geopackages, setup_aeroapi_mocking, select_flight, bcbp_data
 ):
-    """Tests importing a flight via BCBP data."""
+    """Tests importing a flight from BCBP data."""
     flight_bcbp = bcbp_data("bcbp_import.txt")
     import_flight_bcbp(flight_bcbp)
     flights = FlightTable.from_all().joined()
@@ -116,8 +119,28 @@ def test_import_flight_bcbp(
     assert flight["trip_section"] == 1
     assert flight["boarding_pass_data"] == flight_bcbp
 
-def test_import_flight_number(populate_geopackages, setup_aeroapi_mocking):
-    """Tests importing a flight via flight number."""
+def test_import_fa_flight_id(
+    populate_geopackages, setup_aeroapi_mocking
+):
+    """Tests importing a flight from an AeroAPI fa_flight_id"""
+    fa_flight_id = "AAL777-1792303609-airline-766p"
+    import_flight_fa_flight_id(fa_flight_id)
+    flights = FlightTable.from_all().joined()
+    assert len(flights) == 1
+    flight = flights[list(flights)[-1]]
+    assert flight["airline_fid"] is None
+    assert flight["operator"]["icao_code"] == "AAL"
+    assert flight["origin_airport"]["icao_code"] == "KDFW"
+    assert flight["destination_airport"]["icao_code"] == "KLAS"
+    assert flight["aircraft_type"]["icao_code"] == "A321"
+    assert flight["trip"]["name"] == "Las Vegas, NV"
+    assert flight["trip_section"] == 1
+    assert flight["boarding_pass_data"] is None
+
+def test_import_flight_number(
+    populate_geopackages, setup_aeroapi_mocking, select_flight
+):
+    """Tests importing a flight from a flight number."""
     import_flight_number("AAL", "777")
     flights = FlightTable.from_all().joined()
     assert len(flights) == 1
@@ -129,3 +152,4 @@ def test_import_flight_number(populate_geopackages, setup_aeroapi_mocking):
     assert flight["aircraft_type"]["icao_code"] == "A321"
     assert flight["trip"]["name"] == "Las Vegas, NV"
     assert flight["trip_section"] == 1
+    assert flight["boarding_pass_data"] is None

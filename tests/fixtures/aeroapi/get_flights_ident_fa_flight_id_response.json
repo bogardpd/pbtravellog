@@ -1,0 +1,85 @@
+{
+  "flights": [
+    {
+      "ident": "AAL777",
+      "ident_icao": "AAL777",
+      "ident_iata": "AA777",
+      "actual_runway_off": "18R",
+      "actual_runway_on": "26L",
+      "fa_flight_id": "AAL777-1792303609-airline-766p",
+      "operator": "AAL",
+      "operator_icao": "AAL",
+      "operator_iata": "AA",
+      "flight_number": "777",
+      "registration": "N159AN",
+      "atc_ident": null,
+      "inbound_fa_flight_id": "AAL2811-1792299959-airline-1094p",
+      "codeshares": [
+        "QTR2760"
+      ],
+      "codeshares_iata": [
+        "QR2760"
+      ],
+      "blocked": false,
+      "diverted": false,
+      "cancelled": false,
+      "position_only": false,
+      "origin": {
+        "code": "KDFW",
+        "code_icao": "KDFW",
+        "code_iata": "DFW",
+        "code_lid": "DFW",
+        "timezone": "America/Chicago",
+        "name": "Dallas-Fort Worth Intl",
+        "city": "Dallas-Fort Worth",
+        "airport_info_url": "/airports/KDFW"
+      },
+      "destination": {
+        "code": "KLAS",
+        "code_icao": "KLAS",
+        "code_iata": "LAS",
+        "code_lid": "LAS",
+        "timezone": "America/Los_Angeles",
+        "name": "Harry Reid Intl",
+        "city": "Las Vegas",
+        "airport_info_url": "/airports/KLAS"
+      },
+      "departure_delay": -300,
+      "arrival_delay": -780,
+      "filed_ete": 8820,
+      "foresight_predictions_available": true,
+      "scheduled_out": "2024-09-22T17:15:00Z",
+      "estimated_out": "2024-09-22T17:09:00Z",
+      "actual_out": "2024-09-22T17:10:00Z",
+      "scheduled_off": "2024-09-22T17:25:00Z",
+      "estimated_off": "2024-09-22T17:30:58Z",
+      "actual_off": "2024-09-22T17:30:58Z",
+      "scheduled_on": "2024-09-22T19:52:00Z",
+      "estimated_on": "2024-09-22T19:52:18Z",
+      "actual_on": "2024-09-22T19:52:18Z",
+      "scheduled_in": "2024-09-22T20:13:00Z",
+      "estimated_in": "2024-09-22T20:01:00Z",
+      "actual_in": "2024-09-22T20:00:00Z",
+      "progress_percent": 100,
+      "status": "Arrived / Gate Arrival",
+      "aircraft_type": "A321",
+      "route_distance": 1054,
+      "filed_airspeed": 448,
+      "filed_altitude": 360,
+      "route": "HRPER4 HULZE MIERA J72 ABQ HAHAA RKSTR4",
+      "baggage_claim": "15",
+      "seats_cabin_business": null,
+      "seats_cabin_coach": null,
+      "seats_cabin_first": null,
+      "gate_origin": "C15",
+      "gate_destination": "D12",
+      "terminal_origin": "C",
+      "terminal_destination": "1",
+      "type": "Airline"
+    }
+  ],
+  "links": {
+    "next": "/flights/AAL777?ident_type=fa_flight_id&cursor=6a640334c40aff1"
+  },
+  "num_pages": 1
+}
