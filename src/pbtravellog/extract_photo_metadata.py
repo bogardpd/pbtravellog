@@ -1,4 +1,4 @@
-"""Extracts metadata from a folder of photos."""
+"""User functions for extracting metadata from a folder of photos."""
 
 # Standard imports
 from datetime import datetime

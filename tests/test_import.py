@@ -13,8 +13,9 @@ from pytest import approx
 import requests
 
 # Project imports
-from pbtravellog.aeroapi import (
-    AeroAPIRateLimiter, import_flight_bcbp, import_flight_fa_flight_id,
+from pbtravellog.aeroapi import AeroAPIRateLimiter
+from pbtravellog.import_flight import (
+    import_flight_bcbp, import_flight_fa_flight_id,
     import_flight_number, import_flight_pkpasses,
 )
 from pbtravellog.boarding_pass import Leg

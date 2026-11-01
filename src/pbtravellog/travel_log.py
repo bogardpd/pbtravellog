@@ -1,4 +1,4 @@
-"""Manages records from the overall Travel Log data file.
+"""Domain logic for travel log records.
 
 Some record types involve multiple types of travel, and those types
 should be defined here.

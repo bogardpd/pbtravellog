@@ -1,4 +1,4 @@
-"""Scripts for interacting with the flight log."""
+"""Domain logic for flight log records."""
 
 # Standard imports
 from collections import defaultdict

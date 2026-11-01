@@ -1,10 +1,9 @@
-"""Tools for interacting with boarding passes."""
+"""Utilities for interacting with boarding passes."""
 
 # Standard imports
 import calendar
 from datetime import datetime, date, timedelta
 import json
-import os
 from pathlib import Path
 import sys
 from zoneinfo import ZoneInfo

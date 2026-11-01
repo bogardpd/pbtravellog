@@ -1,4 +1,4 @@
-"""Manages geometry methods."""
+"""Utilities for handling geometry."""
 
 # Standard imports
 from math import ceil

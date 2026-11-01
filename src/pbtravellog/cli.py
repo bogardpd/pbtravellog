@@ -1,4 +1,4 @@
-"""Travel log command line utilities."""
+"""User CLI interface commands."""
 
 # Standard imports
 import argparse
@@ -8,11 +8,11 @@ from pathlib import Path
 
 # Project imports
 from pbtravellog import (
-    aeroapi,
     browser,
     extract_photo_metadata as epm,
     flight_cli as flc,
     flight_log as fl,
+    import_flight,
     report,
     record,
 )
@@ -43,19 +43,22 @@ def main():
     elif args.command == "import":
         if args.entity == "flight":
             if args.bcbp is not None:
-                aeroapi.import_flight_bcbp(args.bcbp, geojson=args.geojson)
+                import_flight.import_flight_bcbp(
+                    args.bcbp,
+                    geojson=args.geojson,
+                )
             elif args.fa_flight_id is not None:
-                aeroapi.import_flight_fa_flight_id(
+                import_flight.import_flight_fa_flight_id(
                     args.fa_flight_id,
                     geojson=args.geojson,
                 )
             elif args.flight_number is not None:
-                aeroapi.import_flight_number(
+                import_flight.import_flight_number(
                     *args.flight_number,
                     geojson=args.geojson,
                 )
             elif args.pkpasses:
-                aeroapi.import_flight_pkpasses(geojson=args.geojson)
+                import_flight.import_flight_pkpasses(geojson=args.geojson)
     elif args.command == "index":
         if args.entity == "airports":
             flc.index_airports(args.output, args.year)

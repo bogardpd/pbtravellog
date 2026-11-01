@@ -1,4 +1,4 @@
-"""Manages travel records."""
+"""Domain logic for overall records."""
 
 # Standard imports
 import csv

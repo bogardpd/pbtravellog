@@ -1,4 +1,4 @@
-"""Manages flight data CLI commands."""
+"""User functions for flight data CLI commands."""
 
 # Standard imports
 from pathlib import Path

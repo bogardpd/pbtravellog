@@ -1,4 +1,4 @@
-"""Runs a local server for browsing flight data."""
+"""User functions for serving and browsing flight data."""
 
 # Standard imports
 from datetime import date, datetime, UTC
@@ -16,7 +16,7 @@ from pbtravellog.geometry import GeoJSONMap
 
 def _get_mapbox_api_key():
     """Gets the current AeroAPI API key.
-        
+
     Needed to ensure tests aren't using stale environment variables.
     """
     mapbox_api_key = os.getenv("MAPBOX_API_KEY")

@@ -1,4 +1,4 @@
-"""Functions for creating reports."""
+"""User functions for creating reports."""
 
 # Standard imports
 from importlib.resources import files
