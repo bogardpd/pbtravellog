@@ -4,9 +4,6 @@
 from importlib.resources import files
 import tomllib
 
-# Third-party imports
-import pandas as pd
-
 # Project imports
 import pbtravellog.flight_log as fl
 
@@ -15,45 +12,24 @@ with open(files("pbtravellog.config").joinpath("config.toml"), "rb") as f:
 
 def report_milestones() -> None:
     """Reports flying milestones."""
+    ft = fl.FlightTable.from_all().joined().sort("departure_utc")
+    flights = list(ft.values())
+    mile_distances = CONFIG["milestones"]["distances"]
+    cum_distance = 0
+    milestone_index = 0
+    print("milestone,departure_utc,fid,cum_distance")
+    for flight in flights:
+        distance = flight.distance() if flight.distance() else 0
+        cum_distance += distance
+        flight["cum_distance"] = cum_distance
+        for i in range(milestone_index, len(mile_distances)):
+            if cum_distance >= mile_distances[i]:
+                print(",".join([
+                    str(mile_distances[i]),
+                    str(flight["departure_utc"]),
+                    str(flight["fid"]),
+                    str(cum_distance)
+                ]))
+                milestone_index = i + 1
 
-    print("Flying Distance Milestones")
-    routes_df = pd.DataFrame(fl.Route.every())[
-        ["origin_airport_fid", "destination_airport_fid", "distance_mi"]
-    ].set_index(["origin_airport_fid", "destination_airport_fid"])
-    flights_df = pd.DataFrame(fl.Flight.every())
-    flights_df = flights_df.sort_values("departure_utc")
-
-    # If a flight doesn't have a distance, use the route distance.
-    flights_df = flights_df.join(
-        routes_df,
-        on=["origin_airport_fid", "destination_airport_fid"],
-        rsuffix="_route",
-    )
-    flights_df["distance_mi"] = flights_df["distance_mi"].fillna(
-        flights_df["distance_mi_route"]
-    ).astype(int)
-
-    # Find the first flight that exceeds each milestone
-    flights_df["cumulative_mi"] = flights_df["distance_mi"].cumsum()
-    milestone_distances_df = pd.DataFrame({
-        "milestone": CONFIG["milestones"]["distances"]
-    })
-    flights_df = flights_df.reset_index(names="fid")
-    total_distance = flights_df["cumulative_mi"].max()
-    flights_df = pd.merge_asof(
-        milestone_distances_df,
-        flights_df,
-        left_on="milestone",
-        right_on="cumulative_mi",
-        direction="forward",
-    )
-    flights_df = flights_df.dropna(subset=["departure_utc", "cumulative_mi"])
-    flights_df["fid"] = flights_df["fid"].astype(int)
-    flights_df["cumulative_mi"] = flights_df["cumulative_mi"].astype(int)
-    flights_df = flights_df.set_index("fid")
-
-    print(fl.flights_table(flights_df, extra_columns={
-        "milestone": "Milestone\nMiles",
-        "cumulative_mi": "Cumulative\nMiles",
-    }))
-    print(f"Total distance: {total_distance} mi")
+    print(f"Total distance: {ft.total_distance()} mi")
