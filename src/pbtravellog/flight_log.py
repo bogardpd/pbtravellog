@@ -2,12 +2,10 @@
 
 # Standard imports
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import os
-from pathlib import Path
 import re
 import sqlite3
-import sys
 from typing import Self
 from zoneinfo import ZoneInfo
 
@@ -15,19 +13,15 @@ from zoneinfo import ZoneInfo
 from dateutil.parser import isoparse
 import geopandas as gpd
 import pandas as pd
-from shapely.geometry import Point, LineString
 from tabulate import tabulate
 
 # Project imports
-import pbtravellog.aeroapi as aero
-from pbtravellog.boarding_pass import BoardingPass, PKPass
 from pbtravellog.geometry import (
-    METERS_PER_HUNDRED_FEET, CRS,
+    CRS,
     gc_distance, geo_interface, great_circle_route, great_circle_route_pd,
-    split_at_antimeridian,
 )
 from pbtravellog.record import Record, RecordTable, RecordLayerTable
-from pbtravellog.travel_log import Trip, TripTable
+from pbtravellog.travel_log import TripTable
 
 FLIGHT_DATA_FILE_ENV = "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"
 
@@ -198,46 +192,6 @@ class Flight(Record):
         if self["arrival_utc"] is None:
             return None
         return (self["arrival_utc"] - self["departure_utc"]).total_seconds()
-
-    def exit_if_not_complete(self) -> None:
-        """Exits if this flight is not complete."""
-        if self.get("progress") is None or self["progress"] < 100:
-            print(
-                f"⚠️ Flight is not complete ({self.get("progress")}% "
-                "complete). Flight was not added to log."
-            )
-            sys.exit(1)
-
-    def fetch_aeroapi_track_geometry(self) -> None:
-        """Gets flight track from AeroAPI"""
-        if self.get("progress") is None or self["progress"] < 100:
-            print(
-                "⚠️ Cannot get track: flight is not complete "
-                f"({self.get("progress")}% complete)."
-            )
-            return
-        if self.get("fa_flight_id") is None:
-            print("⚠️ Cannot get track: fa_flight_id is not set.")
-            return
-        fa_json = aero.get_flights_ident_track(self["fa_flight_id"])
-        if fa_json is None:
-            print(f"⚠️ No track found for {self["fa_flight_id"]}.")
-            return
-        positions = fa_json.get("positions")
-        if len(positions) == 0:
-            print(f"⚠️ No positions found for {self["fa_flight_id"]}.")
-            return
-        track_ls = LineString([Point(
-            p.get("longitude"),
-            p.get("latitude"),
-            p.get("altitude") * METERS_PER_HUNDRED_FEET,
-        ) for p in positions])
-        self["geometry"] = split_at_antimeridian(track_ls)
-        self["geom_source"] = "FlightAware"
-        try:
-            self["distance_mi"] = int(fa_json.get("actual_distance"))
-        except TypeError, ValueError:
-            print(f"⚠️ No distance found for {self["fa_flight_id"]}.")
 
     def geojson(self) -> dict:
         """Returns a single flight as a dict in GeoJSON structure."""
@@ -883,95 +837,6 @@ def flights_table(
         headers=["fid", *table_cols.values()],
     )
 
-def import_flight_bcbp(bcbp_str, geojson: Path | None = None) -> None:
-    """Parses a Bar-Coded Boarding Pass string."""
-    bp = BoardingPass(bcbp_str)
-    _import_bp_flights(bp, geojson=geojson)
-    refresh_routes()
-
-def import_flight_fa_flight_id(
-    fa_flight_id: str,
-    geojson: Path | None = None
-) -> None:
-    """Gets info for a fa_flight_id and saves flight to log."""
-    fa_flights = aero.get_flights_ident(fa_flight_id, "fa_flight_id")
-    _import_fa_flight_results(fa_flights, geojson=geojson)
-    refresh_routes()
-
-def import_flight_number(
-    airline_code: str,
-    flight_number: str,
-    geojson: Path | None = None
-) -> None:
-    """Gets info for a flight number and logs the flight."""
-    airline = AirlineTable.find_by_code(airline_code)
-    # If airline is IATA, try to look up ICAO.
-    if len(airline_code) == 2:
-        if airline is not None and airline.get("icao_code") is not None:
-            airline_code = airline.get("icao_code")
-    flight_number = flight_number.lstrip("0") or "0"
-    ident = f"{airline_code}{flight_number}"
-    fa_flights = aero.get_flights_ident(ident, "designator")
-    _import_fa_flight_results(
-        fa_flights,
-        fields={"airline_fid": airline.get("fid")},
-        geojson=geojson,
-    )
-    refresh_routes()
-
-def import_flight_pkpasses(geojson: Path | None = None) -> None:
-    """Imports digital boarding passes."""
-
-    import_folder_env = os.getenv("PBTRAVELLOG_FLIGHT_IMPORT_PATH")
-    if import_folder_env is None:
-        raise KeyError(
-            "Environment variable PBTRAVELLOG_FLIGHT_IMPORT_PATH is missing."
-        )
-    import_folder = Path(import_folder_env)
-    if not import_folder.is_dir():
-        raise KeyError(
-            "Environment variable PBTRAVELLOG_FLIGHT_IMPORT_PATH is not a "
-            + "directory."
-        )
-    archive_folder_env = os.getenv("PBTRAVELLOG_PKPASS_ARCHIVE_PATH")
-    if archive_folder_env is None:
-        raise KeyError(
-            "Environment variable PBTRAVELLOG_PKPASS_ARCHIVE_PATH is missing."
-        )
-    archive_folder = Path(archive_folder_env)
-    if not archive_folder.is_dir():
-        raise KeyError(
-            "Environment variable PBTRAVELLOG_PKPASS_ARCHIVE_PATH is not a "
-            + "directory."
-        )
-
-    print(f"Importing digital boarding passes from \"{import_folder}\"")
-    pkpasses = {
-        f: PKPass(f) for f in import_folder.glob("*.pkpass")
-        if f.is_file()
-    }
-    if len(pkpasses) == 0:
-        print("⚠️ No .pkpass files found.")
-
-    # Sort passes by relevant_date.
-    pkpasses = dict(
-        sorted(
-            pkpasses.items(),
-            key=lambda item: item[1].relevant_date or datetime.max.replace(
-                tzinfo=timezone.utc
-            )
-        )
-    )
-
-    # Process passes.
-    for pkpass_file, pkpass in pkpasses.items():
-        bp = pkpass.boarding_pass
-        _import_bp_flights(bp, geojson=geojson)
-        archive_file_path = archive_folder / pkpass.archive_filename
-        pkpass_file.move(archive_file_path)
-        print(f"Archived PKPass to \"{archive_file_path}\"")
-    refresh_routes()
-
 def refresh_routes():
     """Updates the routes layer based on logged flights."""
     con = sqlite3.connect(_get_flight_log())
@@ -986,7 +851,7 @@ def refresh_routes():
     con.close()
     if flights_df.empty:
         print(f"Can't update routes: no flights in \"{_get_flight_log()}\".")
-        return None
+        return
 
     airports = gpd.read_file(
         _get_flight_log(),
@@ -1012,7 +877,7 @@ def refresh_routes():
     )
     print(f"Updated all routes in \"{_get_flight_log()}\".")
 
-def _estimate_trip_section(
+def estimate_trip_section(
         trip_fid: int, departure_dt: datetime
 ) -> int | None:
     """Suggests a trip section number based on departure time."""
@@ -1036,20 +901,6 @@ def _estimate_trip_section(
     # New flight is more than 24 hours after latest flight.
     return int(latest_flight["trip_section"]) + 1
 
-def _flight_from_aeroapi_results(aero_results) -> Flight:
-    """Has user select flight from AeroAPI results and gets geometry."""
-    if len(aero_results) == 0:
-        print("No matching flights found.")
-        sys.exit(1)
-    aero_flight_info = aero.select_flight_info(aero_results)
-    if aero_flight_info is None:
-        # No AeroAPI flight selected. Return empty flight.
-        return Flight()
-    flight = Flight.from_aeroapi(aero_flight_info)
-    flight.exit_if_not_complete()
-    flight.fetch_aeroapi_track_geometry()
-    return flight
-
 def _great_circle_airport_lookup(row, airports):
     """Runs great_circle_route_pd with a GeoDataFrame row."""
     try:
@@ -1059,74 +910,6 @@ def _great_circle_airport_lookup(row, airports):
         )
     except KeyError:
         return pd.Series([None, None])
-
-def _import_bp_flights(bp: BoardingPass, geojson: Path | None = None) -> None:
-    """Builds Flights from a BoardingPass, and saves them."""
-    if not bp.valid or len(bp.legs) == 0:
-        print("⚠️ The boarding pass data is not valid.")
-        sys.exit(1)
-
-    # Build list of boarding pass flights.
-    bp_flights: list[Flight] = []
-    for leg in bp.legs:
-        print(f"Processing leg \"{leg}\"")
-        airline = AirlineTable.find_by_code(leg.airline_iata)
-        if airline is not None and airline.get("icao_code") is not None:
-            airline_code = airline.get("icao_code")
-        else:
-            airline_code = leg.airline_iata
-        ident = f"{airline_code}{leg.flight_number}"
-        aero_results = aero.get_flights_ident(ident, "designator")
-        flight = _flight_from_aeroapi_results(aero_results)
-        flight["airline_fid"] = (airline or {}).get("fid")
-        flight["boarding_pass_data"] = leg.bcbp_str
-        trip = Trip.select_by_date(leg.flight_date)
-        if trip is not None:
-            flight["trip_fid"] = trip.get("fid")
-            if flight.get("departure_utc") is not None:
-                flight["trip_section"] = _estimate_trip_section(
-                    trip.get("fid"), flight["departure_utc"],
-                )
-        bp_flights.append(flight)
-
-    # Save flights.
-    if geojson is None:
-        for flight in bp_flights:
-            flight.save()
-            flight.alert_prior_flown_tail()
-    else:
-        if len(bp_flights) == 1:
-            bp_flights[0].save(geojson=geojson)
-        else:
-            for i, flight in enumerate(bp_flights):
-                gj_path = geojson.with_stem(f"{geojson.stem}_{i}")
-                flight.save(geojson=gj_path)
-
-def _import_fa_flight_results(
-    aero_results: dict,
-    fields: dict = None,
-    geojson: Path | None = None,
-) -> None:
-    """Processes the results of an AeroAPI flights request."""
-    flight = _flight_from_aeroapi_results(aero_results)
-
-    # Set provided fields.
-    if fields is not None:
-        for k, v in fields.items():
-            flight[k] = v
-    # Set trip.
-    departure_utc = flight.get("departure_utc")
-    departure_local = flight.local_time("departure")
-    if departure_local is not None:
-        trip = Trip.select_by_date(departure_local.date())
-        if trip is not None:
-            flight["trip_fid"] = trip.get("fid")
-            if departure_utc is not None:
-                flight["trip_section"] = _estimate_trip_section(
-                    trip.get("fid"), departure_utc,
-                )
-
-    flight.save(geojson=geojson)
 
 def _rank_count(count_dict: dict) -> dict:
     """Ranks a dictionary of item counts."""

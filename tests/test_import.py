@@ -5,21 +5,20 @@ from importlib.resources import files
 import io
 import json
 from pathlib import Path
-import requests
 import shutil
 
 # Third-party imports
 import pytest
 from pytest import approx
+import requests
 
 # Project imports
-from pbtravellog.aeroapi import AeroAPIRateLimiter
-from pbtravellog.boarding_pass import Leg
-from pbtravellog.flight_log import (
-    AircraftType, Airline, Airport, FlightTable,
-    import_flight_bcbp, import_flight_fa_flight_id, import_flight_number,
-    import_flight_pkpasses,
+from pbtravellog.aeroapi import (
+    AeroAPIRateLimiter, import_flight_bcbp, import_flight_fa_flight_id,
+    import_flight_number, import_flight_pkpasses,
 )
+from pbtravellog.boarding_pass import Leg
+from pbtravellog.flight_log import AircraftType, Airline, Airport, FlightTable
 from pbtravellog.travel_log import Trip
 
 class MockResponse(requests.Response):

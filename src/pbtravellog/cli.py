@@ -8,8 +8,9 @@ from pathlib import Path
 
 # Project imports
 from pbtravellog import (
-    extract_photo_metadata as epm,
+    aeroapi,
     browser,
+    extract_photo_metadata as epm,
     flight_cli as flc,
     flight_log as fl,
     report,
@@ -42,19 +43,19 @@ def main():
     elif args.command == "import":
         if args.entity == "flight":
             if args.bcbp is not None:
-                fl.import_flight_bcbp(args.bcbp, geojson=args.geojson)
+                aeroapi.import_flight_bcbp(args.bcbp, geojson=args.geojson)
             elif args.fa_flight_id is not None:
-                fl.import_flight_fa_flight_id(
+                aeroapi.import_flight_fa_flight_id(
                     args.fa_flight_id,
                     geojson=args.geojson,
                 )
             elif args.flight_number is not None:
-                fl.import_flight_number(
+                aeroapi.import_flight_number(
                     *args.flight_number,
                     geojson=args.geojson,
                 )
             elif args.pkpasses:
-                fl.import_flight_pkpasses(geojson=args.geojson)
+                aeroapi.import_flight_pkpasses(geojson=args.geojson)
     elif args.command == "index":
         if args.entity == "airports":
             flc.index_airports(args.output, args.year)
