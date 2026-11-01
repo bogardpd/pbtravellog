@@ -24,7 +24,8 @@ def import_flight_bcbp(bcbp_str, geojson: Path | None = None) -> None:
     bp = BoardingPass(bcbp_str)
     bp_flights = _collect_flights_from_bp(bp)
     # Save flights.
-    _save_flights(bp_flights, geojson=geojson)
+    if None not in bp_flights:
+        _save_flights(bp_flights, geojson=geojson)
 
 def import_flight_fa_flight_id(
     fa_flight_id: str,
@@ -32,7 +33,8 @@ def import_flight_fa_flight_id(
 ) -> None:
     """Gets info for a fa_flight_id and saves flight to log."""
     flight = _fetch_flight_from_ident(fa_flight_id, ident_type="fa_flight_id")
-    _save_flights([flight], geojson=geojson)
+    if flight is not None:
+        _save_flights([flight], geojson=geojson)
 
 def import_flight_number(
     airline_code: str,
@@ -52,11 +54,11 @@ def import_flight_number(
         ident_type="designator",
         airline_fid=(airline or {}).get("fid"),
     )
-    _save_flights([flight], geojson=geojson)
+    if flight is not None:
+        _save_flights([flight], geojson=geojson)
 
 def import_flight_pkpasses(geojson: Path | None = None) -> None:
     """Imports digital boarding passes."""
-
     import_folder_env = os.getenv("PBTRAVELLOG_FLIGHT_IMPORT_PATH")
     if import_folder_env is None:
         raise KeyError(
@@ -79,29 +81,27 @@ def import_flight_pkpasses(geojson: Path | None = None) -> None:
             "Environment variable PBTRAVELLOG_PKPASS_ARCHIVE_PATH is not a "
             + "directory."
         )
-
     print(f"Importing digital boarding passes from \"{import_folder}\"")
     pkpasses = {
         f: PKPass(f) for f in import_folder.glob("*.pkpass") if f.is_file()
     }
     if len(pkpasses) == 0:
         print("⚠️ No .pkpass files found.")
-
     # Sort passes by relevant_date.
-    pkpasses = dict(
-        sorted(
-            pkpasses.items(),
-            key=lambda item: item[1].relevant_date or datetime.max.replace(
-                tzinfo=timezone.utc
-            )
+    pkpasses = dict(sorted(
+        pkpasses.items(),
+        key=lambda item: item[1].relevant_date or datetime.max.replace(
+            tzinfo=timezone.utc
         )
-    )
-
+    ))
     # Process passes.
     flights = []
     for pkpass_file, pkpass in pkpasses.items():
         bp = pkpass.boarding_pass
-        flights.extend(_collect_flights_from_bp(bp))
+        pkpass_flights = _collect_flights_from_bp(bp)
+        if None in pkpass_flights:
+            continue
+        flights.extend(pkpass_flights)
         archive_file_path = archive_folder / pkpass.archive_filename
         pkpass_file.move(archive_file_path)
         print(f"Archived PKPass to \"{archive_file_path}\"")

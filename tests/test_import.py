@@ -79,6 +79,26 @@ def fixture_populate_geopackages(setup_empty_geopackages, sample_record):
     sample_record(AircraftType, "aircraft_type_a321").save()
     sample_record(Trip, "trip_las_vegas").save()
 
+@pytest.fixture(name="setup_pkpass")
+def fixture_setup_pkpass(tmp_path, monkeypatch):
+    """Creates PKPass folders and copies PKPass to import folder."""
+    folders = [
+        ("import", "PBTRAVELLOG_FLIGHT_IMPORT_PATH"),
+        ("archive", "PBTRAVELLOG_PKPASS_ARCHIVE_PATH"),
+    ]
+    tmp_folders = {}
+    for name, env in folders:
+        tmp_folders[name] = tmp_path / name
+        tmp_folders[name].mkdir()
+        monkeypatch.setenv(env, str(tmp_folders[name]))
+    imp_file = tmp_folders["import"] / "aa777.pkpass"
+    arch_file = tmp_folders["archive"] / "20240922T2057Z_AA_777_DFW-LAS.pkpass"
+    shutil.copy(
+        files("tests.fixtures.pkpass").joinpath("aa777.pkpass"),
+        imp_file,
+    )
+    return imp_file, arch_file
+
 def test_import_flight_bcbp_blank_db(
     setup_empty_geopackages, setup_aeroapi_mocking, select_flight, bcbp_data,
 ):
@@ -169,26 +189,12 @@ def test_import_flight_number(
     assert flight["boarding_pass_data"] is None
 
 def test_import_flight_pkpasses(
-    monkeypatch, tmp_path, populate_geopackages, setup_aeroapi_mocking,
-    select_flight, bcbp_data,
+    populate_geopackages, setup_pkpass, setup_aeroapi_mocking, select_flight,
+    bcbp_data,
 ):
     """Tests importing flights from PKPasses."""
     # Set up test.
-    folders = [
-        ("import", "PBTRAVELLOG_FLIGHT_IMPORT_PATH"),
-        ("archive", "PBTRAVELLOG_PKPASS_ARCHIVE_PATH"),
-    ]
-    tmp_folders = {}
-    for name, env in folders:
-        tmp_folders[name] = tmp_path / name
-        tmp_folders[name].mkdir()
-        monkeypatch.setenv(env, str(tmp_folders[name]))
-    imp_file = tmp_folders["import"] / "aa777.pkpass"
-    arch_file = tmp_folders["archive"] / "20240922T2057Z_AA_777_DFW-LAS.pkpass"
-    shutil.copy(
-        files("tests.fixtures.pkpass").joinpath("aa777.pkpass"),
-        imp_file,
-    )
+    imp_file, arch_file = setup_pkpass
     select_flight("6")
     # Run test and check results.
     import_flight_pkpasses()
@@ -206,3 +212,23 @@ def test_import_flight_pkpasses(
     # Verify pass was moved from import to archive.
     assert not imp_file.exists()
     assert arch_file.exists()
+
+def test_flight_import_pkpasses_incomplete_flight(
+    populate_geopackages, setup_pkpass, setup_aeroapi_mocking, select_flight,
+):
+    """Tests selecting an incomplete flight.
+
+    The incomplete flight should not be added and its pkpass should not
+    be archived.
+    """
+    # Set up test.
+    imp_file, arch_file = setup_pkpass
+    select_flight("4") # Incomplete flight
+    # Run test and check results.
+    import_flight_pkpasses()
+    flights = FlightTable.from_all().joined()
+    assert len(flights) == 0
+    # Pass should still be in import and should not have moved to
+    # archive.
+    assert imp_file.exists()
+    assert not arch_file.exists()
