@@ -46,3 +46,10 @@ end_date = 2024-09-27
 [Flight.flight_same_tail]
 # Has the same tail number as the mocked AeroAPI response.
 tail_number = "N159AN"
+
+[Flight.flight_trip_section]
+departure_utc = 2024-09-22T17:00:00Z
+trip_section = 1
+
+[Flight.flight_trip_section_no_section]
+departure_utc = 2024-09-22T20:00:00Z
