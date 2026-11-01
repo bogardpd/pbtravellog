@@ -53,3 +53,4 @@ trip_section = 1
 
 [Flight.flight_trip_section_no_section]
 departure_utc = 2024-09-22T20:00:00Z
+# trip_section is intentionally left blank
