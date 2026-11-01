@@ -877,21 +877,20 @@ def refresh_routes():
     )
     print(f"Updated all routes in \"{_get_flight_log()}\".")
 
-def estimate_trip_section(
-        trip_fid: int, departure_dt: datetime
-) -> int | None:
+def estimate_trip_section(trip_fid: int, departure_dt: datetime) -> int | None:
     """Suggests a trip section number based on departure time."""
-    flights = Flight.every()
-    flights = flights[flights["trip_fid"] == trip_fid]
+    flights = FlightTable.from_all().filter_by_trip(trip_fid).values()
     if len(flights) == 0:
         # No flights in trip.
         return 1
-    if flights["trip_section"].isnull().any():
-        # Some flights have no trip section.
+    unusable_flights = [
+        f for f in flights
+        if f.get("trip_section") is None or f.get("departure_utc") is None
+    ]
+    if len(unusable_flights) > 0:
         return None
-    flights = flights[["departure_utc", "trip_fid", "trip_section"]]
-    flights = flights.sort_values(by="departure_utc")
-    latest_flight = flights.iloc[-1]
+    flights = sorted(flights, key=lambda f: f.get("departure_utc"))
+    latest_flight = flights[-1]
     if departure_dt <= latest_flight["departure_utc"]:
         # New flight occurs before latest flight.
         return None
