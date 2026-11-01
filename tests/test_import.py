@@ -66,8 +66,9 @@ def fixture_setup_aeroapi_mocking(monkeypatch):
 @pytest.fixture(name="select_flight")
 def fixture_select_flight(monkeypatch):
     """Selects a flight from the CLI."""
-    # Always select result 6 from the list of flights:
-    monkeypatch.setattr("sys.stdin", io.StringIO("6\n"))
+    def _get_input(selection: str):
+        monkeypatch.setattr("builtins.input", lambda _: selection)
+    return _get_input
 
 @pytest.fixture(name="populate_geopackages")
 def fixture_populate_geopackages(setup_empty_geopackages, sample_record):
@@ -85,9 +86,11 @@ def test_import_flight_bcbp_blank_db(
     Tests importing a flight with no airline, airport, aircraft type, or
     trip data available to look up.
     """
+    # Set up test.
     flight_bcbp = bcbp_data("aa777.txt")
+    select_flight("6")
+    # Run test and check results.
     import_flight_bcbp(flight_bcbp)
-    # Check results.
     flights = FlightTable.from_all()
     assert len(flights) == 1
     flight = flights[list(flights)[-1]]
@@ -108,7 +111,10 @@ def test_import_flight_bcbp(
     populate_geopackages, setup_aeroapi_mocking, select_flight, bcbp_data
 ):
     """Tests importing a flight from BCBP data."""
+    # Set up test.
     flight_bcbp = bcbp_data("aa777.txt")
+    select_flight("6")
+    # Run test and check results.
     import_flight_bcbp(flight_bcbp)
     flights = FlightTable.from_all().joined()
     assert len(flights) == 1
@@ -126,7 +132,9 @@ def test_import_fa_flight_id(
     populate_geopackages, setup_aeroapi_mocking
 ):
     """Tests importing a flight from an AeroAPI fa_flight_id"""
+    # Set up test.
     fa_flight_id = "AAL777-1792303609-airline-766p"
+    # Run test and check results.
     import_flight_fa_flight_id(fa_flight_id)
     flights = FlightTable.from_all().joined()
     assert len(flights) == 1
@@ -144,6 +152,9 @@ def test_import_flight_number(
     populate_geopackages, setup_aeroapi_mocking, select_flight
 ):
     """Tests importing a flight from a flight number."""
+    # Set up test.
+    select_flight("6")
+    # Run test and check results.
     import_flight_number("AAL", "777")
     flights = FlightTable.from_all().joined()
     assert len(flights) == 1
@@ -162,7 +173,7 @@ def test_import_flight_pkpasses(
     select_flight, bcbp_data,
 ):
     """Tests importing flights from PKPasses."""
-    # Set up folders.
+    # Set up test.
     folders = [
         ("import", "PBTRAVELLOG_FLIGHT_IMPORT_PATH"),
         ("archive", "PBTRAVELLOG_PKPASS_ARCHIVE_PATH"),
@@ -178,7 +189,8 @@ def test_import_flight_pkpasses(
         files("tests.fixtures.pkpass").joinpath("aa777.pkpass"),
         imp_file,
     )
-    # Run function and check results.
+    select_flight("6")
+    # Run test and check results.
     import_flight_pkpasses()
     flights = FlightTable.from_all().joined()
     assert len(flights) == 1
