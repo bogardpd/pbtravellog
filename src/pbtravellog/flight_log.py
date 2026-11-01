@@ -3,9 +3,11 @@
 # Standard imports
 from collections import defaultdict
 from datetime import datetime, timedelta
+from importlib.resources import files
 import os
 import re
 import sqlite3
+import tomllib
 from typing import Self
 from zoneinfo import ZoneInfo
 
@@ -13,7 +15,6 @@ from zoneinfo import ZoneInfo
 from dateutil.parser import isoparse
 import geopandas as gpd
 import pandas as pd
-from tabulate import tabulate
 
 # Project imports
 from pbtravellog.geometry import (
@@ -24,6 +25,8 @@ from pbtravellog.record import Record, RecordTable, RecordLayerTable
 from pbtravellog.travel_log import TripTable
 
 FLIGHT_DATA_FILE_ENV = "PBTRAVELLOG_FLIGHT_GEOPACKAGE_PATH"
+with open(files("pbtravellog.config").joinpath("config.toml"), "rb") as f:
+    CONFIG = tomllib.load(f)
 
 def _get_flight_log():
     """Gets current value of flight log path.
@@ -597,11 +600,11 @@ class FlightTable(RecordLayerTable):
         """
         airports = {}
         routes = {}
-        for idx, f in enumerate(self.values()):
-            orig_fid = f["origin_airport_fid"]
-            dest_fid = f["destination_airport_fid"]
-            orig = f["origin_airport"]
-            dest = f["destination_airport"]
+        for idx, flight in enumerate(self.values()):
+            orig_fid = flight["origin_airport_fid"]
+            dest_fid = flight["destination_airport_fid"]
+            orig = flight["origin_airport"]
+            dest = flight["destination_airport"]
             flight_airports = [(orig_fid, orig), (dest_fid, dest)]
             for a_fid, a in flight_airports:
                 if a_fid not in airports:
@@ -665,6 +668,26 @@ class FlightTable(RecordLayerTable):
         """Returns the total duration of all flights in seconds."""
         durs = [f.duration() if f.duration() else 0 for f in self.values()]
         return int(sum(durs))
+
+    @classmethod
+    def milestone_distances(cls) -> dict:
+        """Returns a dict of Flights clearing milestone distances."""
+        ft = cls.from_all().joined().sort("departure_utc")
+        flights = list(ft.values())
+        ms_distances = CONFIG["milestones"]["distances"]
+        cum_distance = 0
+        ms_index = 0
+        output = {}
+        for flight in flights:
+            distance = flight.distance() if flight.distance() else 0
+            cum_distance += distance
+            flight["cum_distance"] = cum_distance
+            for i in range(ms_index, len(ms_distances)):
+                if cum_distance >= ms_distances[i]:
+                    output[ms_distances[i]] = flight
+                    ms_index = i + 1
+        return output
+
 
 class SeatClass(Record):
     """Represents a flight class record."""

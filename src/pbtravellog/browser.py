@@ -42,6 +42,13 @@ def create_browser_app():
     def home():
         return render_template("home.html.jinja")
 
+    @app.route("/milestones/")
+    def index_milestones():
+        return render_template(
+            "milestones/index.html.jinja",
+            milestone_distances=FlightTable.milestone_distances(),
+        )
+
     @app.route("/flights/")
     def index_flights():
         return render_template(

@@ -1,0 +1,43 @@
+{% extends "base.html.jinja" %}
+{% import "_macros/icons.html.jinja" as icons %}
+{% block title %}Milestones{% endblock %}
+{% block content %}
+
+<h2>Cumulative Flight Distance</h2>
+<p>Cumulative distance values are the value at the end of each flight.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Milestone</th>
+      <th></th>
+      <th>Flight</th>
+      <th>Route</th>
+      <th>Departure</th>
+      <th>Cum. Distance</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ms_distance, flight in milestone_distances.items() %}
+    <tr>
+      <th>{{ ms_distance | format_thousands }}&nbsp;mi</th>
+      <td>{{ icons.airline(flight.get("airline_fid")) }}</td>
+      <td><a href="{{ url_for('show_flight', flight_fid=flight["fid"]) }}">{{ flight.name() }}</a></td>
+      <td>
+        {% if flight.get("origin_airport_fid") is not none %}
+          <a href="{{ url_for('show_airport', airport_fid=flight['origin_airport_fid']) }}" class="code">{{ flight["origin_airport"].code() }}</a>
+        {% endif %}
+        &rarr;
+        {% if flight.get("destination_airport_fid") is not none %}
+          <a href="{{ url_for('show_airport', airport_fid=flight['destination_airport_fid']) }}" class="code">{{ flight["destination_airport"].code() }}</a>
+        {% endif %}
+      </td>
+      <td>{{ flight.local_time("departure") | format_dt(include_time=False) }}</td>
+      <td>{{ flight["cum_distance"] | format_thousands }}&nbsp;mi</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+
+{% endblock content %}

@@ -12,8 +12,7 @@ from pbtravellog import (
     extract_photo_metadata as epm,
     flight_cli as flc,
     flight_log as fl,
-    import_flight,
-    report,
+    import_flight as impf,
     record,
 )
 
@@ -29,7 +28,6 @@ def main():
     _add_parsers_index(subparsers)
     _add_parsers_init(subparsers)
     _add_parsers_refresh(subparsers)
-    _add_parsers_report(subparsers)
     _add_parsers_browse(subparsers)
     _add_parsers_show(subparsers)
 
@@ -43,22 +41,19 @@ def main():
     elif args.command == "import":
         if args.entity == "flight":
             if args.bcbp is not None:
-                import_flight.import_flight_bcbp(
-                    args.bcbp,
-                    geojson=args.geojson,
-                )
+                impf.import_flight_bcbp(args.bcbp, geojson=args.geojson)
             elif args.fa_flight_id is not None:
-                import_flight.import_flight_fa_flight_id(
+                impf.import_flight_fa_flight_id(
                     args.fa_flight_id,
                     geojson=args.geojson,
                 )
             elif args.flight_number is not None:
-                import_flight.import_flight_number(
+                impf.import_flight_number(
                     *args.flight_number,
                     geojson=args.geojson,
                 )
             elif args.pkpasses:
-                import_flight.import_flight_pkpasses(geojson=args.geojson)
+                impf.import_flight_pkpasses(geojson=args.geojson)
     elif args.command == "index":
         if args.entity == "airports":
             flc.index_airports(args.output, args.year)
@@ -69,9 +64,6 @@ def main():
     elif args.command == "refresh":
         if args.entity == "routes":
             fl.refresh_routes()
-    elif args.command == "report":
-        if args.entity == "milestones":
-            report.report_milestones()
     elif args.command == "show":
         if args.entity == "airport":
             flc.show_airport(args.id)
@@ -214,23 +206,6 @@ def _add_parsers_refresh(subparsers) -> None:
     refresh_parser_subparsers.add_parser(
         "routes",
         help="Manually refresh routes layer",
-    )
-
-def _add_parsers_report(subparsers) -> None:
-    """Adds parsers for report command."""
-    report_parser = subparsers.add_parser(
-        "report",
-        help="Generate reports",
-    )
-    report_parser_subparsers = report_parser.add_subparsers(
-        dest="entity",
-        required=True,
-    )
-
-    # Report milestones
-    report_parser_subparsers.add_parser(
-        "milestones",
-        help="Generate a report of flying milestones"
     )
 
 def _add_parsers_browse(subparsers) -> None:

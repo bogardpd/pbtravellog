@@ -6,6 +6,10 @@
 
 - Added `init` command to set up empty GeoPackage files.
 
+### Changed
+
+- Moved milestones to a browser page and removed `report milestones` command.
+
 ## [0.6.0]
 
 ### Added
