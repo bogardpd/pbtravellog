@@ -20,10 +20,10 @@ def fixture_bcbp_data():
 @pytest.fixture(name="sample_record")
 def fixture_sample_record():
     """Gets sample record data."""
+    data_path = files("tests.fixtures").joinpath("sample_records.toml")
+    with open(data_path, "rb") as f:
+        samples = tomllib.load(f)
     def _get_data(record_class, record_name) -> dict:
-        data_path = files("tests.fixtures").joinpath("sample_records.toml")
-        with open(data_path, "rb") as f:
-            samples = tomllib.load(f)
         return record_class(samples[record_class.__name__][record_name])
     return _get_data
 
