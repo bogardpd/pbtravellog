@@ -124,17 +124,6 @@ class Record(dict):
             )
         return data_log
 
-    @classmethod
-    def every(cls) -> gpd.GeoDataFrame:
-        """Returns a GeoDataFrame of all records."""
-        records = gpd.read_file(
-            cls.data_file(),
-            layer=cls.LAYER,
-            engine="pyogrio",
-            fid_as_index=True,
-        ).astype(cls.DTYPES)
-        return records
-
 class RecordTable(dict):
     """Represents a dict of instances of travel log records.
 
