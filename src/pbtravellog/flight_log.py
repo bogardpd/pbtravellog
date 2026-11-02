@@ -645,7 +645,7 @@ class FlightTable(RecordLayerTable):
                     v["properties"]["count_forward"] = count_forward[k]
                     v["properties"]["count_reverse"] = count_reverse[k]
             else:
-                routes[idx] = f.geojson_feature()
+                routes[idx] = flight.geojson_feature()
         gj = {
             "type": "FeatureCollection",
             "features": [*airports.values(), *routes.values()],
