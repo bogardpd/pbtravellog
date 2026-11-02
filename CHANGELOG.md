@@ -5,6 +5,7 @@
 ### Added
 
 - Added `init` command to set up empty GeoPackage files.
+- Added `export flights` command to export GeoJSON flight route geometry.
 
 ### Changed
 

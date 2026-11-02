@@ -588,7 +588,10 @@ class FlightTable(RecordLayerTable):
         }
         return self.__class__(records)
 
-    def geojson(self, group_routes: bool = True) -> dict:
+    def geojson(self,
+        group_routes: bool = True,
+        include_airports: bool = True,
+    ) -> dict:
         """Returns flight records as a dict in GeoJSON structure.
 
         Args:
@@ -597,20 +600,32 @@ class FlightTable(RecordLayerTable):
                 circle geometry. If False, individual flights are added
                 as features with actual geometry if available, or great
                 circle paths if actual geometry is not available.
+            include_airports (bool, optional): If true, includes point
+                geometry for the airports associated with these flights
+                or routes.
         """
         airports = {}
         routes = {}
+        count_total = defaultdict(int)
+        count_forward = defaultdict(int)
+        count_reverse = defaultdict(int)
         for idx, flight in enumerate(self.values()):
             orig_fid = flight["origin_airport_fid"]
             dest_fid = flight["destination_airport_fid"]
             orig = flight["origin_airport"]
             dest = flight["destination_airport"]
             flight_airports = [(orig_fid, orig), (dest_fid, dest)]
-            for a_fid, a in flight_airports:
-                if a_fid not in airports:
-                    airports[a_fid] = a.geojson_feature()
+            if include_airports:
+                for a_fid, a in flight_airports:
+                    if a_fid not in airports:
+                        airports[a_fid] = a.geojson_feature()
             if group_routes:
                 route_key = tuple(sorted([orig_fid, dest_fid]))
+                count_total[route_key] += 1
+                if route_key == tuple([orig_fid, dest_fid]):
+                    count_forward[route_key] += 1
+                else:
+                    count_reverse[route_key] += 1
                 if route_key not in routes:
                     dist_mi, geom = great_circle_route(
                         orig["geometry"], dest["geometry"]
@@ -625,6 +640,10 @@ class FlightTable(RecordLayerTable):
                         }
                     }
                     routes[route_key] = feature
+                for k, v in routes.items():
+                    v["properties"]["count_total"] = count_total[k]
+                    v["properties"]["count_forward"] = count_forward[k]
+                    v["properties"]["count_reverse"] = count_reverse[k]
             else:
                 routes[idx] = f.geojson_feature()
         gj = {

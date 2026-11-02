@@ -9,10 +9,11 @@ from pathlib import Path
 # Project imports
 from pbtravellog import (
     browser,
+    export_flights as expf,
     extract_photo_metadata as epm,
     flight_cli as flc,
     flight_log as fl,
-    import_flight as impf,
+    import_flights as impf,
     record,
 )
 
@@ -23,6 +24,7 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command")
     subparsers.required = True
+    _add_parsers_export(subparsers)
     _add_parsers_extract_photo_metadata(subparsers)
     _add_parsers_import(subparsers)
     _add_parsers_index(subparsers)
@@ -35,7 +37,10 @@ def main():
     args = parser.parse_args()
     if args.command == "browse":
         browser.launch(args.port)
-    if args.command == "extract-photo-metadata":
+    elif args.command == "export":
+        if args.entity == "flights":
+            expf.export_flights_geojson(args.geojson_file)
+    elif args.command == "extract-photo-metadata":
         if args.entity == "photo-metadata":
             epm.extract_photo_metadata(args.source, args.output)
     elif args.command == "import":
@@ -70,6 +75,27 @@ def main():
         elif args.entity == "tail":
             flc.show_tail(args.tail_number)
 
+
+def _add_parsers_export(subparsers) -> None:
+    """Adds parsers for export command."""
+    import_parser = subparsers.add_parser(
+        "export",
+        help="Export items from travel log",
+    )
+    import_subparsers = import_parser.add_subparsers(
+        dest="entity",
+        required=True,
+    )
+
+    # Export flights
+    export_flights_parser = import_subparsers.add_parser(
+        "flights",
+        help="Export flights",
+    )
+    export_flights_parser.add_argument("geojson_file",
+        help="GeoJSON output file",
+        type=Path,
+    )
 
 def _add_parsers_extract_photo_metadata(subparsers) -> None:
     """Adds parsers for extract-photo-metadata command."""

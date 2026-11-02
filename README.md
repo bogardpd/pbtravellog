@@ -81,6 +81,16 @@ If you need to run the server on a particular port, use the `--port NNNN` flag:
 pbtravellog browse --port 12345
 ```
 
+### `export flights`
+
+Exports flight routes as a GeoJSON file. Flights are represented as great circle routes (not actual flight paths) and flight routes using the same airport pair (in either direction) are consolidated into a single feature.
+
+#### Example
+
+```bash
+pbtravellog export flights flight_routes.geojson
+```
+
 ### `extract photo-metadata`
 
 Takes a folder of JPEG images, and returns an HTML file with a table of photo metadata, and a GeoPackage and KMZ file of photo locations (for photos with location data).

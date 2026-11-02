@@ -2,7 +2,6 @@
 # Standard imports
 from datetime import datetime, timezone
 from importlib.resources import files
-import io
 import json
 from pathlib import Path
 import shutil
@@ -14,7 +13,7 @@ import requests
 
 # Project imports
 from pbtravellog.aeroapi import AeroAPIRateLimiter
-from pbtravellog.import_flight import (
+from pbtravellog.import_flights import (
     import_flight_bcbp, import_flight_fa_flight_id,
     import_flight_number, import_flight_pkpasses,
 )
