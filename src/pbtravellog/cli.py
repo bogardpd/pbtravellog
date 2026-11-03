@@ -12,7 +12,6 @@ from pbtravellog import (
     export_flights as expf,
     extract_photo_metadata as epm,
     flight_cli as flc,
-    flight_log as fl,
     import_flights as impf,
     record,
 )
@@ -29,7 +28,6 @@ def main():
     _add_parsers_import(subparsers)
     _add_parsers_index(subparsers)
     _add_parsers_init(subparsers)
-    _add_parsers_refresh(subparsers)
     _add_parsers_browse(subparsers)
     _add_parsers_show(subparsers)
 
@@ -66,9 +64,6 @@ def main():
             flc.index_tails(args.output)
     elif args.command == "init":
         record.init_gpkg()
-    elif args.command == "refresh":
-        if args.entity == "routes":
-            fl.refresh_routes()
     elif args.command == "show":
         if args.entity == "airport":
             flc.show_airport(args.id)
@@ -215,23 +210,6 @@ def _add_parsers_init(subparsers) -> None:
     subparsers.add_parser(
         "init",
         help="Create new GeoPackage data files"
-    )
-
-def _add_parsers_refresh(subparsers) -> None:
-    """Adds parsers for refresh command."""
-    refresh_parser = subparsers.add_parser(
-        "refresh",
-        help="Refresh flight log data",
-    )
-    refresh_parser_subparsers = refresh_parser.add_subparsers(
-        dest="entity",
-        required=True,
-    )
-
-    # Refresh routes
-    refresh_parser_subparsers.add_parser(
-        "routes",
-        help="Manually refresh routes layer",
     )
 
 def _add_parsers_browse(subparsers) -> None:

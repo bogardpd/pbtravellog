@@ -23,4 +23,3 @@ The Flight Log GeoPackage contains tables of entities related to flights.
 - Airlines
 - Airports
 - Seat classes
-- Routes

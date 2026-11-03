@@ -11,6 +11,10 @@
 
 - Moved milestones to a browser page and removed `report milestones` command.
 
+### Removed
+
+- Removed `refresh routes` command.
+
 ## [0.6.0]
 
 ### Added

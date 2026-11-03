@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from importlib.resources import files
 import os
 import re
-import sqlite3
 import tomllib
 from typing import Self
 from zoneinfo import ZoneInfo
@@ -18,7 +17,6 @@ import pandas as pd
 
 # Project imports
 from pbtravellog.geometry import (
-    CRS,
     gc_distance, geo_interface, great_circle_route, great_circle_route_pd,
 )
 from pbtravellog.record import Record, RecordTable, RecordLayerTable
@@ -455,7 +453,6 @@ class FlightTable(RecordLayerTable):
             )
             route_flight_count[airport_fids] += 1
         ranks = _rank_count(route_flight_count)
-        # routes = RouteTable.from_fids(route_flight_count.keys()).joined()
         airports = AirportTable.from_all()
         route_records = {}
         for airport_fids, count in route_flight_count.items():
@@ -779,46 +776,6 @@ def count_origin_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
         & (flights_gdf["trip_section"] == flights_gdf["prev_trip_section"]),
     "orig_visit"] = False
     return flights_gdf["orig_visit"]
-
-def refresh_routes():
-    """Updates the routes layer based on logged flights."""
-    con = sqlite3.connect(_get_flight_log())
-    flights_sql = """
-        SELECT origin_airport_fid, destination_airport_fid,
-            COUNT(*) as flight_count
-        FROM flights
-        GROUP BY origin_airport_fid, destination_airport_fid
-        ORDER BY origin_airport_fid, destination_airport_fid
-    """
-    flights_df = pd.read_sql(flights_sql, con)
-    con.close()
-    if flights_df.empty:
-        print(f"Can't update routes: no flights in \"{_get_flight_log()}\".")
-        return
-
-    airports = gpd.read_file(
-        _get_flight_log(),
-        layer="airports",
-        engine="pyogrio",
-        fid_as_index=True,
-    )
-
-    flights_df[["distance_mi", "geometry"]] = flights_df.apply(lambda f:
-        _great_circle_airport_lookup(f, airports),
-        axis = 1,
-    )
-    flights_df["distance_mi"] = flights_df["distance_mi"].astype("Int64")
-
-    routes_gdf = gpd.GeoDataFrame(flights_df, geometry="geometry", crs=CRS)
-
-    routes_gdf.to_file(
-        _get_flight_log(),
-        driver="GPKG",
-        engine="pyogrio",
-        layer="routes",
-        mode="w",
-    )
-    print(f"Updated all routes in \"{_get_flight_log()}\".")
 
 def estimate_trip_section(trip_fid: int, departure_dt: datetime) -> int | None:
     """Suggests a trip section number based on departure time."""

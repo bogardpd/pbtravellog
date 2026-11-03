@@ -14,7 +14,7 @@ from pbtravellog.aeroapi import (
 )
 from pbtravellog.boarding_pass import BoardingPass, PKPass
 from pbtravellog.flight_log import (
-    AirlineTable, Flight, estimate_trip_section, refresh_routes
+    AirlineTable, Flight, estimate_trip_section
 )
 from pbtravellog.geometry import METERS_PER_HUNDRED_FEET, split_at_antimeridian
 from pbtravellog.travel_log import Trip
@@ -218,4 +218,3 @@ def _save_flights(flights: list[Flight], geojson: Path | None = None):
             for i, flight in enumerate(flights):
                 gj_path = geojson.with_stem(f"{geojson.stem}_{i}")
                 flight.save(geojson=gj_path)
-    refresh_routes()

@@ -223,18 +223,6 @@ Save tail numbers to tails.csv:
 pbtravellog index airports --output tails.csv
 ```
 
-### `refresh routes`
-
-Regenerates the routes table based on all origin and destination airport pairs present in the flights table. Generates great circle geometry for these routes.
-
-> [!WARNING]
-> This will overwrite the routes table, including removing routes that no longer have flights. Do not manually edit the routes table, as any edits will be lost when routes are refreshed.
-
-#### Example
-```bash
-pbtravellog refresh routes
-```
-
 ### `show airport`
 
 Shows a flight table for a specific airport.
