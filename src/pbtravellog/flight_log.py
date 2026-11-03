@@ -12,7 +12,6 @@ from zoneinfo import ZoneInfo
 
 # Third-party imports
 from dateutil.parser import isoparse
-import geopandas as gpd
 import pandas as pd
 
 # Project imports
