@@ -13,6 +13,7 @@
 
 ### Removed
 
+- Removed routes table from flight log. (The GeoPackage routes table is unnecessary now that routes can be exported using the `export flights` command.)
 - Removed `refresh routes` command.
 
 ## [0.6.0]
