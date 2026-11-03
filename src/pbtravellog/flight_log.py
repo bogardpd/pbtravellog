@@ -12,12 +12,9 @@ from zoneinfo import ZoneInfo
 
 # Third-party imports
 from dateutil.parser import isoparse
-import pandas as pd
 
 # Project imports
-from pbtravellog.geometry import (
-    gc_distance, geo_interface, great_circle_route, great_circle_route_pd,
-)
+from pbtravellog.geometry import gc_distance, geo_interface, great_circle_route
 from pbtravellog.record import Record, RecordTable, RecordLayerTable
 from pbtravellog.travel_log import TripTable
 
@@ -767,16 +764,6 @@ def estimate_trip_section(trip_fid: int, departure_dt: datetime) -> int | None:
         return int(latest_flight["trip_section"])
     # New flight is more than 24 hours after latest flight.
     return int(latest_flight["trip_section"]) + 1
-
-def _great_circle_airport_lookup(row, airports):
-    """Runs great_circle_route_pd with a GeoDataFrame row."""
-    try:
-        return great_circle_route_pd(
-            airports.loc[row.origin_airport_fid, "geometry"],
-            airports.loc[row.destination_airport_fid, "geometry"],
-        )
-    except KeyError:
-        return pd.Series([None, None])
 
 def _rank_count(count_dict: dict) -> dict:
     """Ranks a dictionary of item counts."""

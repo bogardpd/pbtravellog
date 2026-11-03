@@ -4,7 +4,6 @@
 from math import ceil
 
 # Third-party imports
-import pandas as pd
 from pyproj import Geod
 from shapely.geometry import Point, LineString, MultiLineString
 
@@ -159,15 +158,6 @@ def great_circle_route(
         LineString([point1, *midpoints, point2])
     )
     return (dist_mi, geom)
-
-def great_circle_route_pd(point1, point2) -> pd.Series:
-    """Creates a great circle line between points.
-
-    Returns a Pandas series with distance in integer miles and a
-    MultiLineString geometry.
-    """
-    dist_mi, geom = great_circle_route(point1, point2)
-    return pd.Series([dist_mi, geom])
 
 def split_at_antimeridian(track_ls: LineString) -> MultiLineString:
     """Split a LineString at the antimeridian."""
