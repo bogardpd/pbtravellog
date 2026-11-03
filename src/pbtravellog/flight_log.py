@@ -746,37 +746,6 @@ class TailNumberTable(RecordTable):
         "rank": "rank",
     }
 
-def count_origin_visits(flights_gdf: gpd.GeoDataFrame) -> pd.Series:
-    """Determines whether to count origins as a visit."""
-    flights_gdf = flights_gdf[[
-        "departure_utc",
-        "trip_fid",
-        "trip_section",
-        "origin_airport_fid",
-        "destination_airport_fid",
-    ]]
-    flights_gdf = flights_gdf.sort_values(by="departure_utc")
-    flights_gdf["prev_dest_fid"] = flights_gdf["destination_airport_fid"] \
-        .shift(1)
-    flights_gdf["prev_trip_fid"] = flights_gdf["trip_fid"].shift(1)
-    flights_gdf["prev_trip_section"] = flights_gdf["trip_section"].shift(1)
-    # Set origin airport to NA for flights that continue after a
-    # layover. A flight is considered continuing after a layover if it
-    # has a trip and trip section, the trip and trip section are the
-    # same as the previous flight, and the origin is the same as the
-    # previous flight's destination. In that case, the continuing
-    # flight's origin should not be counted (since it was already
-    # counted in the previous flight's destination).
-    flights_gdf["orig_visit"] = True
-    flights_gdf.loc[
-        (flights_gdf["trip_fid"].notna())
-        & (flights_gdf["trip_section"].notna())
-        & (flights_gdf["origin_airport_fid"] == flights_gdf["prev_dest_fid"])
-        & (flights_gdf["trip_fid"] == flights_gdf["prev_trip_fid"])
-        & (flights_gdf["trip_section"] == flights_gdf["prev_trip_section"]),
-    "orig_visit"] = False
-    return flights_gdf["orig_visit"]
-
 def estimate_trip_section(trip_fid: int, departure_dt: datetime) -> int | None:
     """Suggests a trip section number based on departure time."""
     flights = FlightTable.from_all().filter_by_trip(trip_fid).values()
