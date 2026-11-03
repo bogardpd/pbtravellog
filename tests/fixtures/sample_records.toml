@@ -38,10 +38,16 @@ name = "A321"
 icao_code = "A321"
 iata_code = "321"
 
-[Trip.trip_las_vegas]
-name = "Las Vegas, NV"
-start_date = 2024-09-22
-end_date = 2024-09-27
+[Flight.flight_aal_777]
+departure_utc = 2024-09-22T17:00:00Z
+airline_fid = 1
+operator_fid = 1
+origin_airport_fid = 1
+destination_airport_fid = 2
+aircraft_type_fid = 1
+trip_fid = 1
+tail_number = "N159AN"
+class_fid = 1
 
 [Flight.flight_same_tail]
 # Has the same tail number as the mocked AeroAPI response.
@@ -54,3 +60,13 @@ trip_section = 1
 [Flight.flight_trip_section_no_section]
 departure_utc = 2024-09-22T20:00:00Z
 # trip_section is intentionally left blank
+
+[SeatClass.seat_class_economy]
+quality = 1
+name = "Economy"
+description = "Standard main cabin seat"
+
+[Trip.trip_las_vegas]
+name = "Las Vegas, NV"
+start_date = 2024-09-22
+end_date = 2024-09-27

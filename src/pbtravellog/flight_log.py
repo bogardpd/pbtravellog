@@ -443,11 +443,11 @@ class FlightTable(RecordLayerTable):
         """
         route_flight_count = defaultdict(int)
         for _, flight in self.sort("departure_utc").items():
-            airport_fids = (
+            count_airport_fids = (
                 flight["origin_airport_fid"],
                 flight["destination_airport_fid"],
             )
-            route_flight_count[airport_fids] += 1
+            route_flight_count[count_airport_fids] += 1
         ranks = _rank_count(route_flight_count)
         airports = AirportTable.from_all()
         route_records = {}
