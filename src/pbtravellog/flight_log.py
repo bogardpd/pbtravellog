@@ -455,15 +455,25 @@ class FlightTable(RecordLayerTable):
             )
             route_flight_count[airport_fids] += 1
         ranks = _rank_count(route_flight_count)
-        routes = RouteTable.from_fids(route_flight_count.keys()).joined()
-        for route_fid, route in routes.items():
-            route["count"] = route_flight_count[route_fid]
-            route["rank"] = ranks[route_fid]
-            # Add derived columns for sorting.
-            route["origin_airport_code"] = route["origin_airport"].code()
-            route["destination_airport_code"] = (
-                route["destination_airport"].code()
-            )
+        # routes = RouteTable.from_fids(route_flight_count.keys()).joined()
+        airports = AirportTable.from_all()
+        route_records = {}
+        for airport_fids, count in route_flight_count.items():
+            orig_airport = airports[airport_fids[0]]
+            dest_airport = airports[airport_fids[1]]
+            record = {
+                "origin_airport": orig_airport,
+                "destination_airport": dest_airport,
+                "origin_airport_code": orig_airport.code(),
+                "destination_airport_code": dest_airport.code(),
+                "distance_mi": gc_distance(
+                    orig_airport["geometry"], dest_airport["geometry"]
+                ),
+                "count": count,
+                "rank": ranks[airport_fids]
+            }
+            route_records[airport_fids] = record
+        routes = RouteTable(route_records)
         routes = routes.sort("destination_airport_code") \
             .sort("origin_airport_code").sort("count", ascending=False)
         return routes
@@ -721,47 +731,10 @@ class SeatClassTable(RecordLayerTable):
 
 class Route(Record):
     """Represents a route record."""
-    LOG_TYPE = "flight"
-    LAYER = "routes"
-    FIND_BY_CODES = []
-    DTYPES = {"distance_mi": "Int64"}
 
-class RouteTable(RecordLayerTable):
+class RouteTable(RecordTable):
     """Represents a dict of Route instances."""
     RECORD_CLASS = Route
-
-    def joined(self) -> Self:
-        """Joins airports on fid fields."""
-        airports = AirportTable.from_all()
-        joins = [
-            (airports, "origin_airport_fid", "origin_airport"),
-            (airports, "destination_airport_fid", "destination_airport"),
-        ]
-        for _, v in self.items():
-            for j in joins:
-                if v.get(j[1]) is None:
-                    v[j[2]] = {}
-                else:
-                    v[j[2]] = j[0][v[j[1]]]
-        return self
-
-    @classmethod
-    def from_all(cls):
-        """Creates a table of routes with a tuple of airports as keys.
-
-        Route FIDs could change when they are refreshed, so we should
-        always look up routes by an origin airport/destination airport
-        fid pair.
-        """
-        rec_table = {
-            (v.get("origin_airport_fid"), v.get("destination_airport_fid")): v
-            for _, v in super().from_all().items()
-        }
-        for r in rec_table.values():
-            # Remove flight_count key, since we'll calculate count
-            # separately.
-            r.pop("flight_count", None)
-        return cls(rec_table)
 
 class TailNumber(Record):
     """Represents a tail number."""
