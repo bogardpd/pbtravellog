@@ -49,6 +49,58 @@ def create_browser_app():
             milestone_distances=FlightTable.milestone_distances(),
         )
 
+    @app.route("/trips/")
+    def index_trips():
+        trip_records = all_trips.sort("end_date", ascending=False) \
+            .sort("start_date", ascending=False)
+        return render_template("trips/index.html.jinja", trips=trip_records)
+
+    @app.route("/trips/<int:trip_fid>/")
+    def show_trip(trip_fid: int):
+        trip = all_trips[trip_fid]
+        flights = all_flights.filter_by_trip(trip_fid)
+        return render_template(
+            "trips/show.html.jinja",
+            trip=trip,
+            flights=flights,
+            flights_map=GeoJSONMap(flights.geojson(group_routes=False)),
+        )
+
+    @app.route("/years/")
+    def index_years():
+        flight_counts = all_flights.count_by_year()
+        year_range = range(
+            min([
+               min(flight_counts),
+            ]),
+            max([
+                max(flight_counts),
+                datetime.now(UTC).year,
+            ]) + 1,
+        )
+        years = {
+            y: {"flights": flight_counts.get(y, 0)}
+            for y in year_range
+        }
+        return render_template(
+            "/years/index.html.jinja",
+            years=years,
+        )
+
+    @app.route("/years/<int:year>/")
+    def show_year(year: int):
+        flights = all_flights.filter_by_year(year)
+        return render_template(
+            "years/show.html.jinja",
+            year=year,
+            airlines=flights.collect_airlines(operators=False),
+            operators=flights.collect_airlines(operators=True),
+            aircraft_types=flights.collect_aircraft_types(),
+            classes=flights.collect_classes(),
+            flights=flights,
+            flights_map=GeoJSONMap(flights.geojson()),
+        )
+
     @app.route("/flights/")
     def index_flights():
         return render_template(
@@ -211,58 +263,6 @@ def create_browser_app():
         return render_template(
             "tail_numbers/show.html.jinja",
             tail_number_record=tail_number_records[tail_number],
-            airlines=flights.collect_airlines(operators=False),
-            operators=flights.collect_airlines(operators=True),
-            aircraft_types=flights.collect_aircraft_types(),
-            classes=flights.collect_classes(),
-            flights=flights,
-            flights_map=GeoJSONMap(flights.geojson()),
-        )
-
-    @app.route("/trips/")
-    def index_trips():
-        trip_records = all_trips.sort("end_date", ascending=False) \
-            .sort("start_date", ascending=False)
-        return render_template("trips/index.html.jinja", trips=trip_records)
-
-    @app.route("/trips/<int:trip_fid>/")
-    def show_trip(trip_fid: int):
-        trip = all_trips[trip_fid]
-        flights = all_flights.filter_by_trip(trip_fid)
-        return render_template(
-            "trips/show.html.jinja",
-            trip=trip,
-            flights=flights,
-            flights_map=GeoJSONMap(flights.geojson(group_routes=False)),
-        )
-
-    @app.route("/years/")
-    def index_years():
-        flight_counts = all_flights.count_by_year()
-        year_range = range(
-            min([
-               min(flight_counts),
-            ]),
-            max([
-                max(flight_counts),
-                datetime.now(UTC).year,
-            ]) + 1,
-        )
-        years = {
-            y: {"flights": flight_counts.get(y, 0)}
-            for y in year_range
-        }
-        return render_template(
-            "/years/index.html.jinja",
-            years=years,
-        )
-
-    @app.route("/years/<int:year>/")
-    def show_year(year: int):
-        flights = all_flights.filter_by_year(year)
-        return render_template(
-            "years/show.html.jinja",
-            year=year,
             airlines=flights.collect_airlines(operators=False),
             operators=flights.collect_airlines(operators=True),
             aircraft_types=flights.collect_aircraft_types(),
