@@ -159,6 +159,10 @@ def great_circle_route(
     )
     return (dist_mi, geom)
 
+def normalize_angle(angle: float):
+    """Returns an angle in the -180 to 180 range."""
+    return (angle + 180) % 360 - 180
+
 def split_at_antimeridian(track_ls: LineString) -> MultiLineString:
     """Split a LineString at the antimeridian."""
     # Find all points where the track crosses the antimeridian.
@@ -215,7 +219,3 @@ def _crossing_point(p1, p2):
         return None
     x_frac = (lon - p1[0]) / (p2[0] - p1[0])
     return tuple([c1 + (x_frac * (c2 - c1)) for c1, c2 in zip(p1, p2)])
-
-def normalize_angle(angle: float):
-    """Returns an angle in the -180 to 180 range."""
-    return (angle + 180) % 360 - 180
