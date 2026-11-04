@@ -435,40 +435,38 @@ class FlightTable(RecordLayerTable):
         return seat_classes
 
     def collect_routes(self) -> RouteTable:
-        """Builds route records from this FlightTable.
-
-        Although routes already store their flight_count, the value is
-        only good for all flights. This method calculates routes for
-        whatever flights are passed into it.
-        """
+        """Builds route records from this FlightTable."""
         route_flight_count = defaultdict(int)
         for _, flight in self.sort("departure_utc").items():
-            count_airport_fids = (
+            count_airport_fids = tuple(sorted([
                 flight["origin_airport_fid"],
                 flight["destination_airport_fid"],
-            )
+            ]))
             route_flight_count[count_airport_fids] += 1
         ranks = _rank_count(route_flight_count)
         airports = AirportTable.from_all()
         route_records = {}
         for airport_fids, count in route_flight_count.items():
-            orig_airport = airports[airport_fids[0]]
-            dest_airport = airports[airport_fids[1]]
+            record_airports = sorted(
+                [airports[airport_fids[0]], airports[airport_fids[1]]],
+                key=lambda a: a.code(),
+            )
             record = {
-                "origin_airport": orig_airport,
-                "destination_airport": dest_airport,
-                "origin_airport_code": orig_airport.code(),
-                "destination_airport_code": dest_airport.code(),
+                "airport_0": record_airports[0],
+                "airport_1": record_airports[1],
+                "airport_0_code": record_airports[0].code(),
+                "airport_1_code": record_airports[1].code(),
                 "distance_mi": gc_distance(
-                    orig_airport["geometry"], dest_airport["geometry"]
+                    record_airports[0]["geometry"],
+                    record_airports[1]["geometry"],
                 ),
                 "count": count,
                 "rank": ranks[airport_fids]
             }
             route_records[airport_fids] = record
         routes = RouteTable(route_records)
-        routes = routes.sort("destination_airport_code") \
-            .sort("origin_airport_code").sort("count", ascending=False)
+        routes = routes.sort("airport_1_code") \
+            .sort("airport_0_code").sort("count", ascending=False)
         return routes
 
     def collect_tail_numbers(self) -> TailNumberTable:
@@ -558,12 +556,13 @@ class FlightTable(RecordLayerTable):
         }
         return self.__class__(records)
 
-    def filter_by_route(self, orig_fid: int, dest_fid: int) -> Self:
+    def filter_by_route(self, airport_0_fid: int, airport_1_fid: int) -> Self:
         """Filters flight records by a route."""
+        fids = [airport_0_fid, airport_1_fid]
         records = {
             k: v for k, v in self.items()
-            if v["origin_airport_fid"] == orig_fid
-            and v["destination_airport_fid"] == dest_fid
+            if [v["origin_airport_fid"], v["destination_airport_fid"]] == fids
+            or [v["destination_airport_fid"], v["origin_airport_fid"]] == fids
         }
         return self.__class__(records)
 

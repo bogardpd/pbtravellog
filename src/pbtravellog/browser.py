@@ -231,11 +231,11 @@ def create_browser_app():
         return render_template("routes/index.html.jinja", routes=route_records)
 
     @app.route(
-        "/routes/<int:origin_airport_fid>/<int:destination_airport_fid>/"
+        "/routes/<int:airport_0_fid>/<int:airport_1_fid>/"
     )
-    def show_route(origin_airport_fid, destination_airport_fid):
+    def show_route(airport_0_fid, airport_1_fid):
         route_records = all_flights.collect_routes()
-        fids = (origin_airport_fid, destination_airport_fid)
+        fids = tuple(sorted([airport_0_fid, airport_1_fid]))
         flights = all_flights.filter_by_route(*fids)
         return render_template(
             "routes/show.html.jinja",

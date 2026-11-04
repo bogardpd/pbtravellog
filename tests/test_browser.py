@@ -57,5 +57,6 @@ def test_flask_routes_return_200(setup_sample_data, client):
     assert client.get("/classes/1/").status_code == 200
     assert client.get("/routes/").status_code == 200
     assert client.get("/routes/1/2/").status_code == 200
+    assert client.get("/routes/2/1/").status_code == 200
     assert client.get("/tail_numbers/").status_code == 200
     assert client.get("/tail_numbers/N159AN/").status_code == 200

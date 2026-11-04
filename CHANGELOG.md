@@ -10,6 +10,7 @@
 ### Changed
 
 - Moved milestones to a browser page and removed `report milestones` command.
+- Routes are now bidirectional. All flights between the same pair of airports in either direction are now considered the same route.
 
 ### Removed
 
