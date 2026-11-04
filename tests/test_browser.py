@@ -7,16 +7,9 @@ from shapely.geometry import Point
 # Project imports
 from pbtravellog.browser import create_browser_app
 from pbtravellog.flight_log import (
-    AircraftType, Airline, Airport, Flight, SeatClass, SeatClassTable
+    AircraftType, Airline, Airport, Flight, SeatClass
 )
 from pbtravellog.travel_log import Trip
-
-@pytest.fixture(name="client")
-def fixture_client():
-    """Represents a Flask client."""
-    app = create_browser_app()
-    app.config["TESTING"] = True
-    return app.test_client()
 
 @pytest.fixture(name="setup_sample_data")
 def fixture_setup_sample_data(setup_empty_geopackages, sample_record):
@@ -33,31 +26,36 @@ def fixture_setup_sample_data(setup_empty_geopackages, sample_record):
     sample_record(SeatClass, "seat_class_economy").save()
     sample_record(Flight, "flight_aal_777").save()
 
-@pytest.mark.parametrize("flask_route", [
-    "/",
-    "/milestones/",
-    "/trips/",
-    "/trips/1/",
-    "/years/",
-    "/years/2024/",
-    "/flights/",
-    "/flights/1/",
-    "/aircraft_types/",
-    "/aircraft_types/1/",
-    "/airlines/",
-    "/airlines/1/",
-    "/airlines/operators/1/",
-    "/airports/",
-    "/airports/1/",
-    "/classes/",
-    "/classes/1/",
-    "/routes/",
-    "/routes/1/2/",
-    "/tail_numbers/",
-    "/tail_numbers/N159AN/",
-])
+@pytest.fixture(name="client")
+def fixture_client():
+    """Represents a Flask client."""
+    app = create_browser_app()
+    app.config["TESTING"] = True
+    return app.test_client()
 
-def test_flask_routes_return_200(setup_sample_data, client, flask_route):
+def test_flask_routes_return_200(setup_sample_data, client):
     """Checks that flask routes return a response code of 200 OK."""
-    response = client.get(flask_route)
-    assert response.status_code == 200
+    # Deliberately using multiple assertions instead of parametrize
+    # as we want all the tests to read the same set of sample data,
+    # rather than reinitializing the data every time.
+    assert client.get("/").status_code == 200
+    assert client.get("/milestones/").status_code == 200
+    assert client.get("/trips/").status_code == 200
+    assert client.get("/trips/1/").status_code == 200
+    assert client.get("/years/").status_code == 200
+    assert client.get("/years/2024/").status_code == 200
+    assert client.get("/flights/").status_code == 200
+    assert client.get("/flights/1/").status_code == 200
+    assert client.get("/aircraft_types/").status_code == 200
+    assert client.get("/aircraft_types/1/").status_code == 200
+    assert client.get("/airlines/").status_code == 200
+    assert client.get("/airlines/1/").status_code == 200
+    assert client.get("/airlines/operators/1/").status_code == 200
+    assert client.get("/airports/").status_code == 200
+    assert client.get("/airports/1/").status_code == 200
+    assert client.get("/classes/").status_code == 200
+    assert client.get("/classes/1/").status_code == 200
+    assert client.get("/routes/").status_code == 200
+    assert client.get("/routes/1/2/").status_code == 200
+    assert client.get("/tail_numbers/").status_code == 200
+    assert client.get("/tail_numbers/N159AN/").status_code == 200
