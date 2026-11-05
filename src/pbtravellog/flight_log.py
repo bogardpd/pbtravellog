@@ -448,15 +448,17 @@ class FlightTable(RecordLayerTable):
         airports = AirportTable.from_all()
         route_records = {}
         for airport_fids, count in route_flight_count.items():
+            # For display, sort the airport pair alphabetically by code.
             record_airports = sorted(
                 [airports[airport_fids[0]], airports[airport_fids[1]]],
                 key=lambda a: a.code(),
             )
             record = {
-                "airport_0": record_airports[0],
-                "airport_1": record_airports[1],
-                "airport_0_code": record_airports[0].code(),
-                "airport_1_code": record_airports[1].code(),
+                "airports": record_airports,
+                "sort_key": (
+                    record_airports[0].code(),
+                    record_airports[1].code(),
+                ),
                 "distance_mi": gc_distance(
                     record_airports[0]["geometry"],
                     record_airports[1]["geometry"],
@@ -466,8 +468,7 @@ class FlightTable(RecordLayerTable):
             }
             route_records[airport_fids] = record
         routes = RouteTable(route_records)
-        routes = routes.sort("airport_1_code") \
-            .sort("airport_0_code").sort("count", ascending=False)
+        routes = routes.sort("sort_key").sort("count", ascending=False)
         return routes
 
     def collect_tail_numbers(self) -> TailNumberTable:

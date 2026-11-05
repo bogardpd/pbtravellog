@@ -13,9 +13,9 @@
       <td class="rank">{% if loop.first or route.get("rank") != loop.previtem[1].get("rank") %}{{ route.get("rank") }}{% else %}⋮{% endif %}</td>
       <td>
         <a href="{{ url_for('show_route', airport_0_fid=fids[0], airport_1_fid=fids[1]) }}">
-          {% if route.get("airport_0") is not none %}<span class="code">{{ route["airport_0"].code() }}</span>{% endif %}
+          <span class="code">{{ route["airports"][0].code() }}</span>
           &harr;
-          {% if route.get("airport_1") is not none %}<span class="code">{{ route["airport_1"].code() }}</span>{% endif %}
+          <span class="code">{{ route["airports"][1].code() }}</span>
         </a>
       </td>
       <td>{% if route.get("distance_mi") is not none %}{{ route["distance_mi"] }}&nbsp;mi{% endif %}</td>
