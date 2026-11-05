@@ -211,7 +211,7 @@ class Flight(Record):
             dest = self.get("destination_airport")
             if orig is not None and dest is not None:
                 gc_dist_mi, gc_geom = great_circle_route(
-                    orig["geometry"], dest["geometry"]
+                    orig.get("geometry"), dest.get("geometry")
                 )
                 if geom is None:
                     geom = gc_geom
@@ -438,10 +438,11 @@ class FlightTable(RecordLayerTable):
         """Builds route records from this FlightTable."""
         route_flight_count = defaultdict(int)
         for _, flight in self.sort("departure_utc").items():
-            count_airport_fids = tuple(sorted([
-                flight["origin_airport_fid"],
-                flight["destination_airport_fid"],
-            ]))
+            orig_fid = flight["origin_airport_fid"]
+            dest_fid = flight["destination_airport_fid"]
+            if orig_fid is None or dest_fid is None:
+                continue
+            count_airport_fids = tuple(sorted([orig_fid, dest_fid]))
             route_flight_count[count_airport_fids] += 1
         ranks = _rank_count(route_flight_count)
         airports = AirportTable.from_all()
@@ -619,9 +620,9 @@ class FlightTable(RecordLayerTable):
             flight_airports = [(orig_fid, orig), (dest_fid, dest)]
             if include_airports:
                 for a_fid, a in flight_airports:
-                    if a_fid not in airports:
+                    if a_fid not in airports and a_fid is not None:
                         airports[a_fid] = a.geojson_feature()
-            if group_routes:
+            if group_routes and orig_fid is not None and dest_fid is not None:
                 route_key = tuple(sorted([orig_fid, dest_fid]))
                 count_total[route_key] += 1
                 if route_key == tuple([orig_fid, dest_fid]):

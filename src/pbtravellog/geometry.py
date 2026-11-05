@@ -139,9 +139,10 @@ def great_circle_route(
         point2: Point,
 ) -> tuple[int, MultiLineString | None]:
     """Returns great circle miles and geometry between points."""
-    if point1 == point2:
-        # Returned to same airport. Return zero great circle distance
-        # and no geometry.
+    if point1 is None or point2 is None or point1 == point2:
+        # The flight may not have one or more airports set, or the
+        # flight returned to same airport. Return zero great circle
+        # distance and no geometry.
         return (0, None)
     geod = Geod(ellps=ELLPS)
     _, _, dist_m = geod.inv(point1.x, point1.y, point2.x, point2.y)

@@ -25,6 +25,9 @@ def fixture_setup_sample_data(setup_empty_geopackages, sample_record):
     airport_klas.save()
     sample_record(SeatClass, "seat_class_economy").save()
     sample_record(Flight, "flight_aal_777").save()
+    sample_record(Flight, "flight_no_destination").save()
+    sample_record(Flight, "flight_no_origin").save()
+    sample_record(Flight, "flight_no_origin_or_destination").save()
 
 @pytest.fixture(name="client")
 def fixture_client():

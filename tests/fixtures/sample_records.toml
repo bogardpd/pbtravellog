@@ -49,6 +49,17 @@ trip_fid = 1
 tail_number = "N159AN"
 class_fid = 1
 
+[Flight.flight_no_destination]
+departure_utc = 2024-09-23T12:00:00Z
+origin_airport_fid = 1
+
+[Flight.flight_no_origin]
+departure_utc = 2024-09-23T13:00:00Z
+destination_airport_fid = 1
+
+[Flight.flight_no_origin_or_destination]
+departure_utc = 2024-09-23T14:00:00Z
+
 [Flight.flight_same_tail]
 # Has the same tail number as the mocked AeroAPI response.
 tail_number = "N159AN"
