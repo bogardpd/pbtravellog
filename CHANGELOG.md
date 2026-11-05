@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.0]
+
 ### Added
 
 - Added `init` command to set up empty GeoPackage files.
