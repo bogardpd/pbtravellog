@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 # Third-party imports
-from shapely import LineString, MultiLineString, Point
+from shapely.geometry import LineString, MultiLineString, Point
 
 # Project imports
 from pbtravellog.aeroapi import (
