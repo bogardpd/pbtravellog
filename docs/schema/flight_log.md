@@ -107,6 +107,6 @@ Individual flights may or may not have geometry (e.g., older flights without kno
 | `boarding_pass_data` | TEXT | *Optional.* Boarding pass data string in IATA BCBP format. |
 | `fh_id` | INT (64 bit) | *Optional.* Flight Historian flight record ID. |
 | `geom_source` | TEXT | *Optional.* Source of geometry data for this flight (e.g. `FlightAware`, `GPS`).
-| `fa_flight_id` | TEXT | *Optional.* FlightAware AeroAPI ID string. If a flight has multiple fa_flight_ids because of diverts, separate them with a comma with no spacing (e.g. `EGF2814-1345324398-23-0,EGF2814-1345333208-83-0`) |
+| `fa_flight_id` | TEXT | *Optional.* FlightAware AeroAPI ID string. If a flight has multiple fa_flight_ids because of diverts, separate them with a comma with no spacing (e.g. `EGF2814-1345324398-23-0,EGF2814-1345333208-83-0`). |
 | `fa_json` | TEXT | *Optional.* A JSON array containing one or more AeroAPI flight lookup JSON responses. (Multiple JSON responses may be necessary for diverts. Most flights will only have a single JSON response in the array.) |
 | `comments` | TEXT | *Optional.* Comments about the flight. |
