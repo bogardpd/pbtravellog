@@ -1,5 +1,8 @@
 """User functions for validating travel log data."""
 
+# Standard imports
+from datetime import timedelta
+
 # Project imports
 from pbtravellog import flight_log
 
@@ -36,6 +39,7 @@ class Validation():
 class ValidateFlightOverlaps(Validation):
     """Validates that flights don't overlap each other."""
     DESCRIPTION = "flights don't overlap"
+    MAX_LAYOVER_HOURS = 1
 
     def run(self) -> None:
         flights = self.flights.sort("departure_utc")
@@ -67,12 +71,44 @@ class ValidateFlightTimes(Validation):
                 )
         self.report()
 
+class ValidateLayoverLength(Validation):
+    """Validates layovers aren't too long."""
+    DESCRIPTION = "flight layovers are reasonable"
+    MAX_LAYOVER_HOURS = 12
+
+    def run(self) -> None:
+        flights = self.flights.sort("departure_utc")
+        fids = list(flights.keys())
+        for fid0, fid1 in zip(fids[:-1], fids[1:]):
+            arr0 = flights[fid0]["arrival_utc"]
+            dep1 = flights[fid1]["departure_utc"]
+            if arr0 is None or dep1 is None:
+                continue
+            trip_sec0 = (
+                flights[fid0]["trip_fid"],
+                flights[fid0]["trip_section"],
+            )
+            trip_sec1 = (
+                flights[fid1]["trip_fid"],
+                flights[fid1]["trip_section"],
+            )
+            if None in trip_sec0 or None in trip_sec1:
+                continue
+            if trip_sec0 == trip_sec1:
+                if (dep1 - arr0) > timedelta(hours=self.MAX_LAYOVER_HOURS):
+                    self.warnings.append(
+                        f"Layover {fid0} → {fid1} greater than "
+                        f"{self.MAX_LAYOVER_HOURS} hours ({dep1 - arr0})"
+                    )
+        self.report()
+
 
 def validate():
     """Validates travel log data."""
     validations = [
         ValidateFlightTimes(),
         ValidateFlightOverlaps(),
+        ValidateLayoverLength(),
     ]
     for v in validations:
         v.run()
