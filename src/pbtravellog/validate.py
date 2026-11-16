@@ -103,12 +103,17 @@ class ValidateLayoverLength(Validation):
         self.report()
 
 
-def validate():
+def validate() -> bool:
     """Validates travel log data."""
     validations = [
         ValidateFlightTimes(),
         ValidateFlightOverlaps(),
         ValidateLayoverLength(),
     ]
+    warning_count = 0
     for v in validations:
         v.run()
+        warning_count += len(v.warnings)
+    if warning_count > 0:
+        print(f"{warning_count} total warning(s) found.")
+    return warning_count == 0
