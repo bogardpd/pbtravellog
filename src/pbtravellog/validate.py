@@ -32,10 +32,16 @@ class ValidateFlightUTCTimes(Validation):
 
     def run(self) -> bool:
         for fid, flight in self.flights.items():
-            if flight["departure_utc"] is None:
+            dep = flight["departure_utc"]
+            arr = flight["arrival_utc"]
+            if dep is None:
                 self.warnings.append(f"Flight {fid} has no departure_utc.")
-            if flight["arrival_utc"] is None:
+            if arr is None:
                 self.warnings.append(f"Flight {fid} has no arrival_utc.")
+            if dep is not None and arr is not None and dep >= arr:
+                self.warnings.append(
+                    f"Flight {fid} arrival_utc is not after departure_utc."
+                )
         self.report()
 
 
