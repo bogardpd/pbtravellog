@@ -69,7 +69,7 @@ pbtravellog <command> --help
 
 ### `browse`
 
-PBTravelLog can locally run a website to show travel log data. By default, this website will be run at http://localhost:5000. To launch a server and a browser, use the `browse` command:
+PBTravelLog can locally run a website to show travel log data. By default, this website will be run at http://localhost:8000. To launch a server and a browser, use the `browse` command:
 
 ```bash
 pbtravellog browse

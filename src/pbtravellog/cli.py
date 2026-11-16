@@ -221,7 +221,7 @@ def _add_parsers_browse(subparsers) -> None:
     browse_parser.add_argument("--port",
         help="Webserver port (default: %(default)s)",
         type=int,
-        default=5000,
+        default=8000,
     )
 
 def _add_parsers_show(subparsers) -> None:
