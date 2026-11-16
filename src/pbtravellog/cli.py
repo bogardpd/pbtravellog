@@ -14,6 +14,7 @@ from pbtravellog import (
     flight_cli as flc,
     import_flights as impf,
     record,
+    validate,
 )
 
 def main():
@@ -30,6 +31,7 @@ def main():
     _add_parsers_init(subparsers)
     _add_parsers_browse(subparsers)
     _add_parsers_show(subparsers)
+    _add_parsers_validate(subparsers)
 
     # Parse arguments
     args = parser.parse_args()
@@ -69,6 +71,8 @@ def main():
             flc.show_airport(args.id)
         elif args.entity == "tail":
             flc.show_tail(args.tail_number)
+    elif args.command == "validate":
+        validate.validate()
 
 
 def _add_parsers_export(subparsers) -> None:
@@ -254,4 +258,11 @@ def _add_parsers_show(subparsers) -> None:
     show_tail_parser.add_argument("tail_number",
         help="Tail number",
         type=str,
+    )
+
+def _add_parsers_validate(subparsers) -> None:
+    """Adds parsers for show command."""
+    subparsers.add_parser(
+        "validate",
+        help="Validate travel log data",
     )
