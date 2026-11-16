@@ -257,6 +257,7 @@ pbtravellog show airports LGA
 
 Shows a flight table for a particular tail number.
 
+
 #### Examples
 
 ```bash
@@ -269,6 +270,16 @@ pbtravellog show tail N123AA
   100  2012-05-16 12:00:00-05:00  American 1000  DFW     ORD
   200  2012-07-23 12:00:00-05:00  American 1100  ORD     LAX
 2 matching flight(s)
+```
+
+### `validate`
+
+Checks travel log data for common errors. If errors are found, they will be printed to the console.
+
+#### Examples
+
+```bash
+pbtravellog validate
 ```
 
 ## Testing
