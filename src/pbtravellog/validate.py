@@ -6,13 +6,13 @@ from datetime import timedelta
 # Project imports
 from pbtravellog import flight_log
 
-GREEN = "\033[32m"
-YELLOW = "\033[33m"
-RESET = "\033[0m"
-OK = f"{GREEN}[OK]{RESET}"
-WARN = f"{YELLOW}[WARN]{RESET}"
-
 _FLIGHTS = flight_log.FlightTable.from_all().joined()
+
+_GREEN = "\033[32m"
+_YELLOW = "\033[33m"
+_RESET = "\033[0m"
+_OK = f"{_GREEN}[OK]{_RESET}"
+_WARN = f"{_YELLOW}[WARN]{_RESET}"
 
 class Validation():
     """Generic validation."""
@@ -29,13 +29,13 @@ class Validation():
         """Prints validation results to the console."""
         warn_len = len(self.warnings)
         if warn_len == 0:
-            print(f"{OK} Validated \"{self.DESCRIPTION}\".")
+            print(f"{_OK} Validated \"{self.DESCRIPTION}\".")
         else:
             print(
-                f"{WARN} {warn_len} warning(s) found in "
+                f"{_WARN} {warn_len} warning(s) found in "
                 f"\"{self.DESCRIPTION}\":")
             for w in self.warnings:
-                print(f"\t{WARN} {w}")
+                print(f"\t{_WARN} {w}")
 
 class ValidateFlightOverlaps(Validation):
     """Validates that flights don't overlap each other."""
