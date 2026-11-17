@@ -88,7 +88,7 @@ Individual flights may or may not have geometry (e.g., older flights without kno
 |--------|-----------|-------------|
 | `fid`  | INT (64 bit) | Primary key for the flight record. |
 | `departure_utc` | DATETIME | UTC departure time for the flight. Prefer gate out time over wheels off (up) time. Prefer actual time over estimated time over scheduled time. |
-| `arrival_utc` | DATETIME | *Optional.* UTC arrival time for the flight. Prefer gate in time over wheels on (down) time. Prefer actual time over estimated time over scheduled time. |
+| `arrival_utc` | DATETIME | UTC arrival time for the flight. Prefer gate in time over wheels on (down) time. Prefer actual time over estimated time over scheduled time. |
 | `purpose` | TEXT | `Business`, `Personal`, or `Mixed` |
 | `trip_fid` | INT (64 bit) | *Optional.* Foreign key referencing the trip on the [`trips`](travel_log.md#trips-no-geometry) table in the [travel log](travel_log.md) GeoPackage. |
 | `trip_section` | INT (64 bit) | *Optional.* Flights which follow each other after a layover should be assigned the same trip section of the same trip. Used to avoid [double-counting visits to airports during layovers](https://paulbogard.net/flight-historian/counting-visits-to-airports-the-significance-of-trip-sections/). |
