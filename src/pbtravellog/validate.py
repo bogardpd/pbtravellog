@@ -2,9 +2,14 @@
 
 # Standard imports
 from datetime import timedelta
+from importlib.resources import files
+import tomllib
 
 # Project imports
 from pbtravellog import flight_log
+
+with open(files("pbtravellog.config").joinpath("config.toml"), "rb") as f:
+    CONFIG = tomllib.load(f)
 
 _FLIGHTS = flight_log.FlightTable.from_all().joined()
 
@@ -75,7 +80,7 @@ class ValidateFlightTimes(Validation):
 class ValidateLayoverLength(Validation):
     """Validates layovers aren't too long."""
     DESCRIPTION = "flight layovers are reasonable"
-    MAX_LAYOVER_HOURS = 12
+    MAX_LAYOVER_HOURS = CONFIG["validation"]["max_layover_hours"]
 
     def run(self) -> None:
         flights = _FLIGHTS.sort("departure_utc")
