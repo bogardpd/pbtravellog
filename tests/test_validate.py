@@ -1,4 +1,9 @@
 """Tests validate module."""
+
+# Third party imports
+from shapely.geometry import MultiLineString
+
+# Project imports
 from pbtravellog import flight_log as fl, travel_log as tl, validate
 
 def test_validate_trip_dates(setup_empty_geopackages, sample_record):
@@ -15,6 +20,19 @@ def test_validate_trip_dates(setup_empty_geopackages, sample_record):
     # too_early and too_late each have arrival and departure out of
     # range, so they should generate two warnings each.
     assert len(v.warnings) == 4
+
+def test_validate_flight_altitudes():
+    """Tests validation of flight altitude units."""
+    wrong_units = fl.Flight({
+        "geometry": MultiLineString([[[0, 0, 300], [1, 1, 300]]]),
+    })
+    valid_units = fl.Flight({
+        "geometry": MultiLineString([[[0, 0, 9000], [1, 1, 9000]]]),
+    })
+    flights = fl.FlightTable(dict(enumerate([wrong_units, valid_units])))
+    v = validate.ValidateFlightAltitudes(flights=flights)
+    v.run()
+    assert len(v.warnings) == 1
 
 def test_validate_flight_distances_zero_distance(
     setup_empty_geopackages, sample_record

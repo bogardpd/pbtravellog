@@ -7,6 +7,7 @@ import tomllib
 
 # Project imports
 from pbtravellog import flight_log
+from pbtravellog.geometry import METERS_PER_FOOT
 
 with open(files("pbtravellog.config").joinpath("config.toml"), "rb") as f:
     CONFIG = tomllib.load(f)
@@ -40,6 +41,32 @@ class Validation():
                 f"\"{self.DESCRIPTION}\":")
             for w in self.warnings:
                 print(f"\t{_WARN} {w}")
+
+class ValidateFlightAltitudes(Validation):
+    """Validates altitudes are in meters, not 100s of feet."""
+    DESCRIPTION = "flight altitude units are correct"
+
+    def run(self) -> None:
+        for fid, flight in self.flights.items():
+            geometry = flight["geometry"]
+            if geometry is None:
+                continue
+            altitudes = []
+            for part in geometry.geoms:
+                altitudes.extend([p[2] for p in part.coords])
+            max_altitude = max(altitudes)
+            if 0.0 < max_altitude <= 600.0:
+                # If altitude units are 100s of feet, this represents
+                # 60000 ft. If units are meters, this represents 1969
+                # ft. Nearly every flight that takes off should reach
+                # 1969 ft, so a max altitude below this is probably in
+                # 100s of feet.
+                self.warnings.append(
+                    f"Flight {fid} has a max altitude of "
+                    f"{int(max_altitude / METERS_PER_FOOT)} ft, and likely "
+                    "uses wrong altitude units."
+                )
+        self.report()
 
 class ValidateFlightDistances(Validation):
     """Validates flight distances are reasonable."""
@@ -180,6 +207,7 @@ def validate() -> bool:
         ValidateFlightOverlaps(flights=flights),
         ValidateLayoverLength(flights=flights),
         ValidateFlightDistances(flights=flights),
+        ValidateFlightAltitudes(flights=flights),
     ]
     warning_count = 0
     for v in validations:
