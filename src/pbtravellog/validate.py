@@ -21,8 +21,9 @@ class Validation():
     """Generic validation."""
     DESCRIPTION = ""
 
-    def __init__(self):
+    def __init__(self, flights=None):
         self.warnings = []
+        self.flights = flights
 
     def run(self) -> None:
         """Runs validation."""
@@ -40,14 +41,43 @@ class Validation():
             for w in self.warnings:
                 print(f"\t{_WARN} {w}")
 
+class ValidateFlightDistances(Validation):
+    """Validates flight distances are reasonable."""
+    DESCRIPTION = "flight distances are reasonable"
+
+    def run(self) -> None:
+        max_dist_mi = CONFIG["validation"]["max_flight_distance_mi"]
+        max_speed_mph = CONFIG["validation"]["max_flight_speed_mph"]
+        for fid, flight in self.flights.items():
+            dist_mi = flight["distance_mi"]
+            if dist_mi is None:
+                continue
+            if dist_mi == 0:
+                self.warnings.append(
+                    f"Flight {fid} has a distance of 0 miles."
+                )
+            if dist_mi > max_dist_mi:
+                self.warnings.append(
+                    f"Flight {fid} has a distance of {dist_mi} miles, which "
+                    f"exceeds the maximum of {max_dist_mi} miles."
+                )
+            dep = flight["departure_utc"]
+            arr = flight["arrival_utc"]
+            if arr is not None and dep is not None:
+                dur_hours = (arr - dep).seconds // 3600
+                if dur_hours != 0:
+                    speed_mph = dist_mi // dur_hours
+                    if speed_mph > max_speed_mph:
+                        self.warnings.append(
+                            f"Flight {fid} has a speed of {speed_mph} mph, "
+                            f"which exceeds the maximum of {max_speed_mph} "
+                            "mph."
+                        )
+        self.report()
+
 class ValidateFlightOverlaps(Validation):
     """Validates that flights don't overlap each other."""
     DESCRIPTION = "flights don't overlap"
-    MAX_LAYOVER_HOURS = 1
-
-    def __init__(self, flights):
-        super().__init__()
-        self.flights = flights
 
     def run(self) -> None:
         flights = self.flights.sort("departure_utc")
@@ -64,10 +94,6 @@ class ValidateFlightOverlaps(Validation):
 class ValidateFlightTimes(Validation):
     """Validates flights have departure_utc and arrival_utc set."""
     DESCRIPTION = "all flights have departure_utc and arrival_utc"
-
-    def __init__(self, flights):
-        super().__init__()
-        self.flights = flights
 
     def run(self) -> None:
         for fid, flight in self.flights.items():
@@ -126,6 +152,7 @@ def validate() -> bool:
         ValidateFlightTimes(flights=flights),
         ValidateFlightOverlaps(flights=flights),
         ValidateLayoverLength(flights=flights),
+        ValidateFlightDistances(flights=flights),
     ]
     warning_count = 0
     for v in validations:

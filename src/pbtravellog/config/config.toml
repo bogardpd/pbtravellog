@@ -2,4 +2,6 @@
 distances = [50000, 100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000, 20000000, 50000000]
 
 [validation]
+max_flight_distance_mi = 12000 # Longer than 11000 mile range of A350-900ULR
+max_flight_speed_mph = 1400 # Faster than Concorde
 max_layover_hours = 12
