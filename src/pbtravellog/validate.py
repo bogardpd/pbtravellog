@@ -160,15 +160,13 @@ class ValidateTripDates(Validation):
                 continue
             if not trip_start <= dep_local_date <= trip_end:
                 self.warnings.append(
-                    f"Flight {fid} has a local departure of {dep_local_date}, "
-                    "which is not within its trip dates of "
-                    f"{trip_start} to {trip_end}."
+                    f"Flight {fid} departed {dep_local_date}, "
+                    f"but its trip dates are {trip_start} to {trip_end}."
                 )
             if not trip_start <= arr_local_date <= trip_end:
                 self.warnings.append(
-                    f"Flight {fid} has a local arrival of {arr_local_date}, "
-                    "which is not within its trip dates of "
-                    f"{trip_start} to {trip_end}."
+                    f"Flight {fid} arrived {arr_local_date}, "
+                    f"but its trip dates are {trip_start} to {trip_end}."
                 )
         self.report()
 
