@@ -114,10 +114,6 @@ class ValidateLayoverLength(Validation):
     DESCRIPTION = "flight layovers are reasonable"
     MAX_LAYOVER_HOURS = CONFIG["validation"]["max_layover_hours"]
 
-    def __init__(self, flights):
-        super().__init__()
-        self.flights = flights
-
     def run(self) -> None:
         flights = self.flights.sort("departure_utc")
         fids = list(flights.keys())
@@ -144,11 +140,44 @@ class ValidateLayoverLength(Validation):
                     )
         self.report()
 
+class ValidateTripDates(Validation):
+    """Validates local times fall within trip dates."""
+    DESCRIPTION = "travel falls within trip dates"
+
+    def run(self) -> None:
+        for fid, flight in self.flights.items():
+            if flight["trip_fid"] is None:
+                continue
+            dep_local_time = flight.local_time("departure")
+            arr_local_time = flight.local_time("arrival")
+            if dep_local_time is None or arr_local_time is None:
+                continue
+            dep_local_date = dep_local_time.date()
+            arr_local_date = arr_local_time.date()
+            trip_start = (flight.get("trip") or {}).get("start_date")
+            trip_end = (flight.get("trip") or {}).get("end_date")
+            if trip_start is None or trip_end is None:
+                continue
+            if not trip_start <= dep_local_date <= trip_end:
+                self.warnings.append(
+                    f"Flight {fid} has a local departure of {dep_local_date}, "
+                    "which is not within its trip dates of "
+                    f"{trip_start} to {trip_end}."
+                )
+            if not trip_start <= arr_local_date <= trip_end:
+                self.warnings.append(
+                    f"Flight {fid} has a local arrival of {arr_local_date}, "
+                    "which is not within its trip dates of "
+                    f"{trip_start} to {trip_end}."
+                )
+        self.report()
+
 
 def validate() -> bool:
     """Validates travel log data."""
     flights = flight_log.FlightTable.from_all().joined()
     validations = [
+        ValidateTripDates(flights=flights),
         ValidateFlightTimes(flights=flights),
         ValidateFlightOverlaps(flights=flights),
         ValidateLayoverLength(flights=flights),

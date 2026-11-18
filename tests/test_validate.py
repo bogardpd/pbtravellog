@@ -1,6 +1,21 @@
 """Tests validate module."""
 from pbtravellog import flight_log as fl, travel_log as tl, validate
 
+def test_validate_trip_dates(setup_empty_geopackages, sample_record):
+    """Tests validation of travel dates being within trip dates."""
+    sample_record(tl.Trip, "trip_validate_trip_dates").save() # fid = 1
+    sample_record(fl.Airport, "airport_kdfw").save() # fid = 1
+    sample_record(fl.Airport, "airport_klas").save() # fid = 2
+    sample_record(fl.Flight, "flight_validate_trip_dates_too_early").save()
+    sample_record(fl.Flight, "flight_validate_trip_dates_valid").save()
+    sample_record(fl.Flight, "flight_validate_trip_dates_too_late").save()
+    flights = fl.FlightTable.from_all().joined()
+    v = validate.ValidateTripDates(flights=flights)
+    v.run()
+    # too_early and too_late each have arrival and departure out of
+    # range, so they should generate two warnings each.
+    assert len(v.warnings) == 4
+
 def test_validate_flight_distances_zero_distance(
     setup_empty_geopackages, sample_record
 ):
