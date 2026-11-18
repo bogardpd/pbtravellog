@@ -11,8 +11,6 @@ from pbtravellog import flight_log
 with open(files("pbtravellog.config").joinpath("config.toml"), "rb") as f:
     CONFIG = tomllib.load(f)
 
-_FLIGHTS = flight_log.FlightTable.from_all().joined()
-
 _GREEN = "\033[32m"
 _YELLOW = "\033[33m"
 _RESET = "\033[0m"
@@ -47,8 +45,12 @@ class ValidateFlightOverlaps(Validation):
     DESCRIPTION = "flights don't overlap"
     MAX_LAYOVER_HOURS = 1
 
+    def __init__(self, flights):
+        super().__init__()
+        self.flights = flights
+
     def run(self) -> None:
-        flights = _FLIGHTS.sort("departure_utc")
+        flights = self.flights.sort("departure_utc")
         fids = list(flights.keys())
         for fid0, fid1 in zip(fids[:-1], fids[1:]):
             arr0 = flights[fid0]["arrival_utc"]
@@ -63,8 +65,12 @@ class ValidateFlightTimes(Validation):
     """Validates flights have departure_utc and arrival_utc set."""
     DESCRIPTION = "all flights have departure_utc and arrival_utc"
 
+    def __init__(self, flights):
+        super().__init__()
+        self.flights = flights
+
     def run(self) -> None:
-        for fid, flight in _FLIGHTS.items():
+        for fid, flight in self.flights.items():
             dep = flight["departure_utc"]
             arr = flight["arrival_utc"]
             if dep is None:
@@ -82,8 +88,12 @@ class ValidateLayoverLength(Validation):
     DESCRIPTION = "flight layovers are reasonable"
     MAX_LAYOVER_HOURS = CONFIG["validation"]["max_layover_hours"]
 
+    def __init__(self, flights):
+        super().__init__()
+        self.flights = flights
+
     def run(self) -> None:
-        flights = _FLIGHTS.sort("departure_utc")
+        flights = self.flights.sort("departure_utc")
         fids = list(flights.keys())
         for fid0, fid1 in zip(fids[:-1], fids[1:]):
             arr0 = flights[fid0]["arrival_utc"]
@@ -111,10 +121,11 @@ class ValidateLayoverLength(Validation):
 
 def validate() -> bool:
     """Validates travel log data."""
+    flights = flight_log.FlightTable.from_all().joined()
     validations = [
-        ValidateFlightTimes(),
-        ValidateFlightOverlaps(),
-        ValidateLayoverLength(),
+        ValidateFlightTimes(flights=flights),
+        ValidateFlightOverlaps(flights=flights),
+        ValidateLayoverLength(flights=flights),
     ]
     warning_count = 0
     for v in validations:
