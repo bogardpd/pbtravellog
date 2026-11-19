@@ -72,94 +72,12 @@ trip_section = 1
 departure_utc = 2024-09-22T20:00:00Z
 # trip_section is intentionally left blank
 
-[Flight.flight_validate_distance_too_fast]
-departure_utc = 2024-09-22T12:00:00Z
-arrival_utc = 2024-09-22T13:00:00Z
-distance_mi = 1500 # 1500 mph
-
-[Flight.flight_validate_distance_too_long]
-distance_mi = 13000
-
-[Flight.flight_validate_distance_valid]
-departure_utc = 2024-09-22T12:00:00Z
-arrival_utc = 2024-09-22T17:00:00Z
-distance_mi = 2000 # 500 mph
-
-[Flight.flight_validate_distance_zero]
-distance_mi = 0
-
-[Flight.flight_validate_long_layover_1]
-departure_utc = 2024-09-22T12:00:00Z
-arrival_utc = 2024-09-22T13:00:00Z
-trip_fid = 1
-trip_section = 1
-
-[Flight.flight_validate_long_layover_2]
-departure_utc = 2024-09-23T12:00:00Z
-arrival_utc = 2024-09-23T13:00:00Z
-trip_fid = 1
-trip_section = 1
-
-[Flight.flight_validate_long_layover_3_valid]
-departure_utc = 2024-09-23T14:00:00Z
-arrival_utc = 2024-09-23T15:00:00Z
-trip_fid = 1
-trip_section = 1
-
-[Flight.flight_validate_times_no_utc]
-# Has no departure_utc or arrival_utc
-
-[Flight.flight_validate_times_valid]
-departure_utc = 2024-09-23T14:00:00Z
-arrival_utc = 2024-09-23T15:00:00Z
-
-[Flight.flight_validate_trip_dates_too_early]
-# For use with Trip.trip_validate_trip_dates (2024-09-22 to 2024-09-27)
-departure_utc = 2024-09-20T12:00:00Z
-arrival_utc = 2024-09-20T15:00:00Z
-origin_airport_fid = 1
-destination_airport_fid = 2
-trip_fid = 1
-
-[Flight.flight_validate_trip_dates_too_late]
-# For use with Trip.trip_validate_trip_dates (2024-09-22 to 2024-09-27)
-departure_utc = 2024-09-29T12:00:00Z
-arrival_utc = 2024-09-29T15:00:00Z
-origin_airport_fid = 1
-destination_airport_fid = 2
-trip_fid = 1
-
-[Flight.flight_validate_trip_dates_valid]
-# For use with Trip.trip_validate_trip_dates (2024-09-22 to 2024-09-27)
-departure_utc = 2024-09-24T12:00:00Z
-arrival_utc = 2024-09-24T15:00:00Z
-origin_airport_fid = 1
-destination_airport_fid = 2
-trip_fid = 1
-
-[Flight.flight_validate_overlapping_1]
-departure_utc = 2024-09-22T12:00:00Z
-arrival_utc = 2024-09-22T18:00:00Z
-
-[Flight.flight_validate_overlapping_2]
-departure_utc = 2024-09-22T15:00:00Z
-arrival_utc = 2024-09-22T21:00:00Z
-
-[Flight.flight_validate_overlapping_3_valid]
-departure_utc = 2024-09-22T22:00:00Z
-arrival_utc = 2024-09-22T23:00:00Z
-
 [SeatClass.seat_class_economy]
 quality = 1
 name = "Economy"
 description = "Standard main cabin seat"
 
 [Trip.trip_las_vegas]
-name = "Las Vegas, NV"
-start_date = 2024-09-22
-end_date = 2024-09-27
-
-[Trip.trip_validate_trip_dates]
 name = "Las Vegas, NV"
 start_date = 2024-09-22
 end_date = 2024-09-27

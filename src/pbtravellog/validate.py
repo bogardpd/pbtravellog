@@ -88,9 +88,9 @@ class ValidateFlightDistances(Validation):
                     f"Flight {fid} has a distance of {dist_mi} miles, which "
                     f"exceeds the maximum of {max_dist_mi} miles."
                 )
-            dep = flight["departure_utc"]
-            arr = flight["arrival_utc"]
-            if arr is not None and dep is not None:
+            dep = flight.get("departure_utc")
+            arr = flight.get("arrival_utc")
+            if dep is not None and arr is not None:
                 dur_hours = (arr - dep).seconds // 3600
                 if dur_hours != 0:
                     speed_mph = dist_mi // dur_hours
